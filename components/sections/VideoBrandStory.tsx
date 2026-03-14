@@ -5,7 +5,7 @@ export default function VideoBrandStory() {
   return (
     <section className="relative w-full h-[400px] md:h-[600px] overflow-hidden bg-[#0a0a23]">
       <video
-        src="https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773167208/Download_bkzmxs.mp4"
+        src="https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773004789/eid_collection_video_dk9q4l.mp4"
         autoPlay
         loop
         muted

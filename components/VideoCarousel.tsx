@@ -7,14 +7,10 @@ import "swiper/css/pagination";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
 
 const videos = [
-  "https://res.cloudinary.com/dwmxdyvd2/video/upload/sapphura/videos/video1.mp4",
-  "https://res.cloudinary.com/dwmxdyvd2/video/upload/sapphura/videos/video2.mp4",
-  "https://res.cloudinary.com/dwmxdyvd2/video/upload/sapphura/videos/video3.mp4",
-  "https://res.cloudinary.com/dwmxdyvd2/video/upload/sapphura/videos/video4.mp4",
-  "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773167208/Download_bkzmxs.mp4",
   "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773004777/bangals-vdo2_ctvcek.mp4",
-  "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1772973004/WhatsApp_Video_2026-03-08_at_5.20.43_PM_bxoap5.mp4",
-  "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1772967976/stitchclothes-1_fsnexm.mp4",
+  "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1772968018/video-1_lg1o1w.mp4",
+  "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1772967954/bangals-vdo1_zvxmnz.mp4",
+  "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773004778/bangals-video_pu6elh.mp4",
 ];
 
 export default function VideoCarousel() {

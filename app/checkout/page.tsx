@@ -6,6 +6,9 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ShoppingCart, CreditCard, Truck, CheckCircle, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+
+const StripePayment = dynamic(() => import('../../components/payment/StripeCheckout'), { ssr: false });
 
 type Step = 'info' | 'shipping' | 'payment' | 'review';
 
@@ -476,7 +479,13 @@ export default function CheckoutPage() {
                   </div>
                   {formData.paymentMethod === 'card' && (
                     <div className="mt-6 p-4 bg-[#0a0a23] rounded-lg border border-gold/30">
-                      <p className="text-white/60 text-sm">Stripe payment integration coming soon. For now, please use Cash on Delivery.</p>
+                      <StripePayment 
+                        amount={totalPrice} 
+                        onSuccess={() => {
+                          placeOrder();
+                        }} 
+                        onCancel={() => setFormData({...formData, paymentMethod: 'cod'})} 
+                      />
                     </div>
                   )}
                 </motion.div>

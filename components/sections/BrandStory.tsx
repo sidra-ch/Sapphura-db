@@ -103,7 +103,7 @@ export default function BrandStory() {
                   className="rounded-xl border-2 border-gold/30"
                 />
                 <img 
-                  src="/making-1.jpeg" 
+                  src="/bangals-1.jpeg" 
                   alt="Craft" 
                   className="rounded-xl border-2 border-gold/30"
                 />

@@ -9,35 +9,39 @@ import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import { useCart } from '../../components/cart/CartContext';
 import { useWishlist } from '../../components/wishlist/WishlistContext';
+import axios from 'axios';
 
-const allProducts = [
-  { id: 'gold-crescent-necklace', name: 'Gold Crescent Necklace', price: 299, image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400&h=400&fit=crop', category: 'Necklaces', rating: 5, collection: 'bridal' },
-  { id: 'navy-velvet-abaya', name: 'Navy Velvet Abaya', price: 189, image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400&h=400&fit=crop', category: 'Abayas', rating: 4, collection: 'eid' },
-  { id: 'diamond-bracelet', name: 'Diamond Bracelet', price: 399, image: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=400&h=400&fit=crop', category: 'Bracelets', rating: 5, collection: 'bridal' },
-  { id: 'kashmiri-bangals', name: 'Kashmiri Bangals', price: 249, image: 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=400&h=400&fit=crop', category: 'Bangles', rating: 4, collection: 'bridal' },
-  { id: 'elegant-earrings', name: 'Elegant Earrings', price: 149, image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400&h=400&fit=crop', category: 'Earrings', rating: 5, collection: 'party' },
-  { id: 'summer-suit', name: 'Summer Suit', price: 199, image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400&h=400&fit=crop', category: 'Suits', rating: 4, collection: 'summer' },
-  { id: 'winter-coat', name: 'Winter Collection', price: 299, image: 'https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=400&h=400&fit=crop', category: 'Suits', rating: 5, collection: 'winter' },
-  { id: 'makeup-set', name: 'Makeup Collection', price: 99, image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=400&fit=crop', category: 'Lipstick', rating: 4, collection: 'party' },
-  { id: 'bridal-necklace-set', name: 'Bridal Necklace Set', price: 599, image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&h=400&fit=crop', category: 'Bridal Sets', rating: 5, collection: 'bridal' },
-  { id: 'royal-abaya', name: 'Royal Embroidered Abaya', price: 249, image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=400&h=400&fit=crop', category: 'Abayas', rating: 5, collection: 'eid' },
-  { id: 'gold-rings', name: 'Gold Ring Set', price: 179, image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400&h=400&fit=crop', category: 'Rings', rating: 4, collection: 'bridal' },
-  { id: 'perfume-bundle', name: 'Luxury Perfume Set', price: 129, image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=400&h=400&fit=crop', category: 'Perfumes', rating: 5, collection: 'party' },
-];
+function cloudinaryUrl(publicId: string) {
+  return `https://res.cloudinary.com/dwmxdyvd2/image/upload/sapphura/${publicId}`;
+}
 
-const categories = ['All', 'Necklaces', 'Earrings', 'Rings', 'Bracelets', 'Bangles', 'Bridal Sets', 'Abayas', 'Suits', 'Dresses', 'Lipstick', 'Perfumes'];
+const defaultImage = '/neckles-1.jpeg';
+
+const categories = ['All', 'Jewelry', 'Abaya', 'Accessories', 'Clothing', 'Makeup'];
 const priceRanges = ['All', 'Under $100', '$100 - $200', '$200 - $300', 'Over $300'];
-const sortOptions = ['Newest', 'Price: Low to High', 'Price: High to Low', 'Popularity', 'Rating'];
+const sortOptions = ['Newest', 'Price: Low to High', 'Price: High to Low'];
+
+interface Product {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  price: number;
+  images: string;
+  stock: number;
+  status: string;
+  isFeatured: boolean;
+  categoryId: number;
+}
 
 function CollectionsContent() {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get('category');
-  const collectionParam = searchParams.get('collection');
-  const sortParam = searchParams.get('sort');
-
-  const [selectedCategory, setSelectedCategory] = useState(categoryParam ? categoryParam.charAt(0).toUpperCase() + categoryParam.slice(1) : 'All');
+  
+  const [products, setProducts] = useState<Product[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedPriceRange, setSelectedPriceRange] = useState('All');
-  const [sortBy, setSortBy] = useState(sortParam ? sortParam.charAt(0).toUpperCase() + sortParam.slice(1) : 'Newest');
+  const [sortBy, setSortBy] = useState('Newest');
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isLoading, setIsLoading] = useState(true);
@@ -46,20 +50,45 @@ function CollectionsContent() {
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
+    fetchProducts();
   }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const res = await axios.get('/api/products');
+      setProducts(res.data.products || []);
+    } catch (err) {
+      console.error('Failed to fetch products:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getProductImage = (imagesStr: string) => {
+    try {
+      const images = JSON.parse(imagesStr);
+      if (images && images.length > 0) {
+        const img = images[0].replace('/', '');
+        return cloudinaryUrl(img);
+      }
+    } catch {}
+    return defaultImage;
+  };
+
+  const getCategoryName = (categoryId: number) => {
+    const catNames: Record<number, string> = { 1: 'Jewelry', 2: 'Abaya', 3: 'Accessories', 4: 'Clothing', 5: 'Makeup' };
+    return catNames[categoryId] || 'Other';
+  };
 
   useEffect(() => {
     if (categoryParam) {
-      const formatted = categoryParam.charAt(0).toUpperCase() + categoryParam.slice(1).replace(/-/g, ' ');
-      setSelectedCategory(categories.includes(formatted) ? formatted : 'All');
+      setSelectedCategory(categoryParam.charAt(0).toUpperCase() + categoryParam.slice(1).replace(/-/g, ' '));
     }
   }, [categoryParam]);
 
-  const filteredProducts = allProducts.filter(product => {
-    if (selectedCategory !== 'All' && product.category !== selectedCategory) return false;
-    if (collectionParam && product.collection !== collectionParam) return false;
+  const filteredProducts = products.filter(product => {
+    const categoryName = getCategoryName(product.categoryId);
+    if (selectedCategory !== 'All' && categoryName !== selectedCategory) return false;
     if (selectedPriceRange !== 'All') {
       if (selectedPriceRange === 'Under $100' && product.price >= 100) return false;
       if (selectedPriceRange === '$100 - $200' && (product.price < 100 || product.price > 200)) return false;
@@ -73,7 +102,6 @@ function CollectionsContent() {
     switch (sortBy) {
       case 'Price: Low to High': return a.price - b.price;
       case 'Price: High to Low': return b.price - a.price;
-      case 'Rating': return b.rating - a.rating;
       default: return 0;
     }
   });
@@ -83,7 +111,7 @@ function CollectionsContent() {
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gold mb-2">
-            {collectionParam ? collectionParam.charAt(0).toUpperCase() + collectionParam.slice(1).replace(/-/g, ' ') + ' Collection' : 'Shop All Products'}
+            Shop All Products
           </h1>
           <p className="text-white/60">{sortedProducts.length} products found</p>
         </div>
@@ -222,7 +250,9 @@ function CollectionsContent() {
               ))
             ) : (
               sortedProducts.map((product, index) => {
-                const inWishlist = isInWishlist(product.id);
+                const inWishlist = isInWishlist(String(product.id));
+                const productImage = getProductImage(product.images);
+                const categoryName = getCategoryName(product.categoryId);
                 return (
               <motion.div
                 key={product.id}
@@ -233,21 +263,21 @@ function CollectionsContent() {
                 <div className="bg-[#1a1a40] border border-gold/20 rounded-xl overflow-hidden hover:border-gold transition group">
                     <div className="relative">
                       <img
-                        src={product.image}
+                        src={productImage}
                         alt={product.name}
                         className="w-full h-64 object-cover group-hover:scale-110 transition duration-300"
                       />
                       <span className="absolute top-3 left-3 bg-gold text-[#0a0a23] text-xs font-bold px-2 py-1 rounded">
-                        {product.category}
+                        {categoryName}
                       </span>
                       <div className="absolute top-3 right-3 flex flex-col gap-2">
                         <button
                           onClick={(e) => {
                             e.preventDefault();
                             if (inWishlist) {
-                              removeFromWishlist(product.id);
+                              removeFromWishlist(String(product.id));
                             } else {
-                              addToWishlist({ id: product.id, name: product.name, image: product.image, price: product.price });
+                              addToWishlist({ id: String(product.id), name: product.name, image: productImage, price: product.price });
                             }
                           }}
                           className={`p-2 rounded-full transition ${inWishlist ? 'bg-red-500 text-white' : 'bg-white/20 text-white hover:bg-gold'}`}
@@ -257,7 +287,7 @@ function CollectionsContent() {
                         <button
                           onClick={(e) => {
                             e.preventDefault();
-                            addToCart({ id: product.id, name: product.name, image: product.image, price: product.price, quantity: 1 });
+                            addToCart({ id: String(product.id), name: product.name, image: productImage, price: product.price, quantity: 1 });
                           }}
                           className="p-2 rounded-full bg-gold text-[#0a0a23] hover:bg-yellow-400 transition"
                         >
@@ -265,15 +295,11 @@ function CollectionsContent() {
                         </button>
                       </div>
                     </div>
-                    <Link href={`/product/${product.id}`}>
+                    <Link href={`/product/${product.slug}`}>
                     <div className="p-4">
                       <h3 className="text-gold font-semibold mb-1">{product.name}</h3>
                       <div className="flex items-center justify-between">
                         <span className="text-white font-bold text-xl">${product.price}</span>
-                        <div className="flex items-center gap-1">
-                          <span className="text-gold">★</span>
-                          <span className="text-white/70 text-sm">{product.rating}</span>
-                        </div>
                       </div>
                     </div>
                     </Link>

@@ -1,6 +1,3 @@
-// Prisma schema for Sapphura luxury e-commerce
-// Uses NeonDB PostgreSQL
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,64 +7,64 @@ datasource db {
 }
 
 model User {
-  id          Int       @id @default(autoincrement())
-  email       String    @unique
-  password    String
-  name        String?
-  phone       String?
-  role        String    @default("customer")
-  isActive    Boolean   @default(true)
-  otp         String?
-  otpExpiry   DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  orders      Order[]
-  reviews     Review[]
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  password  String
+  name      String?
+  role      String    @default("customer")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isActive  Boolean   @default(true)
+  otp       String?
+  otpExpiry DateTime?
+  phone     String?
+  orders    Order[]
+  reviews   Review[]
 }
 
 model Product {
-  id          Int         @id @default(autoincrement())
+  id          Int              @id @default(autoincrement())
   name        String
-  slug        String      @unique
   description String
   price       Float
+  categoryId  Int
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  images      String           @default("[]")
+  isFeatured  Boolean          @default(false)
   salePrice   Float?
   sku         String?
-  stock       Int         @default(0)
-  status      String      @default("active")
-  isFeatured  Boolean     @default(false)
-  images      String      @default("[]")
-  categoryId  Int
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  category    Category    @relation(fields: [categoryId], references: [id])
+  slug        String           @unique
+  status      String           @default("active")
+  stock       Int              @default(0)
   orderItems  OrderItem[]
-  reviews     Review[]
-  variants    ProductVariant[]
+  category    Category         @relation(fields: [categoryId], references: [id])
   tags        ProductTag[]
+  variants    ProductVariant[]
+  reviews     Review[]
 }
 
 model ProductVariant {
-  id          Int     @id @default(autoincrement())
-  productId   Int
-  size        String?
-  color       String?
-  material    String?
-  sku         String?
-  stock       Int     @default(0)
-  price       Float
-  image       String?
-  product     Product @relation(fields: [productId], references: [id])
+  id        Int     @id @default(autoincrement())
+  productId Int
+  size      String?
+  color     String?
+  material  String?
+  sku       String?
+  stock     Int     @default(0)
+  price     Float
+  image     String?
+  product   Product @relation(fields: [productId], references: [id])
 }
 
 model Tag {
-  id       Int            @id @default(autoincrement())
-  name     String         @unique
+  id       Int          @id @default(autoincrement())
+  name     String       @unique
   products ProductTag[]
 }
 
 model ProductTag {
-  id        Int    @id @default(autoincrement())
+  id        Int     @id @default(autoincrement())
   productId Int
   tagId     Int
   product   Product @relation(fields: [productId], references: [id])
@@ -75,38 +72,38 @@ model ProductTag {
 }
 
 model Category {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  products  Product[]
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  products Product[]
 }
 
 model Order {
-  id            Int         @id @default(autoincrement())
-  userId        Int
-  total         Float
-  discount      Float       @default(0)
-  shippingCost Float       @default(0)
-  status        String      @default("pending")
-  shippingName String?
-  shippingPhone String?
+  id              Int         @id @default(autoincrement())
+  userId          Int
+  total           Float
+  status          String      @default("pending")
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  discount        Float       @default(0)
+  notes           String?
+  paymentMethod   String?
+  paymentStatus   String      @default("pending")
   shippingAddress String?
-  paymentMethod String?
-  paymentStatus String      @default("pending")
-  notes         String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  user          User        @relation(fields: [userId], references: [id])
-  items         OrderItem[]
+  shippingCost    Float       @default(0)
+  shippingName    String?
+  shippingPhone   String?
+  user            User        @relation(fields: [userId], references: [id])
+  items           OrderItem[]
 }
 
 model OrderItem {
-  id        Int      @id @default(autoincrement())
+  id        Int     @id @default(autoincrement())
   orderId   Int
   productId Int
-  quantity  Int      @default(1)
+  quantity  Int     @default(1)
   price     Float
-  order     Order    @relation(fields: [orderId], references: [id])
-  product   Product  @relation(fields: [productId], references: [id])
+  order     Order   @relation(fields: [orderId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
 }
 
 model Review {
@@ -118,6 +115,14 @@ model Review {
   isApproved Boolean  @default(false)
   isFeatured Boolean  @default(false)
   createdAt  DateTime @default(now())
-  user       User     @relation(fields: [userId], references: [id])
   product    Product  @relation(fields: [productId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+model PasswordReset {
+  id        Int      @id @default(autoincrement())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
