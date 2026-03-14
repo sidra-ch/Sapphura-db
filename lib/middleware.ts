@@ -34,3 +34,13 @@ export function requireRole(...roles: string[]) {
     return null;
   };
 }
+
+export function requireAuth() {
+  return (req: NextRequest) => {
+    const user = getUserFromRequest(req);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized - Please login' }, { status: 401 });
+    }
+    return null;
+  };
+}

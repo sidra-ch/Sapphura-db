@@ -2,16 +2,29 @@
 
 import { useState } from 'react';
 import { useCart } from '../../components/cart/CartContext';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ShoppingCart, CreditCard, Truck, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShoppingCart, CreditCard, Truck, CheckCircle, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 
 type Step = 'info' | 'shipping' | 'payment' | 'review';
 
+interface FormErrors {
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  postalCode?: string;
+}
+
 export default function CheckoutPage() {
+  const router = useRouter();
   const { items, totalPrice, clearCart } = useCart();
   const [currentStep, setCurrentStep] = useState<Step>('info');
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [orderId, setOrderId] = useState('');
   
   const [formData, setFormData] = useState({
     email: '',
@@ -20,15 +33,17 @@ export default function CheckoutPage() {
     phone: '',
     address: '',
     city: '',
-    country: '',
+    country: 'Pakistan',
     postalCode: '',
     shippingMethod: 'standard',
     paymentMethod: 'cod',
   });
 
+  const [errors, setErrors] = useState<FormErrors>({});
   const [coupon, setCoupon] = useState('');
   const [discount, setDiscount] = useState(0);
   const [appliedCoupon, setAppliedCoupon] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const steps = [
     { id: 'info', label: 'Information', icon: ShoppingCart },
@@ -37,8 +52,68 @@ export default function CheckoutPage() {
     { id: 'review', label: 'Review', icon: CheckCircle },
   ];
 
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePhone = (phone: string): boolean => {
+    const phoneRegex = /^[\d\s\-+()]{10,}$/;
+    return phoneRegex.test(phone);
+  };
+
+  const validateInfoStep = (): boolean => {
+    const newErrors: FormErrors = {};
+    
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+    } else if (!validateEmail(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+    
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = 'First name is required';
+    }
+    
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = 'Last name is required';
+    }
+    
+    if (!formData.phone) {
+      newErrors.phone = 'Phone number is required';
+    } else if (!validatePhone(formData.phone)) {
+      newErrors.phone = 'Please enter a valid phone number';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateShippingStep = (): boolean => {
+    const newErrors: FormErrors = {};
+    
+    if (!formData.address.trim()) {
+      newErrors.address = 'Address is required';
+    }
+    
+    if (!formData.city.trim()) {
+      newErrors.city = 'City is required';
+    }
+    
+    if (!formData.postalCode.trim()) {
+      newErrors.postalCode = 'Postal code is required';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    if (errors[name as keyof FormErrors]) {
+      setErrors({ ...errors, [name]: undefined });
+    }
   };
 
   const applyCoupon = () => {
@@ -52,6 +127,13 @@ export default function CheckoutPage() {
   };
 
   const nextStep = () => {
+    if (currentStep === 'info' && !validateInfoStep()) {
+      return;
+    }
+    if (currentStep === 'shipping' && !validateShippingStep()) {
+      return;
+    }
+    
     const stepOrder: Step[] = ['info', 'shipping', 'payment', 'review'];
     const currentIndex = stepOrder.indexOf(currentStep);
     if (currentIndex < stepOrder.length - 1) {
@@ -67,9 +149,65 @@ export default function CheckoutPage() {
     }
   };
 
-  const placeOrder = () => {
-    setOrderPlaced(true);
-    clearCart();
+  const placeOrder = async () => {
+    setIsProcessing(true);
+    
+    try {
+      const newOrderId = `SAP${Date.now().toString(36).toUpperCase()}`;
+      setOrderId(newOrderId);
+
+      const orderDetails = {
+        orderId: newOrderId,
+        items: items.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image
+        })),
+        total: finalTotal,
+        shippingAddress: {
+          name: `${formData.firstName} ${formData.lastName}`,
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city
+        }
+      };
+
+      localStorage.setItem('lastOrder', JSON.stringify(orderDetails));
+      
+      if (formData.paymentMethod === 'stripe') {
+        const response = await fetch('/api/stripe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: finalTotal,
+            email: formData.email,
+            items: items
+          })
+        });
+
+        const data = await response.json();
+        
+        if (!response.ok) {
+          alert('Payment failed: ' + data.error);
+          setIsProcessing(false);
+          return;
+        }
+      }
+
+      setOrderPlaced(true);
+      clearCart();
+      
+      setTimeout(() => {
+        router.push('/order-confirmation');
+      }, 2000);
+    } catch (error) {
+      console.error('Order error:', error);
+      alert('Failed to place order. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const shippingCost = formData.shippingMethod === 'express' ? 25 : 0;
@@ -133,40 +271,68 @@ export default function CheckoutPage() {
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                   <h2 className="text-2xl font-bold text-gold mb-6">Contact Information</h2>
                   <div className="space-y-4">
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      placeholder="Email Address"
-                      className="w-full px-4 py-3 bg-[#0a0a23] border border-gold/30 rounded-lg text-white focus:outline-none focus:border-gold"
-                    />
-                    <div className="grid grid-cols-2 gap-4">
+                    <div>
                       <input
-                        type="text"
-                        name="firstName"
-                        value={formData.firstName}
+                        type="email"
+                        name="email"
+                        value={formData.email}
                         onChange={handleInputChange}
-                        placeholder="First Name"
-                        className="px-4 py-3 bg-[#0a0a23] border border-gold/30 rounded-lg text-white focus:outline-none focus:border-gold"
+                        placeholder="Email Address"
+                        className={`w-full px-4 py-3 bg-[#0a0a23] border rounded-lg text-white focus:outline-none ${errors.email ? 'border-red-500' : 'border-gold/30 focus:border-gold'}`}
                       />
-                      <input
-                        type="text"
-                        name="lastName"
-                        value={formData.lastName}
-                        onChange={handleInputChange}
-                        placeholder="Last Name"
-                        className="px-4 py-3 bg-[#0a0a23] border border-gold/30 rounded-lg text-white focus:outline-none focus:border-gold"
-                      />
+                      {errors.email && (
+                        <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+                          <AlertCircle className="w-4 h-4" /> {errors.email}
+                        </p>
+                      )}
                     </div>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      placeholder="Phone Number"
-                      className="w-full px-4 py-3 bg-[#0a0a23] border border-gold/30 rounded-lg text-white focus:outline-none focus:border-gold"
-                    />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <input
+                          type="text"
+                          name="firstName"
+                          value={formData.firstName}
+                          onChange={handleInputChange}
+                          placeholder="First Name"
+                          className={`w-full px-4 py-3 bg-[#0a0a23] border rounded-lg text-white focus:outline-none ${errors.firstName ? 'border-red-500' : 'border-gold/30 focus:border-gold'}`}
+                        />
+                        {errors.firstName && (
+                          <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+                            <AlertCircle className="w-4 h-4" /> {errors.firstName}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <input
+                          type="text"
+                          name="lastName"
+                          value={formData.lastName}
+                          onChange={handleInputChange}
+                          placeholder="Last Name"
+                          className={`w-full px-4 py-3 bg-[#0a0a23] border rounded-lg text-white focus:outline-none ${errors.lastName ? 'border-red-500' : 'border-gold/30 focus:border-gold'}`}
+                        />
+                        {errors.lastName && (
+                          <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+                            <AlertCircle className="w-4 h-4" /> {errors.lastName}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        placeholder="Phone Number"
+                        className={`w-full px-4 py-3 bg-[#0a0a23] border rounded-lg text-white focus:outline-none ${errors.phone ? 'border-red-500' : 'border-gold/30 focus:border-gold'}`}
+                      />
+                      {errors.phone && (
+                        <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+                          <AlertCircle className="w-4 h-4" /> {errors.phone}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -175,31 +341,52 @@ export default function CheckoutPage() {
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                   <h2 className="text-2xl font-bold text-gold mb-6">Shipping Address</h2>
                   <div className="space-y-4">
-                    <input
-                      type="text"
-                      name="address"
-                      value={formData.address}
-                      onChange={handleInputChange}
-                      placeholder="Street Address"
-                      className="w-full px-4 py-3 bg-[#0a0a23] border border-gold/30 rounded-lg text-white focus:outline-none focus:border-gold"
-                    />
+                    <div>
+                      <input
+                        type="text"
+                        name="address"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        placeholder="Street Address"
+                        className={`w-full px-4 py-3 bg-[#0a0a23] border rounded-lg text-white focus:outline-none ${errors.address ? 'border-red-500' : 'border-gold/30 focus:border-gold'}`}
+                      />
+                      {errors.address && (
+                        <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+                          <AlertCircle className="w-4 h-4" /> {errors.address}
+                        </p>
+                      )}
+                    </div>
                     <div className="grid grid-cols-2 gap-4">
-                      <input
-                        type="text"
-                        name="city"
-                        value={formData.city}
-                        onChange={handleInputChange}
-                        placeholder="City"
-                        className="px-4 py-3 bg-[#0a0a23] border border-gold/30 rounded-lg text-white focus:outline-none focus:border-gold"
-                      />
-                      <input
-                        type="text"
-                        name="postalCode"
-                        value={formData.postalCode}
-                        onChange={handleInputChange}
-                        placeholder="Postal Code"
-                        className="px-4 py-3 bg-[#0a0a23] border border-gold/30 rounded-lg text-white focus:outline-none focus:border-gold"
-                      />
+                      <div>
+                        <input
+                          type="text"
+                          name="city"
+                          value={formData.city}
+                          onChange={handleInputChange}
+                          placeholder="City"
+                          className={`w-full px-4 py-3 bg-[#0a0a23] border rounded-lg text-white focus:outline-none ${errors.city ? 'border-red-500' : 'border-gold/30 focus:border-gold'}`}
+                        />
+                        {errors.city && (
+                          <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+                            <AlertCircle className="w-4 h-4" /> {errors.city}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <input
+                          type="text"
+                          name="postalCode"
+                          value={formData.postalCode}
+                          onChange={handleInputChange}
+                          placeholder="Postal Code"
+                          className={`w-full px-4 py-3 bg-[#0a0a23] border rounded-lg text-white focus:outline-none ${errors.postalCode ? 'border-red-500' : 'border-gold/30 focus:border-gold'}`}
+                        />
+                        {errors.postalCode && (
+                          <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+                            <AlertCircle className="w-4 h-4" /> {errors.postalCode}
+                          </p>
+                        )}
+                      </div>
                     </div>
                     <select
                       name="country"
@@ -342,9 +529,17 @@ export default function CheckoutPage() {
                 ) : (
                   <button
                     onClick={placeOrder}
-                    className="px-8 py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-400 transition"
+                    disabled={isProcessing}
+                    className="px-8 py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-400 transition disabled:opacity-50 flex items-center gap-2"
                   >
-                    Place Order
+                    {isProcessing ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Processing...
+                      </>
+                    ) : (
+                      'Place Order'
+                    )}
                   </button>
                 )}
               </div>

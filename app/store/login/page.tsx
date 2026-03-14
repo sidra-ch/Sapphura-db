@@ -118,6 +118,12 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-6 text-center">
+            <Link href="/" className="inline-flex items-center gap-2 text-gold hover:text-yellow-300 font-medium">
+              ← Back to Sapphura Homepage
+            </Link>
+          </div>
+          
+          <div className="mt-4 text-center">
             <span className="text-white/60">Don&apos;t have an account? </span>
             <Link href="/store/register" className="text-gold hover:text-yellow-300 font-medium">
               Register Now
