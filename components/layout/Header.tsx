@@ -1,0 +1,121 @@
+"use client";
+
+import { ShoppingBag, User, Search, Heart, Menu, X, MessageCircle, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
+import Link from 'next/link';
+import { useCart } from '../cart/CartContext';
+import { useWishlist } from '../wishlist/WishlistContext';
+
+export default function Header() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [collectionsOpen, setCollectionsOpen] = useState(false);
+  const { totalItems } = useCart();
+  const { totalItems: wishlistCount } = useWishlist();
+  
+  return (
+    <header className="sticky top-0 z-50 w-full flex items-center justify-between px-4 md:px-6 py-3 md:py-4 bg-[#0B1A2F] border-b border-gold shadow-xl transition-all duration-200">
+      <Link 
+        href="/"
+        className="flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-gold rounded-lg"
+      >
+        <img src="https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773004790/logo-1_gzmux1.png" alt="Sapphura Logo" className="w-10 md:w-14 h-10 md:h-14 rounded-full shadow-lg border-2 border-gold" />
+        <span className="text-xl md:text-4xl font-extrabold text-gold tracking-widest drop-shadow-lg ml-1 md:ml-2">Sapphura</span>
+      </Link>
+      
+      <nav className="hidden lg:flex gap-4 xl:gap-6 text-white font-semibold relative">
+        <Link 
+          href="/" 
+          className="relative py-4 px-2 group text-white hover:text-gold"
+        >
+          <span className="relative z-10">Home</span>
+          <span className="absolute bottom-2 left-2 right-2 h-0.5 bg-gold scale-x-0 group-hover:scale-x-100 transition-transform duration-200 ease-out origin-left"></span>
+        </Link>
+        
+        <div 
+          className="relative"
+          onMouseEnter={() => setCollectionsOpen(true)}
+          onMouseLeave={() => setCollectionsOpen(false)}
+        >
+          <button 
+            className="flex items-center gap-1 py-4 px-2 group text-white hover:text-gold"
+          >
+            <span className="relative z-10">Collections</span>
+            <span className="absolute bottom-2 left-2 right-2 h-0.5 bg-gold scale-x-0 group-hover:scale-x-100 transition-transform duration-200 ease-out origin-left"></span>
+            <ChevronDown className={`w-4 h-4 text-gold transition-transform duration-200 ${collectionsOpen ? 'rotate-180' : ''}`} />
+          </button>
+          
+          <div 
+            className={`absolute top-full left-0 mt-0 bg-[#081220] border border-gold rounded-xl shadow-xl p-4 min-w-[320px] z-50 transition-all duration-200 ${collectionsOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 invisible'}`}
+          >
+            <div className="grid grid-cols-2 gap-2">
+              <Link href="/collections?category=necklaces" className="text-gold hover:bg-gold/10 rounded px-3 py-2 transition-all duration-150 hover:translate-x-1">Necklace Sets</Link>
+              <Link href="/collections?category=earrings" className="text-gold hover:bg-gold/10 rounded px-3 py-2 transition-all duration-150 hover:translate-x-1">Earrings</Link>
+              <Link href="/collections?category=rings" className="text-gold hover:bg-gold/10 rounded px-3 py-2 transition-all duration-150 hover:translate-x-1">Rings</Link>
+              <Link href="/collections?category=bracelets" className="text-gold hover:bg-gold/10 rounded px-3 py-2 transition-all duration-150 hover:translate-x-1">Bracelets</Link>
+              <Link href="/collections?category=bangles" className="text-gold hover:bg-gold/10 rounded px-3 py-2 transition-all duration-150 hover:translate-x-1">Bangles</Link>
+              <Link href="/collections?category=bridal" className="text-gold hover:bg-gold/10 rounded px-3 py-2 transition-all duration-150 hover:translate-x-1">Bridal Sets</Link>
+              <Link href="/collections?category=makeup" className="text-gold hover:bg-gold/10 rounded px-3 py-2 transition-all duration-150 hover:translate-x-1">Makeup</Link>
+              <Link href="/collections?category=clothing" className="text-gold hover:bg-gold/10 rounded px-3 py-2 transition-all duration-150 hover:translate-x-1">Clothing</Link>
+            </div>
+          </div>
+        </div>
+        
+        <Link href="/collections" className="relative py-4 px-2 group text-white hover:text-gold">
+          <span className="relative z-10">Shop</span>
+          <span className="absolute bottom-2 left-2 right-2 h-0.5 bg-gold scale-x-0 group-hover:scale-x-100 transition-transform duration-200 ease-out origin-left"></span>
+        </Link>
+        <Link href="/about" className="relative py-4 px-2 group text-white hover:text-gold">
+          <span className="relative z-10">About</span>
+          <span className="absolute bottom-2 left-2 right-2 h-0.5 bg-gold scale-x-0 group-hover:scale-x-100 transition-transform duration-200 ease-out origin-left"></span>
+        </Link>
+        <Link href="/contact" className="relative py-4 px-2 group text-white hover:text-gold">
+          <span className="relative z-10">Contact</span>
+          <span className="absolute bottom-2 left-2 right-2 h-0.5 bg-gold scale-x-0 group-hover:scale-x-100 transition-transform duration-200 ease-out origin-left"></span>
+        </Link>
+      </nav>
+      
+      <div className="flex items-center gap-2 md:gap-4">
+        <Link href="/search" className="text-gold hover:text-yellow-400 hover:scale-110 transition-all duration-150 p-2">
+          <Search className="w-5 md:w-6 h-5 md:h-6" />
+        </Link>
+        <Link href="/wishlist" className="relative text-gold hover:text-yellow-400 hover:scale-110 transition-all duration-150 p-2">
+          <Heart className="w-5 md:w-6 h-5 md:h-6" />
+          {wishlistCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full px-1.5 text-xs font-bold">{wishlistCount}</span>
+          )}
+        </Link>
+        <Link href="/cart" className="relative text-gold hover:text-yellow-400 hover:scale-110 transition-all duration-150 p-2">
+          <ShoppingBag className="w-5 md:w-6 h-5 md:h-6" />
+          {totalItems > 0 && (
+            <span className="absolute -top-1 -right-1 bg-gold text-[#0a0a23] rounded-full px-1.5 text-xs font-bold">{totalItems}</span>
+          )}
+        </Link>
+        <Link href="/account" className="text-gold hover:text-yellow-400 hover:scale-110 transition-all duration-150 p-2">
+          <User className="w-5 md:w-6 h-5 md:h-6" />
+        </Link>
+        <a href="https://wa.me/923320924951" target="_blank" rel="noopener" className="text-green-500 hover:text-green-400 hover:scale-110 transition-all duration-150 p-2">
+          <MessageCircle className="w-5 md:w-6 h-5 md:h-6" />
+        </a>
+        <button 
+          className="lg:hidden text-gold p-2 hover:bg-gold/10 hover:scale-110 rounded-lg transition-all duration-150" 
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        >
+          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </div>
+
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="absolute top-full left-0 right-0 bg-[#0B1A2F] border-b border-gold p-4 lg:hidden animate-in slide-in-from-top duration-200">
+          <nav className="flex flex-col gap-2">
+            <Link href="/" className="text-white hover:text-gold py-2 px-3 rounded hover:bg-gold/10" onClick={() => setMobileMenuOpen(false)}>Home</Link>
+            <Link href="/collections" className="text-white hover:text-gold py-2 px-3 rounded hover:bg-gold/10" onClick={() => setMobileMenuOpen(false)}>Collections</Link>
+            <Link href="/shop" className="text-white hover:text-gold py-2 px-3 rounded hover:bg-gold/10" onClick={() => setMobileMenuOpen(false)}>Shop</Link>
+            <Link href="/about" className="text-white hover:text-gold py-2 px-3 rounded hover:bg-gold/10" onClick={() => setMobileMenuOpen(false)}>About</Link>
+            <Link href="/contact" className="text-white hover:text-gold py-2 px-3 rounded hover:bg-gold/10" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
+          </nav>
+        </div>
+      )}
+    </header>
+  );
+}

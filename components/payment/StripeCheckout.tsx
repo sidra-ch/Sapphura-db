@@ -1,0 +1,135 @@
+"use client";
+
+import { useState, useEffect } from 'react';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { Lock, CreditCard } from 'lucide-react';
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_51RpWKNJgbJcc67pKHTgE6rkbTlHVpH9TMXdHAAUgnxOxbFgnPQtDnCEucwNto8RIDPjn6oNRCdAzLBXM6pwbB6ZF00HEslEGYi');
+
+function CheckoutForm({ amount, onSuccess, onCancel }: { amount: number; onSuccess: () => void; onCancel: () => void }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Create payment intent
+      const res = await fetch('/api/stripe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount, currency: 'usd' }),
+      });
+
+      const { clientSecret, error: apiError } = await res.json();
+
+      if (apiError) {
+        setError(apiError);
+        setLoading(false);
+        return;
+      }
+
+      // Confirm payment
+      const cardElement = elements.getElement(CardElement);
+      if (!cardElement) {
+        setError('Card element not found');
+        setLoading(false);
+        return;
+      }
+
+      const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: { card: cardElement },
+      });
+
+      if (stripeError) {
+        setError(stripeError.message || 'Payment failed');
+        setLoading(false);
+        return;
+      }
+
+      if (paymentIntent?.status === 'succeeded') {
+        onSuccess();
+      }
+    } catch (err: any) {
+      setError(err.message || 'Payment failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="bg-[#0a0a23] p-4 rounded-lg border border-gold/30">
+        <CardElement
+          options={{
+            style: {
+              base: {
+                color: '#ffffff',
+                fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                fontSmoothing: 'antialiased',
+                fontSize: '16px',
+                '::placeholder': { color: '#aab7c4' },
+              },
+              invalid: { color: '#fa755a', iconColor: '#fa755a' },
+            },
+          }}
+        />
+      </div>
+
+      {error && (
+        <div className="bg-red-500/20 border border-red-500 text-red-300 px-4 py-3 rounded-lg text-sm">
+          {error}
+        </div>
+      )}
+
+      <div className="flex gap-4">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex-1 py-3 border border-gold/30 text-white rounded-lg hover:bg-gold/10 transition"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={!stripe || loading}
+          className="flex-1 py-3 bg-gold text-[#0a0a23] rounded-lg font-bold hover:bg-yellow-400 transition disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          {loading ? (
+            <div className="w-5 h-5 border-2 border-[#0a0a23] border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <>
+              <Lock className="w-4 h-4" />
+              Pay ${amount.toFixed(2)}
+            </>
+          )}
+        </button>
+      </div>
+
+      <p className="text-white/50 text-xs text-center">
+        Your payment is secured with Stripe encryption
+      </p>
+    </form>
+  );
+}
+
+interface StripePaymentProps {
+  amount: number;
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+export default function StripePayment({ amount, onSuccess, onCancel }: StripePaymentProps) {
+  return (
+    <Elements stripe={stripePromise}>
+      <CheckoutForm amount={amount} onSuccess={onSuccess} onCancel={onCancel} />
+    </Elements>
+  );
+}

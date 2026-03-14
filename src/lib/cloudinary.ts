@@ -1,10 +1,10 @@
 // Cloudinary utility for uploads
-import { v2 as cloudinary } from 'cloudinary';
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-export default cloudinary;
+export function cloudinaryUrl(publicId: string, options: { width?: number; height?: number; format?: string } = {}) {
+  const base = 'https://res.cloudinary.com/dwmxdyvd2/image/upload/';
+  const params = [];
+  if (options.width) params.push(`w_${options.width}`);
+  if (options.height) params.push(`h_${options.height}`);
+  if (options.format) params.push(`f_${options.format}`);
+  const transformation = params.length ? params.join(',') + '/' : '';
+  return `${base}${transformation}${publicId}`;
+}

@@ -7,31 +7,71 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  name      String?
-  role      String   @default("customer")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  orders    Order[]
+  id          Int       @id @default(autoincrement())
+  email       String    @unique
+  password    String
+  name        String?
+  phone       String?
+  role        String    @default("customer")
+  isActive    Boolean   @default(true)
+  otp         String?
+  otpExpiry   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  orders      Order[]
+  reviews     Review[]
 }
 
 model Product {
-  id          Int      @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
   name        String
+  slug        String      @unique
   description String
   price       Float
-  imageUrl    String
+  salePrice   Float?
+  sku         String?
+  stock       Int         @default(0)
+  status      String      @default("active")
+  isFeatured  Boolean     @default(false)
+  images      String      @default("[]")
   categoryId  Int
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  category    Category @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  category    Category    @relation(fields: [categoryId], references: [id])
   orderItems  OrderItem[]
+  reviews     Review[]
+  variants    ProductVariant[]
+  tags        ProductTag[]
+}
+
+model ProductVariant {
+  id          Int     @id @default(autoincrement())
+  productId   Int
+  size        String?
+  color       String?
+  material    String?
+  sku         String?
+  stock       Int     @default(0)
+  price       Float
+  image       String?
+  product     Product @relation(fields: [productId], references: [id])
+}
+
+model Tag {
+  id       Int            @id @default(autoincrement())
+  name     String         @unique
+  products ProductTag[]
+}
+
+model ProductTag {
+  id        Int    @id @default(autoincrement())
+  productId Int
+  tagId     Int
+  product   Product @relation(fields: [productId], references: [id])
+  tag       Tag     @relation(fields: [tagId], references: [id])
 }
 
 model Category {
@@ -41,14 +81,22 @@ model Category {
 }
 
 model Order {
-  id         Int      @id @default(autoincrement())
-  userId     Int
-  total      Float
-  status     String   @default("pending")
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  user       User     @relation(fields: [userId], references: [id])
-  items      OrderItem[]
+  id            Int         @id @default(autoincrement())
+  userId        Int
+  total         Float
+  discount      Float       @default(0)
+  shippingCost Float       @default(0)
+  status        String      @default("pending")
+  shippingName String?
+  shippingPhone String?
+  shippingAddress String?
+  paymentMethod String?
+  paymentStatus String      @default("pending")
+  notes         String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  user          User        @relation(fields: [userId], references: [id])
+  items         OrderItem[]
 }
 
 model OrderItem {
@@ -56,6 +104,20 @@ model OrderItem {
   orderId   Int
   productId Int
   quantity  Int      @default(1)
+  price     Float
   order     Order    @relation(fields: [orderId], references: [id])
   product   Product  @relation(fields: [productId], references: [id])
+}
+
+model Review {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  productId  Int
+  rating     Int
+  comment    String?
+  isApproved Boolean  @default(false)
+  isFeatured Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
+  product    Product  @relation(fields: [productId], references: [id])
 }

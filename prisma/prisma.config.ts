@@ -1,8 +1,6 @@
-import { defineConfig } from '@prisma/cli';
-
-export default defineConfig({
+export default {
   db: {
     adapter: 'postgresql',
     url: process.env.DATABASE_URL,
   },
-});
+};
