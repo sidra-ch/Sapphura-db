@@ -2,77 +2,110 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { motion } from 'framer-motion';
-import { Filter, Grid, List, X, ShoppingCart, Heart } from 'lucide-react';
+import { Filter, Grid, List, X, ShoppingCart, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import { useCart } from '../../components/cart/CartContext';
 import { useWishlist } from '../../components/wishlist/WishlistContext';
-import axios from 'axios';
+import { PRODUCT_CATALOG } from '../../lib/products-catalog';
 
-function cloudinaryUrl(publicId: string) {
-  return `https://res.cloudinary.com/dwmxdyvd2/image/upload/sapphura/${publicId}`;
-}
-
-const defaultImage = '/neckles-1.jpeg';
+const products = PRODUCT_CATALOG;
+const FALLBACK_IMAGE = 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569411/neckles-1_hpggw5.jpg';
 
 const categories = ['All', 'Jewelry', 'Abaya', 'Accessories', 'Clothing', 'Makeup'];
 const priceRanges = ['All', 'Under $100', '$100 - $200', '$200 - $300', 'Over $300'];
 const sortOptions = ['Newest', 'Price: Low to High', 'Price: High to Low'];
 
 interface Product {
-  id: number;
+  id: string;
   name: string;
   slug: string;
-  description: string;
   price: number;
-  images: string;
-  stock: number;
-  status: string;
-  isFeatured: boolean;
+  images: string[];
   categoryId: number;
 }
 
 function CollectionsContent() {
   const searchParams = useSearchParams();
-  const categoryParam = searchParams.get('category');
+  const categoryParam = searchParams?.get('category') || '';
+  const collectionParam = searchParams?.get('collection') || '';
+
+  const normalizeCategoryParam = (raw: string) => {
+    const value = raw.toLowerCase().trim();
+    const aliasToCategory: Record<string, string> = {
+      all: 'All',
+      jewelry: 'Jewelry',
+      necklace: 'Jewelry',
+      necklaces: 'Jewelry',
+      'necklace-sets': 'Jewelry',
+      earring: 'Jewelry',
+      earrings: 'Jewelry',
+      ring: 'Jewelry',
+      rings: 'Jewelry',
+      bracelet: 'Jewelry',
+      bracelets: 'Jewelry',
+      bangle: 'Jewelry',
+      bangles: 'Jewelry',
+      bridal: 'Jewelry',
+      abaya: 'Abaya',
+      abayas: 'Abaya',
+      accessories: 'Accessories',
+      accessory: 'Accessories',
+      clothing: 'Clothing',
+      clothes: 'Clothing',
+      suit: 'Clothing',
+      suits: 'Clothing',
+      summer: 'Clothing',
+      winter: 'Clothing',
+      makeup: 'Makeup',
+      beauty: 'Makeup',
+    };
+
+    return aliasToCategory[value] || 'All';
+  };
   
-  const [products, setProducts] = useState<Product[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCollection, setSelectedCollection] = useState('all');
   const [selectedPriceRange, setSelectedPriceRange] = useState('All');
   const [sortBy, setSortBy] = useState('Newest');
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isLoading, setIsLoading] = useState(true);
+  const [galleryProduct, setGalleryProduct] = useState<Product | null>(null);
+  const [galleryImageIndex, setGalleryImageIndex] = useState(0);
 
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
   useEffect(() => {
-    fetchProducts();
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
   }, []);
 
-  const fetchProducts = async () => {
-    try {
-      const res = await axios.get('/api/products');
-      setProducts(res.data.products || []);
-    } catch (err) {
-      console.error('Failed to fetch products:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const getProductImage = (imagesStr: string) => {
-    try {
-      const images = JSON.parse(imagesStr);
-      if (images && images.length > 0) {
-        const img = images[0].replace('/', '');
-        return cloudinaryUrl(img);
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!galleryProduct) return;
+      if (event.key === 'Escape') {
+        setGalleryProduct(null);
+        return;
       }
-    } catch {}
-    return defaultImage;
+      if (event.key === 'ArrowRight') {
+        setGalleryImageIndex((prev) => (prev + 1) % galleryProduct.images.length);
+      }
+      if (event.key === 'ArrowLeft') {
+        setGalleryImageIndex((prev) => (prev - 1 + galleryProduct.images.length) % galleryProduct.images.length);
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [galleryProduct]);
+
+  const getProductImage = (images: string[]) => {
+    if (!images || !images.length) return FALLBACK_IMAGE;
+    return images[0];
   };
 
   const getCategoryName = (categoryId: number) => {
@@ -80,15 +113,77 @@ function CollectionsContent() {
     return catNames[categoryId] || 'Other';
   };
 
+  const openGallery = (product: Product, imageIndex = 0) => {
+    setGalleryProduct(product);
+    setGalleryImageIndex(imageIndex);
+  };
+
+  const closeGallery = () => {
+    setGalleryProduct(null);
+    setGalleryImageIndex(0);
+  };
+
+  const matchesCollection = (product: Product, collectionKey: string) => {
+    const collectionSlugMap: Record<string, string[]> = {
+      suits: ['navy-velvet-abaya', 'silk-abaya-set', 'royal-abaya', 'summer-suit', 'party-wear-saree'],
+      bangles: ['kashmiri-bangals'],
+      necklaces: ['gold-crescent-necklace', 'bridal-necklace-set'],
+      earrings: ['pearl-earrings', 'diamond-stud-earrings'],
+      bracelets: ['diamond-bracelet', 'crystal-hair-band', 'gold-ring-set'],
+      summer: ['summer-suit'],
+      winter: ['winter-collection', 'kashmiri-shawl'],
+      makeup: ['luxury-perfume'],
+    };
+
+    if (collectionSlugMap[collectionKey]) {
+      return collectionSlugMap[collectionKey].includes(product.slug);
+    }
+
+    const name = product.name.toLowerCase();
+    const slug = product.slug.toLowerCase();
+
+    switch (collectionKey) {
+      case 'suits':
+        return name.includes('suit') || name.includes('abaya') || slug.includes('suit') || slug.includes('abaya');
+      case 'bangles':
+        return name.includes('bangle') || name.includes('bangal') || slug.includes('bangle') || slug.includes('bangal');
+      case 'necklaces':
+        return name.includes('necklace') || slug.includes('necklace');
+      case 'earrings':
+        return name.includes('earring') || slug.includes('earring');
+      case 'bracelets':
+        return name.includes('bracelet') || slug.includes('bracelet') || name.includes('hair band') || slug.includes('hair-band');
+      case 'summer':
+        return name.includes('summer') || slug.includes('summer');
+      case 'winter':
+        return name.includes('winter') || slug.includes('winter') || name.includes('shawl') || slug.includes('shawl');
+      case 'makeup':
+        return name.includes('perfume') || name.includes('makeup') || slug.includes('perfume') || slug.includes('makeup');
+      default:
+        return true;
+    }
+  };
+
   useEffect(() => {
     if (categoryParam) {
-      setSelectedCategory(categoryParam.charAt(0).toUpperCase() + categoryParam.slice(1).replace(/-/g, ' '));
+      setSelectedCategory(normalizeCategoryParam(categoryParam));
+    } else {
+      setSelectedCategory('All');
     }
-  }, [categoryParam]);
+
+    if (collectionParam) {
+      setSelectedCollection(collectionParam.toLowerCase());
+    } else {
+      setSelectedCollection('all');
+    }
+  }, [categoryParam, collectionParam]);
 
   const filteredProducts = products.filter(product => {
     const categoryName = getCategoryName(product.categoryId);
-    if (selectedCategory !== 'All' && categoryName !== selectedCategory) return false;
+    // When a collection is selected from Featured Collections, prioritize collection matching.
+    // This avoids category/collection conflicts that can hide all products.
+    if (selectedCollection === 'all' && selectedCategory !== 'All' && categoryName !== selectedCategory) return false;
+    if (selectedCollection !== 'all' && !matchesCollection(product, selectedCollection)) return false;
     if (selectedPriceRange !== 'All') {
       if (selectedPriceRange === 'Under $100' && product.price >= 100) return false;
       if (selectedPriceRange === '$100 - $200' && (product.price < 100 || product.price > 200)) return false;
@@ -250,7 +345,7 @@ function CollectionsContent() {
               ))
             ) : (
               sortedProducts.map((product, index) => {
-                const inWishlist = isInWishlist(String(product.id));
+                const inWishlist = isInWishlist(product.id);
                 const productImage = getProductImage(product.images);
                 const categoryName = getCategoryName(product.categoryId);
                 return (
@@ -266,6 +361,7 @@ function CollectionsContent() {
                         src={productImage}
                         alt={product.name}
                         className="w-full h-64 object-cover group-hover:scale-110 transition duration-300"
+                        loading="lazy"
                       />
                       <span className="absolute top-3 left-3 bg-gold text-[#0a0a23] text-xs font-bold px-2 py-1 rounded">
                         {categoryName}
@@ -275,9 +371,9 @@ function CollectionsContent() {
                           onClick={(e) => {
                             e.preventDefault();
                             if (inWishlist) {
-                              removeFromWishlist(String(product.id));
+                              removeFromWishlist(product.id);
                             } else {
-                              addToWishlist({ id: String(product.id), name: product.name, image: productImage, price: product.price });
+                              addToWishlist({ id: product.id, name: product.name, image: productImage, price: product.price });
                             }
                           }}
                           className={`p-2 rounded-full transition ${inWishlist ? 'bg-red-500 text-white' : 'bg-white/20 text-white hover:bg-gold'}`}
@@ -287,7 +383,7 @@ function CollectionsContent() {
                         <button
                           onClick={(e) => {
                             e.preventDefault();
-                            addToCart({ id: String(product.id), name: product.name, image: productImage, price: product.price, quantity: 1 });
+                            addToCart({ id: product.id, name: product.name, image: productImage, price: product.price, quantity: 1 });
                           }}
                           className="p-2 rounded-full bg-gold text-[#0a0a23] hover:bg-yellow-400 transition"
                         >
@@ -295,11 +391,53 @@ function CollectionsContent() {
                         </button>
                       </div>
                     </div>
+                    <div className="px-3 py-2 border-t border-gold/10 bg-[#121237]">
+                      <div className="flex gap-2 overflow-x-auto pb-1">
+                        {product.images.slice(0, 6).map((img, imgIdx) => (
+                          <button
+                            key={`${product.slug}-${imgIdx}`}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              openGallery(product, imgIdx);
+                            }}
+                            className="flex-shrink-0"
+                          >
+                            <img
+                              src={img}
+                              alt={`${product.name} ${imgIdx + 1}`}
+                              className="w-12 h-12 rounded-md border border-gold/30 object-cover"
+                              loading="lazy"
+                            />
+                          </button>
+                        ))}
+                        {product.images.length > 6 && (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              openGallery(product, 0);
+                            }}
+                            className="w-12 h-12 rounded-md border border-gold/30 text-gold text-xs flex-shrink-0 bg-[#0a0a23]"
+                          >
+                            +{product.images.length - 6}
+                          </button>
+                        )}
+                      </div>
+                    </div>
                     <Link href={`/product/${product.slug}`}>
                     <div className="p-4">
                       <h3 className="text-gold font-semibold mb-1">{product.name}</h3>
-                      <div className="flex items-center justify-between">
+                      <p className="text-white/60 text-xs mb-2">{product.images.length} images</p>
+                      <div className="flex items-center justify-between gap-2">
                         <span className="text-white font-bold text-xl">${product.price}</span>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            openGallery(product, 0);
+                          }}
+                          className="text-xs px-3 py-1.5 rounded-md border border-gold text-gold hover:bg-gold hover:text-[#0a0a23] transition"
+                        >
+                          Show More
+                        </button>
                       </div>
                     </div>
                     </Link>
@@ -307,6 +445,67 @@ function CollectionsContent() {
               </motion.div>
             )})
             )}
+          </div>
+        )}
+
+        {galleryProduct && (
+          <div
+            className="fixed inset-0 z-[70] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={closeGallery}
+          >
+            <div
+              className="w-full max-w-5xl bg-[#0f1630] border border-gold/40 rounded-2xl p-4 md:p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-gold text-xl md:text-2xl font-bold">{galleryProduct.name}</h3>
+                  <p className="text-white/60 text-sm">{galleryImageIndex + 1} / {galleryProduct.images.length}</p>
+                </div>
+                <button
+                  onClick={closeGallery}
+                  className="p-2 rounded-lg border border-gold/40 text-gold hover:bg-gold hover:text-[#0a0a23] transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="relative rounded-xl overflow-hidden border border-gold/30">
+                <img
+                  src={galleryProduct.images[galleryImageIndex]}
+                  alt={`${galleryProduct.name} large view`}
+                  className="w-full h-[55vh] object-cover"
+                />
+                <button
+                  onClick={() => setGalleryImageIndex((prev) => (prev - 1 + galleryProduct.images.length) % galleryProduct.images.length)}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-gold hover:text-[#0a0a23] transition"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  onClick={() => setGalleryImageIndex((prev) => (prev + 1) % galleryProduct.images.length)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-gold hover:text-[#0a0a23] transition"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+                {galleryProduct.images.map((img, idx) => (
+                  <button
+                    key={`${galleryProduct.slug}-gallery-${idx}`}
+                    onClick={() => setGalleryImageIndex(idx)}
+                    className={`rounded-md border-2 flex-shrink-0 ${galleryImageIndex === idx ? 'border-gold' : 'border-transparent'}`}
+                  >
+                    <img
+                      src={img}
+                      alt={`${galleryProduct.name} thumb ${idx + 1}`}
+                      className="w-16 h-16 object-cover rounded-sm"
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </div>

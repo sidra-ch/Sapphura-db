@@ -13,7 +13,7 @@ const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: 'sapphuraofficial@gmail.com',
-    pass: process.env.SMTP_PASSWORD || 'btrn dphx qfjw qpxb'
+    pass: process.env.SMTP_PASSWORD
   }
 });
 
@@ -24,6 +24,10 @@ export async function POST(req: NextRequest) {
     if (action === 'send') {
       if (!email) {
         return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+      }
+
+      if (!process.env.SMTP_PASSWORD) {
+        return NextResponse.json({ error: 'Email service is not configured' }, { status: 500 });
       }
 
       const generatedOTP = generateOTP();
@@ -59,7 +63,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         message: 'OTP sent to your email',
-        otp: generatedOTP,
         expiry: expiry.toISOString()
       });
     }

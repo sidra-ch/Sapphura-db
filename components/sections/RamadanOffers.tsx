@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 const offers = [
 	   {
 		   title: 'Ramadan Gold Set',
-		   image: '/neckles-2.jpeg',
+		   image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569412/neckles-2_nwgwbk.jpg',
 		   originalPrice: '$599',
 		   discountPrice: '$499',
 		   discount: '17% OFF',
@@ -12,7 +12,7 @@ const offers = [
 	   },
 	   {
 		   title: 'Luxury Abaya Offer',
-		   image: '/suit-30.jpeg',
+		   image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569423/suit-30_mm11yj.jpg',
 		   originalPrice: '$299',
 		   discountPrice: '$249',
 		   discount: '16% OFF',
@@ -20,7 +20,7 @@ const offers = [
 	   },
 	   {
 		   title: 'Elegant Earrings',
-		   image: '/earing-2.jpeg',
+		   image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569408/earing-2_qbxara.jpg',
 		   originalPrice: '$199',
 		   discountPrice: '$149',
 		   discount: '25% OFF',
@@ -28,7 +28,7 @@ const offers = [
 	   },
 	   {
 		   title: 'Bridal Bangles',
-		   image: '/bangals-2.jpeg',
+		   image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569401/bangals-2_cosddb.jpg',
 		   originalPrice: '$349',
 		   discountPrice: '$279',
 		   discount: '20% OFF',

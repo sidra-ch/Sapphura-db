@@ -19,13 +19,13 @@ export default function CategoryTicker() {
   return (
     <div className="w-full bg-[#081220] py-3 overflow-hidden border-b border-gold">
       <div className="relative w-full flex items-center">
-        <div className="animate-marquee flex gap-4">
-          {categories.map((cat, idx) => (
+        <div className="marquee-track">
+          {/* Duplicated twice for seamless infinite loop */}
+          {[...categories, ...categories].map((cat, idx) => (
             <a
               key={cat + idx}
               href={`/category/${cat.toLowerCase().replace(/\s+/g, "-")}`}
-              className="px-6 py-2 rounded-full bg-[#0B1A2F] text-gold font-semibold shadow hover:bg-gold hover:text-[#0B1A2F] transition border border-gold hover:glow"
-              style={{ minWidth: "140px", textAlign: "center" }}
+              className="marquee-chip"
             >
               {cat}
             </a>
@@ -33,12 +33,35 @@ export default function CategoryTicker() {
         </div>
       </div>
       <style jsx>{`
-        .animate-marquee {
-          animation: marquee 18s linear infinite;
+        .marquee-track {
+          display: flex;
+          gap: 1rem;
+          width: max-content;
+          animation: marquee 24s linear infinite;
         }
         @keyframes marquee {
           0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }
+        }
+        .marquee-chip {
+          display: inline-block;
+          min-width: 140px;
+          text-align: center;
+          padding: 0.375rem 1.25rem;
+          border-radius: 9999px;
+          background: #0B1A2F;
+          color: #d4af37;
+          font-weight: 600;
+          font-size: 0.875rem;
+          border: 1px solid #d4af37;
+          white-space: nowrap;
+          text-decoration: none;
+          transition: background 0.2s, color 0.2s;
+          cursor: pointer;
+        }
+        .marquee-chip:hover {
+          background: #d4af37;
+          color: #0B1A2F;
         }
       `}</style>
     </div>

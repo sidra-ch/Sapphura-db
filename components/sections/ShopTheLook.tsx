@@ -4,22 +4,22 @@ import { motion } from 'framer-motion';
 const looks = [
 	{
 		title: 'Gold & Navy Harmony',
-		image: '/newcollection-1.jpeg',
+		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569414/newcollection-1_jthfl7.jpg',
 		description: 'Pair gold jewelry with navy abaya for a timeless look.'
 	},
 	{
 		title: 'Ramadan Chic',
-		image: '/newcollection-2.jpeg',
+		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569414/newcollection-2_pupo2j.jpg',
 		description: 'Celebrate Ramadan in style with our exclusive collection.'
 	},
 	{
 		title: 'Summer Breeze',
-		image: '/summer-4.jpeg',
+		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569424/summer-4_qa42me.jpg',
 		description: 'Light and elegant summer outfit ideas.'
 	},
 	{
 		title: 'Winter Elegance',
-		image: '/wintercollection-2.jpeg',
+		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569425/wintercollection-2_ij3z2z.jpg',
 		description: 'Luxurious winter collection for special occasions.'
 	}
 ];

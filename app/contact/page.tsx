@@ -12,10 +12,7 @@ const ContactMap = dynamic(() => import('../../components/ContactMap'), {
 export default function ContactPage() {
   return (
     <div className="min-h-screen bg-[#0B1C3F]">
-      <div className="relative h-[300px] flex items-center justify-center bg-gradient-to-r from-[#0B1C3F] to-[#1a2d5a]">
-        <div className="absolute inset-0 bg-[url('https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773004790/logo-1_gzmux1.png')] bg-cover bg-center opacity-10"></div>
-        <h1 className="text-5xl font-bold text-gold relative z-10">Contact Us</h1>
-      </div>
+    
       
       <div className="container mx-auto px-6 py-16">
         <div className="grid md:grid-cols-2 gap-12">

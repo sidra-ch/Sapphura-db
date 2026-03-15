@@ -2,10 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 
 const media = [
-  "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773004786/clothes-vdo-1_iwxgp4.mp4",
-  "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773004785/clothesvdo2_e26nvn.mp4",
-  "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1772967976/stitchclothes-1_fsnexm.mp4",
-  "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1772967957/eid_collection_vnz1ro.mp4",
+  "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773004789/eid_collection_video_dk9q4l.mp4",
 ];
 
 export default function SimpleVideoSlider() {

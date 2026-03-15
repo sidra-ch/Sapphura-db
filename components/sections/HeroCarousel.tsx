@@ -8,27 +8,27 @@ import { Navigation, Pagination, Autoplay } from "swiper/modules";
 
 const slides = [
   {
-    src: "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773167208/Download_bkzmxs.mp4",
+    src: "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773004789/eid_collection_video_dk9q4l.mp4",
     title: "Sapphura Signature Collection",
     description: "Discover timeless elegance with our exclusive signature pieces."
   },
   {
-    src: "https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773004858/wintercollection-3_i0zjvc.jpg",
+    src: "https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569414/new-collection_nqgbws.jpg",
     title: "Winter Collection",
     description: "Warm up your style with luxurious winter jewellery."
   },
   {
-    src: "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773004778/bangals-video_pu6elh.mp4",
+    src: "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773004789/eid_collection_video_dk9q4l.mp4",
     title: "Designer Bangals",
     description: "Experience the beauty of Kashmiri craftsmanship in every bangle."
   },
   {
-    src: "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773167208/Download_bkzmxs.mp4",
+    src: "https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569424/summer-2_zmuo2p.jpg",
     title: "Royal Glam",
     description: "Shine bright with our royal-inspired glamour collection."
   },
   {
-    src: "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773004777/bangals-vdo2_ctvcek.mp4",
+    src: "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773004789/eid_collection_video_dk9q4l.mp4",
     title: "Kashmiri Bangals",
     description: "Elevate your look with our stunning designer bangles collection."
   },

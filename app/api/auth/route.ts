@@ -1,6 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '../../../lib/db';
-import { hashPassword, comparePassword, generateToken, generateOTP } from '../../../lib/auth';
+import { hashPassword, comparePassword, generateToken, generateOTP, hashOTP, compareOTP } from '../../../lib/auth';
+import { getOTPEmail, sendEmail } from '../../../lib/email';
+
+const OTP_MAX_ATTEMPTS = 5;
+const otpAttempts = new Map<string, number>();
+
+function getAttemptKey(userId: number, purpose: 'signup' | 'login'): string {
+  return `${purpose}:${userId}`;
+}
+
+function consumeAttempt(key: string): number {
+  const next = (otpAttempts.get(key) || 0) + 1;
+  otpAttempts.set(key, next);
+  return next;
+}
+
+function clearAttempts(key: string) {
+  otpAttempts.delete(key);
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -8,6 +26,10 @@ export async function POST(req: NextRequest) {
 
     // Signup with OTP
     if (action === 'signup') {
+      if (!email || !password || !name) {
+        return NextResponse.json({ error: 'Name, email, and password are required' }, { status: 400 });
+      }
+
       const existingUser = await prisma.user.findUnique({ where: { email } });
       if (existingUser) {
         return NextResponse.json({ error: 'Email already registered' }, { status: 400 });
@@ -15,6 +37,7 @@ export async function POST(req: NextRequest) {
 
       const hashedPassword = await hashPassword(password);
       const otpCode = generateOTP();
+      const hashedOtp = await hashOTP(otpCode);
       
       const user = await prisma.user.create({
         data: {
@@ -22,13 +45,16 @@ export async function POST(req: NextRequest) {
           password: hashedPassword,
           name,
           phone,
-          otp: otpCode,
+          otp: hashedOtp,
           otpExpiry: new Date(Date.now() + 10 * 60 * 1000),
         },
       });
 
-      // In production, send OTP via SMS/Email
-      console.log('OTP:', otpCode);
+      await sendEmail({
+        to: email,
+        subject: 'Your Sapphura Verification Code',
+        html: getOTPEmail(otpCode, name),
+      });
 
       return NextResponse.json({ message: 'OTP sent to your email', userId: user.id });
     }
@@ -36,15 +62,78 @@ export async function POST(req: NextRequest) {
     // Verify OTP
     if (action === 'verify-otp') {
       const { userId, otp: verifyOtp } = await req.json();
+
+      if (!userId || !verifyOtp) {
+        return NextResponse.json({ error: 'User ID and OTP are required' }, { status: 400 });
+      }
       
       const user = await prisma.user.findUnique({ where: { id: userId } });
       if (!user) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
       }
 
-      if (user.otp !== verifyOtp || !user.otpExpiry || user.otpExpiry < new Date()) {
+      const attemptKey = getAttemptKey(user.id, 'signup');
+      const attempts = otpAttempts.get(attemptKey) || 0;
+      if (attempts >= OTP_MAX_ATTEMPTS) {
+        return NextResponse.json({ error: 'Too many OTP attempts. Please request a new code.' }, { status: 429 });
+      }
+
+      if (!user.otp || !user.otpExpiry || user.otpExpiry < new Date()) {
         return NextResponse.json({ error: 'Invalid or expired OTP' }, { status: 400 });
       }
+
+      const otpValid = await compareOTP(verifyOtp, user.otp);
+      if (!otpValid) {
+        const used = consumeAttempt(attemptKey);
+        const remaining = Math.max(OTP_MAX_ATTEMPTS - used, 0);
+        return NextResponse.json({ error: `Invalid OTP. ${remaining} attempts remaining.` }, { status: 400 });
+      }
+
+      clearAttempts(attemptKey);
+
+      await prisma.user.update({
+        where: { id: userId },
+        data: { otp: null, otpExpiry: null, isActive: true },
+      });
+
+      const token = generateToken({ id: user.id, email: user.email, role: user.role });
+      return NextResponse.json({ 
+        token, 
+        user: { id: user.id, email: user.email, name: user.name, role: user.role, phone: user.phone } 
+      });
+    }
+
+    // Verify login OTP
+    if (action === 'verify-login-otp') {
+      const { userId, otp: verifyOtp } = await req.json();
+
+      if (!userId || !verifyOtp) {
+        return NextResponse.json({ error: 'User ID and OTP are required' }, { status: 400 });
+      }
+
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      }
+
+      const attemptKey = getAttemptKey(user.id, 'login');
+      const attempts = otpAttempts.get(attemptKey) || 0;
+      if (attempts >= OTP_MAX_ATTEMPTS) {
+        return NextResponse.json({ error: 'Too many OTP attempts. Please request a new code.' }, { status: 429 });
+      }
+
+      if (!user.otp || !user.otpExpiry || user.otpExpiry < new Date()) {
+        return NextResponse.json({ error: 'Invalid or expired OTP' }, { status: 400 });
+      }
+
+      const otpValid = await compareOTP(verifyOtp, user.otp);
+      if (!otpValid) {
+        const used = consumeAttempt(attemptKey);
+        const remaining = Math.max(OTP_MAX_ATTEMPTS - used, 0);
+        return NextResponse.json({ error: `Invalid OTP. ${remaining} attempts remaining.` }, { status: 400 });
+      }
+
+      clearAttempts(attemptKey);
 
       await prisma.user.update({
         where: { id: userId },
@@ -60,24 +149,8 @@ export async function POST(req: NextRequest) {
 
     // Login
     if (action === 'login') {
-      // Demo login bypass (remove in production)
-      if (email === 'admin@sapphura.com' && password === 'demo123') {
-        return NextResponse.json({ 
-          token: 'demo-admin-token', 
-          user: { id: '1', email: 'admin@sapphura.com', name: 'Admin User', phone: '+923320924951', role: 'admin' } 
-        });
-      }
-      if (email === 'manager@sapphura.com' && password === 'demo123') {
-        return NextResponse.json({ 
-          token: 'demo-manager-token', 
-          user: { id: '2', email: 'manager@sapphura.com', name: 'Manager User', phone: '+923320924951', role: 'manager' } 
-        });
-      }
-      if (email === 'customer@sapphura.com' && password === 'demo123') {
-        return NextResponse.json({ 
-          token: 'demo-customer-token', 
-          user: { id: '3', email: 'customer@sapphura.com', name: 'Customer User', phone: '+923320924951', role: 'customer' } 
-        });
+      if (!email || !password) {
+        return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
       }
 
       const user = await prisma.user.findUnique({ where: { email } });
@@ -103,18 +176,30 @@ export async function POST(req: NextRequest) {
 
     // Login with OTP
     if (action === 'login-otp') {
+      if (!email) {
+        return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+      }
+
       const user = await prisma.user.findUnique({ where: { email } });
       if (!user) {
         return NextResponse.json({ error: 'Email not registered' }, { status: 404 });
       }
 
       const otpCode = generateOTP();
+      const hashedOtp = await hashOTP(otpCode);
       await prisma.user.update({
         where: { id: user.id },
-        data: { otp: otpCode, otpExpiry: new Date(Date.now() + 10 * 60 * 1000) },
+        data: { otp: hashedOtp, otpExpiry: new Date(Date.now() + 10 * 60 * 1000) },
       });
 
-      console.log('Login OTP:', otpCode);
+      clearAttempts(getAttemptKey(user.id, 'login'));
+
+      await sendEmail({
+        to: user.email,
+        subject: 'Your Sapphura Login Code',
+        html: getOTPEmail(otpCode, user.name || 'Customer'),
+      });
+
       return NextResponse.json({ message: 'OTP sent', userId: user.id });
     }
 

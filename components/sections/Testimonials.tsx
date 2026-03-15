@@ -11,7 +11,7 @@ const testimonials = [
     location: 'Lahore, Pakistan',
     rating: 5,
     comment: 'Absolutely stunning jewelry! The quality exceeded my expectations. Fast delivery and beautiful packaging. Will definitely shop again!',
-    image: '/neckles-1.jpeg',
+    image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569411/neckles-1_hpggw5.jpg',
     verified: true,
     date: 'January 2024'
   },
@@ -21,7 +21,7 @@ const testimonials = [
     location: 'Dubai, UAE',
     rating: 5,
     comment: 'The best online shopping experience. Products are exactly as shown, and the gold quality is exceptional. Highly recommended!',
-    image: '/earing-1.jpeg',
+    image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569408/earing-1_onddex.jpg',
     verified: true,
     date: 'January 2024'
   },
@@ -31,7 +31,7 @@ const testimonials = [
     location: 'Karachi, Pakistan',
     rating: 4,
     comment: 'Great customer service and beautiful collection. The abaya quality is premium. Will order more soon!',
-    image: '/suit-31.jpeg',
+    image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569423/suit-31_ty5xq7.jpg',
     verified: true,
     date: 'December 2023'
   },
@@ -41,7 +41,7 @@ const testimonials = [
     location: 'London, UK',
     rating: 5,
     comment: 'Living abroad, I was skeptical about online jewelry shopping. But Sappura delivered perfectly to the UK. Love my necklace!',
-    image: '/bracelet-1.jpeg',
+    image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569402/bracelet-1_n7qbu8.jpg',
     verified: true,
     date: 'December 2023'
   },

@@ -9,15 +9,12 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-[#0B1C3F]">
-      <div className="relative h-[300px] flex items-center justify-center bg-gradient-to-r from-[#0B1C3F] to-[#1a2d5a]">
-        <div className="absolute inset-0 bg-[url('https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773004790/logo-1_gzmux1.png')] bg-cover bg-center opacity-10"></div>
-        <h1 className="text-5xl font-bold text-gold relative z-10">About Sapphura</h1>
-      </div>
+      
       
       <div className="container mx-auto px-6 py-16">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div>
-            <h2 className="text-3xl font-bold text-gold mb-6">Redefining Luxury</h2>
+            <h2 className="text-3xl font-bold text-gold mb-6">Since 2025</h2>
             <p className="text-white/80 text-lg mb-6">
               Sapphura is a premier luxury fashion brand dedicated to bringing you the finest in jewelry, 
               clothing, and accessories. Founded with a vision to blend timeless elegance with contemporary 
@@ -52,7 +49,7 @@ export default function AboutPage() {
               />
             </div>
             <div className="absolute -bottom-6 -left-6 bg-gold text-[#0B1C3F] p-6 rounded-xl">
-              <div className="text-3xl font-bold">Since 2020</div>
+              <div className="text-3xl font-bold">Since 2024</div>
               <div className="font-semibold">Excellence in Luxury</div>
             </div>
           </div>

@@ -7,10 +7,7 @@ import "swiper/css/pagination";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
 
 const videos = [
-  "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773004777/bangals-vdo2_ctvcek.mp4",
-  "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1772968018/video-1_lg1o1w.mp4",
-  "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1772967954/bangals-vdo1_zvxmnz.mp4",
-  "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773004778/bangals-video_pu6elh.mp4",
+  "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773004789/eid_collection_video_dk9q4l.mp4",
 ];
 
 export default function VideoCarousel() {

@@ -1,17 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '../../../lib/db';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const page = parseInt(searchParams.get('page') || '1', 10);
-  const take = 12;
-  const skip = (page - 1) * take;
-
-  const products = await prisma.product.findMany({
-    skip,
-    take,
-    orderBy: { createdAt: 'desc' },
+  return NextResponse.json({ 
+    message: 'API working',
+    url: req.url,
+    db: process.env.DATABASE_URL ? 'has DB URL' : 'no DB URL'
   });
-
-  return NextResponse.json({ products });
 }

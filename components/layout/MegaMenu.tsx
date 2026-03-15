@@ -40,8 +40,8 @@ export default function MegaMenu() {
         </button>
         
         {activeMenu === 'collections' && (
-          <div className="absolute top-full left-0 mt-2 bg-[#0B1A2F] border border-gold rounded-xl shadow-2xl p-6 min-w-[800px] opacity-100 transition-all">
-            <div className="grid grid-cols-4 gap-6">
+          <div className="absolute top-full left-0 mt-2 w-[92vw] max-w-[900px] bg-[#0B1A2F] border border-gold rounded-xl shadow-2xl p-4 lg:p-6 opacity-100 transition-all">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
               {categories.map((cat) => (
                 <div key={cat.name}>
                   <h3 className="text-gold font-bold mb-3 text-lg">{cat.name}</h3>
@@ -60,7 +60,7 @@ export default function MegaMenu() {
                 </div>
               ))}
             </div>
-            <div className="mt-6 pt-4 border-t border-gold/20 flex gap-4">
+            <div className="mt-6 pt-4 border-t border-gold/20 flex flex-wrap gap-4">
               <Link href="/collections" className="text-gold hover:text-yellow-300 text-sm font-semibold">
                 View All Collections →
               </Link>

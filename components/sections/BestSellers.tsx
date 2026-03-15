@@ -9,7 +9,7 @@ const bestSellers = [
 	{
 		id: 'gold-crescent-necklace',
 		name: 'Gold Crescent Necklace',
-		image: '/neckles-2.jpeg',
+		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569412/neckles-2_nwgwbk.jpg',
 		price: 299,
 		description: 'Elegant gold necklace with crescent design',
 		style: 'modern'
@@ -17,15 +17,15 @@ const bestSellers = [
 	{
 		id: 'navy-velvet-abaya',
 		name: 'Navy Velvet Abaya',
-		image: '/suit-20.jpeg',
+		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569420/suit-20_kpktvs.jpg',
 		price: 189,
 		description: 'Premium navy velvet abaya for special occasions',
 		style: 'traditional'
 	},
 	{
-		id: 'signature-gold-ring',
-		name: 'Signature Gold Ring',
-		image: '/earing-4.jpeg',
+		id: 'gold-ring-set',
+		name: 'Gold Ring Set',
+		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569408/earing-4_eklgke.jpg',
 		price: 149,
 		description: 'Classic gold ring with intricate details',
 		style: 'classic'
@@ -33,7 +33,7 @@ const bestSellers = [
 	{
 		id: 'diamond-bracelet',
 		name: 'Diamond Bracelet',
-		image: '/clothes-collection.jpeg',
+		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569402/bracelet-1_n7qbu8.jpg',
 		price: 399,
 		description: 'Stunning diamond bracelet for luxury look',
 		style: 'luxury'
@@ -41,7 +41,7 @@ const bestSellers = [
 	{
 		id: 'kashmiri-bangals',
 		name: 'Kashmiri Bangals',
-		image: '/bangals-5.jpeg',
+		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569401/bangals-5_lyy9xr.jpg',
 		price: 249,
 		description: 'Authentic Kashmiri bangles with traditional design',
 		style: 'traditional'
@@ -49,7 +49,7 @@ const bestSellers = [
 	{
 		id: 'summer-suit',
 		name: 'Summer Suit Set',
-		image: '/summer-9.jpeg',
+		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569425/summer-9_bwdctj.jpg',
 		price: 199,
 		description: 'Light and breezy summer suit collection',
 		style: 'modern'

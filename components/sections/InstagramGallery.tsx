@@ -2,14 +2,14 @@
 import { motion } from 'framer-motion';
 
 const instagramImages = [
-	'/newcollection-3.jpeg',
-	'/newcollection-4.jpeg',
-	'/newcollection-5.jpeg',
-	'/newcollection-6.jpeg',
-	'/summer-5.jpeg',
-	'/summer-6.jpeg',
-	'/wintercollection-3.jpeg',
-	'/wintercollection-4.jpeg',
+	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569414/newcollection-3_ghbfql.jpg',
+	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569414/newcollection-4_dvvzcc.jpg',
+	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569414/newcollection-5_jlamzp.jpg',
+	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569415/newcollection-6_ew91ud.jpg',
+	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569424/summer-5_nalb95.jpg',
+	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569424/summer-6_k4ugyt.jpg',
+	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569426/wintercollection-3_gtsisz.jpg',
+	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569426/wintercollection-4_demd3s.jpg',
 ];
 
 export default function InstagramGallery() {

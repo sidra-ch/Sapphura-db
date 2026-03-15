@@ -156,48 +156,57 @@ export default function CheckoutPage() {
     setIsProcessing(true);
     
     try {
-      const newOrderId = `SAP${Date.now().toString(36).toUpperCase()}`;
-      setOrderId(newOrderId);
+      if (items.length === 0) {
+        alert('Your cart is empty.');
+        return;
+      }
 
-      const orderDetails = {
-        orderId: newOrderId,
-        items: items.map(item => ({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-          image: item.image
-        })),
-        total: finalTotal,
-        shippingAddress: {
-          name: `${formData.firstName} ${formData.lastName}`,
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
           phone: formData.phone,
           address: formData.address,
-          city: formData.city
-        }
+          city: formData.city,
+          country: formData.country,
+          postalCode: formData.postalCode,
+          shippingMethod: formData.shippingMethod,
+          paymentMethod: formData.paymentMethod,
+          items,
+          subtotal: totalPrice,
+          shippingCost,
+          discount,
+          total: finalTotal,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || 'Failed to place order. Please try again.');
+        return;
+      }
+
+      const persistedOrder = data.order;
+      const publicOrderId = `SAP${String(persistedOrder.id).padStart(6, '0')}`;
+      setOrderId(publicOrderId);
+
+      const orderDetails = {
+        orderId: publicOrderId,
+        items: persistedOrder.items,
+        total: persistedOrder.total,
+        shippingAddress: {
+          name: persistedOrder.shippingName || `${formData.firstName} ${formData.lastName}`,
+          phone: persistedOrder.shippingPhone || formData.phone,
+          address: persistedOrder.shippingAddress || formData.address,
+          city: formData.city,
+        },
       };
 
       localStorage.setItem('lastOrder', JSON.stringify(orderDetails));
-      
-      if (formData.paymentMethod === 'stripe') {
-        const response = await fetch('/api/stripe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            amount: finalTotal,
-            email: formData.email,
-            items: items
-          })
-        });
-
-        const data = await response.json();
-        
-        if (!response.ok) {
-          alert('Payment failed: ' + data.error);
-          setIsProcessing(false);
-          return;
-        }
-      }
 
       setOrderPlaced(true);
       clearCart();
@@ -480,7 +489,7 @@ export default function CheckoutPage() {
                   {formData.paymentMethod === 'card' && (
                     <div className="mt-6 p-4 bg-[#0a0a23] rounded-lg border border-gold/30">
                       <StripePayment 
-                        amount={totalPrice} 
+                        amount={finalTotal} 
                         onSuccess={() => {
                           placeOrder();
                         }} 

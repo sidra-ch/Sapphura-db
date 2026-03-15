@@ -1,6 +1,6 @@
 "use client";
 
-import { ShoppingBag, User, Search, Heart, Menu, X, MessageCircle, ChevronDown } from 'lucide-react';
+import { ShoppingBag, User, Search, Heart, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useCart } from '../cart/CartContext';
@@ -41,7 +41,6 @@ export default function Header() {
           >
             <span className="relative z-10">Collections</span>
             <span className="absolute bottom-2 left-2 right-2 h-0.5 bg-gold scale-x-0 group-hover:scale-x-100 transition-transform duration-200 ease-out origin-left"></span>
-            <ChevronDown className={`w-4 h-4 text-gold transition-transform duration-200 ${collectionsOpen ? 'rotate-180' : ''}`} />
           </button>
           
           <div 
@@ -93,9 +92,6 @@ export default function Header() {
         <Link href="/account" className="text-gold hover:text-yellow-400 hover:scale-110 transition-all duration-150 p-2">
           <User className="w-5 md:w-6 h-5 md:h-6" />
         </Link>
-        <a href="https://wa.me/923320924951" target="_blank" rel="noopener" className="text-green-500 hover:text-green-400 hover:scale-110 transition-all duration-150 p-2">
-          <MessageCircle className="w-5 md:w-6 h-5 md:h-6" />
-        </a>
         <button 
           className="lg:hidden text-gold p-2 hover:bg-gold/10 hover:scale-110 rounded-lg transition-all duration-150" 
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
