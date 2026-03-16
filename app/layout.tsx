@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "../components/Providers";
 import CartDrawer from "../components/cart/CartDrawer";
+import MobileBackHomeNav from "../components/layout/MobileBackHomeNav";
 
 export const metadata: Metadata = {
   title: "Sapphura - Luxury Fashion",
@@ -23,6 +24,7 @@ export default function RootLayout({
       >
         <Providers>
           {children}
+          <MobileBackHomeNav />
           <CartDrawer />
         </Providers>
       </body>

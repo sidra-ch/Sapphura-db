@@ -21,6 +21,12 @@ body {
   color: #fff;
 }
 
+@media (max-width: 767px) {
+  body {
+    padding-bottom: 84px;
+  }
+}
+
 img,
 video,
 canvas,
