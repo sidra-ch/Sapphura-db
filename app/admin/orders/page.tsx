@@ -197,7 +197,7 @@ export default function OrdersPage() {
                       
                       <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto justify-between sm:justify-start">
                         <div className="text-right">
-                          <p className="text-white font-bold text-xl">${order.total}</p>
+                          <p className="text-white font-bold text-lg sm:text-xl">${order.total}</p>
                           <p className="text-white/50 text-sm">{order.items.length} items</p>
                         </div>
                         <div className="text-right hidden sm:block">

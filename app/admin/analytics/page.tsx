@@ -99,7 +99,7 @@ export default function AnalyticsPage() {
               {['Gold Crescent Necklace', 'Diamond Bracelet', 'Bridal Necklace Set', 'Royal Embroidered Abaya'].map((product, i) => (
                 <div key={product} className="flex items-center justify-between p-2 bg-[#0a0a23] rounded-lg">
                   <span className="text-white truncate pr-3">{product}</span>
-                  <span className="text-gold font-bold">{45 - i * 10} sold</span>
+                  <span className="text-gold font-bold shrink-0">{45 - i * 10} sold</span>
                 </div>
               ))}
             </div>
