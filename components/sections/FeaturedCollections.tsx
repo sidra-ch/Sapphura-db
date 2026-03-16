@@ -76,6 +76,7 @@ export default function FeaturedCollections() {
 					<Link
 						key={collection.id}
 						href={`/collections?category=${collection.category}`}
+						prefetch
 						className="block h-full"
 					>
 					<motion.div

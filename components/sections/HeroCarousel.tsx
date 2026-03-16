@@ -81,9 +81,9 @@ function HeroCarousel() {
                   }}
                 />
               )}
-              <div className="absolute top-1/2 right-8 md:right-16 -translate-y-1/2 bg-black/60 rounded-xl p-6 md:p-8 shadow-lg max-w-xs md:max-w-md text-right z-10">
-                <h2 className="text-2xl md:text-4xl font-bold text-gold mb-2 drop-shadow-lg">{slide.title}</h2>
-                <p className="text-base md:text-lg text-white/90">{slide.description}</p>
+              <div className="absolute z-10 top-3 left-3 md:top-1/2 md:right-16 md:left-auto md:-translate-y-1/2 bg-black/60 rounded-lg md:rounded-xl p-2.5 sm:p-3 md:p-8 shadow-lg max-w-[78%] sm:max-w-[70%] md:max-w-md text-left md:text-right">
+                <h2 className="text-xs sm:text-sm md:text-4xl font-bold text-gold mb-1 md:mb-2 drop-shadow-lg line-clamp-2 md:line-clamp-none">{slide.title}</h2>
+                <p className="hidden sm:block text-sm md:text-lg text-white/90">{slide.description}</p>
               </div>
             </div>
           </SwiperSlide>

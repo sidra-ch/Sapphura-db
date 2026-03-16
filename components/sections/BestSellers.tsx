@@ -76,7 +76,7 @@ export default function BestSellers() {
 				{bestSellers.map((product, idx) => {
 					const inWishlist = isInWishlist(product.id);
 					return (
-					<Link href={`/product/${product.id}`} key={product.id} className="h-full">
+					<Link href={`/product/${product.id}`} prefetch key={product.id} className="h-full">
 						<motion.div
 							className="h-full relative group cursor-pointer"
 							initial={{ opacity: 0, y: 40 }}

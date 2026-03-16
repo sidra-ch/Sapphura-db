@@ -1,10 +1,12 @@
 "use client";
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import CompactCommerceCard from '../ui/CompactCommerceCard';
 
 const offers = [
 	   {
 		   title: 'Ramadan Gold Set',
+		   href: '/product/gold-crescent-necklace',
 		   image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635070/neckles-2_ifgegk.jpg',
 		   originalPrice: '$599',
 		   discountPrice: '$499',
@@ -13,6 +15,7 @@ const offers = [
 	   },
 	   {
 		   title: 'Luxury Abaya Offer',
+		   href: '/product/navy-velvet-abaya',
 		   image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635129/suit-30_gdgbdt.jpg',
 		   originalPrice: '$299',
 		   discountPrice: '$249',
@@ -21,6 +24,7 @@ const offers = [
 	   },
 	   {
 		   title: 'Elegant Earrings',
+		   href: '/product/pearl-earrings',
 		   image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635056/earing-2_rst8xu.jpg',
 		   originalPrice: '$199',
 		   discountPrice: '$149',
@@ -29,6 +33,7 @@ const offers = [
 	   },
 	   {
 		   title: 'Bridal Bangles',
+		   href: '/product/kashmiri-bangals',
 		   image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635036/bangals-2_wjknoh.jpg',
 		   originalPrice: '$349',
 		   discountPrice: '$279',
@@ -43,8 +48,8 @@ export default function RamadanOffers() {
 			<h2 className="text-3xl md:text-4xl font-bold text-gold mb-6 text-center">Ramadan Offers</h2>
 			   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
 				   {offers.map((offer, idx) => (
+					   <Link key={offer.title} href={offer.href} prefetch className="block h-full">
 					   <motion.div
-						   key={offer.title}
 						   className="h-full"
 						   initial={{ opacity: 0, y: 40 }}
 						   whileInView={{ opacity: 1, y: 0 }}
@@ -64,6 +69,7 @@ export default function RamadanOffers() {
 							   className="bg-[#0a0a23]"
 						   />
 					   </motion.div>
+					   </Link>
 				   ))}
 			</div>
 		</section>

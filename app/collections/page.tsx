@@ -72,17 +72,12 @@ function CollectionsContent() {
   const [sortBy, setSortBy] = useState('Newest');
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading] = useState(false);
   const [galleryProduct, setGalleryProduct] = useState<Product | null>(null);
   const [galleryImageIndex, setGalleryImageIndex] = useState(0);
 
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -105,7 +100,8 @@ function CollectionsContent() {
 
   const getProductImage = (images: string[]) => {
     if (!images || !images.length) return FALLBACK_IMAGE;
-    return images[0];
+    const firstImage = images[0];
+    return typeof firstImage === 'string' && firstImage.startsWith('http') ? firstImage : FALLBACK_IMAGE;
   };
 
   const getCategoryName = (categoryId: number) => {
@@ -367,6 +363,7 @@ function CollectionsContent() {
               sortedProducts.map((product, index) => {
                 const inWishlist = isInWishlist(product.id);
                 const productImage = getProductImage(product.images);
+                const productGalleryImages = product.images.length ? product.images : [FALLBACK_IMAGE];
                 const categoryName = getCategoryName(product.categoryId);
                 return (
               <motion.div
@@ -382,6 +379,9 @@ function CollectionsContent() {
                         alt={product.name}
                         className="w-full h-44 object-cover group-hover:scale-110 transition duration-300"
                         loading="lazy"
+                        onError={(event) => {
+                          event.currentTarget.src = FALLBACK_IMAGE;
+                        }}
                       />
                       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-3 py-2">
                         <h3 className="text-white text-sm font-semibold line-clamp-1">{product.name}</h3>
@@ -417,12 +417,12 @@ function CollectionsContent() {
                     </div>
                     <div className="px-3 py-2 border-t border-gold/10 bg-[#121237]">
                       <div className="flex gap-2 overflow-x-auto pb-1">
-                        {product.images.slice(0, 6).map((img, imgIdx) => (
+                        {productGalleryImages.slice(0, 6).map((img, imgIdx) => (
                           <button
                             key={`${product.slug}-${imgIdx}`}
                             onClick={(e) => {
                               e.preventDefault();
-                              openGallery(product, imgIdx);
+                              openGallery({ ...product, images: productGalleryImages }, imgIdx);
                             }}
                             className="flex-shrink-0"
                           >
@@ -431,31 +431,34 @@ function CollectionsContent() {
                               alt={`${product.name} ${imgIdx + 1}`}
                               className="w-12 h-12 rounded-md border border-gold/30 object-cover"
                               loading="lazy"
+                              onError={(event) => {
+                                event.currentTarget.src = FALLBACK_IMAGE;
+                              }}
                             />
                           </button>
                         ))}
-                        {product.images.length > 6 && (
+                        {productGalleryImages.length > 6 && (
                           <button
                             onClick={(e) => {
                               e.preventDefault();
-                              openGallery(product, 0);
+                              openGallery({ ...product, images: productGalleryImages }, 0);
                             }}
                             className="w-12 h-12 rounded-md border border-gold/30 text-gold text-xs flex-shrink-0 bg-[#0a0a23]"
                           >
-                            +{product.images.length - 6}
+                            +{productGalleryImages.length - 6}
                           </button>
                         )}
                       </div>
                     </div>
-                    <Link href={`/product/${product.slug}`}>
+                    <Link href={`/product/${product.slug}`} prefetch>
                     <div className="p-3 flex-1 flex flex-col">
-                      <p className="text-white/60 text-xs mb-2">{product.images.length} images</p>
+                      <p className="text-white/60 text-xs mb-2">{productGalleryImages.length} images</p>
                       <div className="flex items-center justify-between gap-2 mt-auto">
                         <span className="text-white font-bold text-lg">${product.price}</span>
                         <button
                           onClick={(e) => {
                             e.preventDefault();
-                            openGallery(product, 0);
+                            openGallery({ ...product, images: productGalleryImages }, 0);
                           }}
                           className="text-[11px] px-2.5 py-1.5 rounded-md border border-gold text-gold hover:bg-gold hover:text-[#0a0a23] transition"
                         >
@@ -472,6 +475,10 @@ function CollectionsContent() {
         )}
 
         {galleryProduct && (
+          (() => {
+            const galleryImages = galleryProduct.images.length ? galleryProduct.images : [FALLBACK_IMAGE];
+            const activeImage = galleryImages[galleryImageIndex] || FALLBACK_IMAGE;
+            return (
           <div
             className="fixed inset-0 z-[70] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4"
             onClick={closeGallery}
@@ -483,7 +490,7 @@ function CollectionsContent() {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-gold text-xl md:text-2xl font-bold">{galleryProduct.name}</h3>
-                  <p className="text-white/60 text-sm">{galleryImageIndex + 1} / {galleryProduct.images.length}</p>
+                  <p className="text-white/60 text-sm">{galleryImageIndex + 1} / {galleryImages.length}</p>
                 </div>
                 <button
                   onClick={closeGallery}
@@ -495,18 +502,21 @@ function CollectionsContent() {
 
               <div className="relative rounded-xl overflow-hidden border border-gold/30">
                 <img
-                  src={galleryProduct.images[galleryImageIndex]}
+                  src={activeImage}
                   alt={`${galleryProduct.name} large view`}
                   className="w-full h-[55vh] object-cover"
+                  onError={(event) => {
+                    event.currentTarget.src = FALLBACK_IMAGE;
+                  }}
                 />
                 <button
-                  onClick={() => setGalleryImageIndex((prev) => (prev - 1 + galleryProduct.images.length) % galleryProduct.images.length)}
+                  onClick={() => setGalleryImageIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length)}
                   className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-gold hover:text-[#0a0a23] transition"
                 >
                   <ChevronLeft className="w-6 h-6" />
                 </button>
                 <button
-                  onClick={() => setGalleryImageIndex((prev) => (prev + 1) % galleryProduct.images.length)}
+                  onClick={() => setGalleryImageIndex((prev) => (prev + 1) % galleryImages.length)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-gold hover:text-[#0a0a23] transition"
                 >
                   <ChevronRight className="w-6 h-6" />
@@ -514,7 +524,7 @@ function CollectionsContent() {
               </div>
 
               <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-                {galleryProduct.images.map((img, idx) => (
+                {galleryImages.map((img, idx) => (
                   <button
                     key={`${galleryProduct.slug}-gallery-${idx}`}
                     onClick={() => setGalleryImageIndex(idx)}
@@ -524,12 +534,17 @@ function CollectionsContent() {
                       src={img}
                       alt={`${galleryProduct.name} thumb ${idx + 1}`}
                       className="w-16 h-16 object-cover rounded-sm"
+                      onError={(event) => {
+                        event.currentTarget.src = FALLBACK_IMAGE;
+                      }}
                     />
                   </button>
                 ))}
               </div>
             </div>
           </div>
+            );
+          })()
         )}
       </div>
     </div>

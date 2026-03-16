@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -11,6 +11,8 @@ import { useCart } from '../../../components/cart/CartContext';
 import { useWishlist } from '../../../components/wishlist/WishlistContext';
 import { PRODUCT_BY_SLUG } from '../../../lib/products-catalog';
 
+const FALLBACK_IMAGE = 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569411/neckles-1_hpggw5.jpg';
+
 export default function ProductDetailPage() {
   const params = useParams();
   const slug = params?.slug as string;
@@ -18,22 +20,19 @@ export default function ProductDetailPage() {
   
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 600);
-    return () => clearTimeout(timer);
-  }, []);
+  const productImages = product?.images?.length ? product.images : [FALLBACK_IMAGE];
 
   const handleAddToCart = () => {
     if (product) {
       addToCart({
         id: product.id,
         name: product.name,
-        image: product.images[0],
+        image: productImages[0],
         price: product.price,
         quantity
       });
@@ -48,7 +47,7 @@ export default function ProductDetailPage() {
         addToWishlist({
           id: product.id,
           name: product.name,
-          image: product.images[0],
+          image: productImages[0],
           price: product.price
         });
       }
@@ -95,8 +94,8 @@ export default function ProductDetailPage() {
     );
   }
 
-  const nextImage = () => setSelectedImage((prev) => (prev + 1) % product.images.length);
-  const prevImage = () => setSelectedImage((prev) => (prev - 1 + product.images.length) % product.images.length);
+  const nextImage = () => setSelectedImage((prev) => (prev + 1) % productImages.length);
+  const prevImage = () => setSelectedImage((prev) => (prev - 1 + productImages.length) % productImages.length);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0a0a23] to-[#1a1a40] py-8 px-4">
@@ -114,9 +113,12 @@ export default function ProductDetailPage() {
           >
             <div className="relative rounded-2xl overflow-hidden border-2 border-gold shadow-xl">
               <img 
-                src={product.images[selectedImage]} 
+                src={productImages[selectedImage] || FALLBACK_IMAGE}
                 alt={product.name}
                 className="w-full h-[500px] object-cover"
+                onError={(event) => {
+                  event.currentTarget.src = FALLBACK_IMAGE;
+                }}
               />
               <button 
                 onClick={prevImage}
@@ -132,7 +134,7 @@ export default function ProductDetailPage() {
               </button>
             </div>
             <div className="flex gap-3 mt-4">
-              {product.images.map((img, idx) => (
+              {productImages.map((img, idx) => (
                 <button
                   key={idx}
                   onClick={() => setSelectedImage(idx)}
@@ -140,7 +142,14 @@ export default function ProductDetailPage() {
                     selectedImage === idx ? 'border-gold' : 'border-transparent opacity-60'
                   }`}
                 >
-                  <img src={img} alt={`View ${idx + 1}`} className="w-full h-full object-cover" />
+                  <img
+                    src={img}
+                    alt={`View ${idx + 1}`}
+                    className="w-full h-full object-cover"
+                    onError={(event) => {
+                      event.currentTarget.src = FALLBACK_IMAGE;
+                    }}
+                  />
                 </button>
               ))}
             </div>

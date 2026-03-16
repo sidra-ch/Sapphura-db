@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 
 const categories = [
   "Necklace Sets",
@@ -22,13 +23,14 @@ export default function CategoryTicker() {
         <div className="marquee-track">
           {/* Duplicated twice for seamless infinite loop */}
           {[...categories, ...categories].map((cat, idx) => (
-            <a
+            <Link
               key={cat + idx}
               href={`/collections?category=${cat.toLowerCase().replace(/\s+/g, "-")}`}
+              prefetch
               className="marquee-chip"
             >
               {cat}
-            </a>
+            </Link>
           ))}
         </div>
       </div>

@@ -1,4 +1,3 @@
-import Header from '../components/layout/Header';
 import CategoryTicker from '../components/sections/CategoryTicker';
 import InstagramGallery from '../components/sections/InstagramGallery';
 import HeroCarousel from '../components/sections/HeroCarousel';
@@ -21,8 +20,6 @@ export const metadata = generateMetadata;
 export default function HomePage() {
   return (
     <div className="bg-gradient-to-b from-[#0a0a23] to-[#1a1a40] min-h-screen text-white font-sans">
-      <Header />
-
       <HeroCarousel />
       <CategoryTicker />
       <FeaturedCollections />
