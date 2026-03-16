@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Prisma } from '@prisma/client';
 import prisma from '../../../../../lib/db';
 import { extractStatus, isWebhookTimestampFresh, verifyCallbackSignature } from '../../../../../lib/payments';
 
@@ -57,7 +56,7 @@ export async function POST(req: NextRequest) {
         where: { id: transaction.id },
         data: {
           status,
-          callbackPayload: payload as Prisma.InputJsonValue,
+          callbackPayload: payload as any,
           signatureValid,
           reconciledAt: new Date(),
           providerTransactionId: String(payload.transactionId || transaction.providerTransactionId || '' ) || null,
