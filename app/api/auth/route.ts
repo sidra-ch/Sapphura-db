@@ -8,7 +8,14 @@ import { sendWhatsAppOtp } from '../../../lib/whatsapp';
 import { sendSmsOtp } from '../../../lib/sms';
 
 type OtpChannel = 'email' | 'whatsapp' | 'sms' | 'all';
-const OTP_EMAIL_ONLY_MODE = process.env.OTP_EMAIL_ONLY_MODE !== 'false';
+
+function toOtpChannel(value: string): OtpChannel {
+  const normalized = value.toLowerCase();
+  if (normalized === 'email' || normalized === 'whatsapp' || normalized === 'sms' || normalized === 'all') {
+    return normalized;
+  }
+  return 'email';
+}
 
 const OTP_MAX_ATTEMPTS = 5;
 const OTP_TTL_MS = 10 * 60 * 1000;
@@ -36,8 +43,8 @@ export async function POST(req: NextRequest) {
     const phone = body.phone ? String(body.phone).trim() : '';
     const userId = Number(body.userId || 0);
     const otpInput = body.otp ? String(body.otp).trim() : '';
-    const requestedOtpChannel = String(body.otpChannel || 'email').toLowerCase() as OtpChannel;
-    const otpChannel: OtpChannel = OTP_EMAIL_ONLY_MODE ? 'email' : requestedOtpChannel;
+    const requestedOtpChannel = toOtpChannel(String(body.otpChannel || 'email'));
+    const otpChannel: OtpChannel = requestedOtpChannel;
 
     if (email) {
       const emailLimit = checkRateLimit({ key: `auth:email:${email}`, max: 15, windowMs: 15 * 60_000 });
@@ -138,23 +145,6 @@ export async function POST(req: NextRequest) {
       }
 
       const sentChannels = deliveryResults.filter((item: any) => item.sent).map((item: any) => item.channel);
-      if (sentChannels.length === 0 && otpChannel !== 'email') {
-        try {
-          await sendEmail({
-            to: email,
-            subject: 'Your Sapphura Verification Code',
-            html: getOTPEmail(otpCode, name),
-          });
-          deliveryResults.push({ channel: 'email', sent: true });
-          sentChannels.push('email');
-        } catch (error) {
-          deliveryResults.push({
-            channel: 'email',
-            sent: false,
-            error: error instanceof Error ? error.message : 'Email fallback failed',
-          });
-        }
-      }
 
       if (sentChannels.length === 0) {
         const reasons = deliveryResults

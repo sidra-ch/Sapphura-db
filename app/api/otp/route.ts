@@ -8,7 +8,14 @@ import { sendSmsOtp } from '../../../lib/sms';
 import { normalizeEmail } from '../../../lib/request';
 
 type OtpChannel = 'email' | 'whatsapp' | 'sms' | 'all';
-const OTP_EMAIL_ONLY_MODE = process.env.OTP_EMAIL_ONLY_MODE === 'true';
+
+function toOtpChannel(value: string): OtpChannel {
+  const normalized = value.toLowerCase();
+  if (normalized === 'email' || normalized === 'whatsapp' || normalized === 'sms' || normalized === 'all') {
+    return normalized;
+  }
+  return 'email';
+}
 
 function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -109,8 +116,8 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      const requestedChannel = String(otpChannel).toLowerCase() as OtpChannel;
-      const channel: OtpChannel = OTP_EMAIL_ONLY_MODE ? 'email' : requestedChannel;
+      const requestedChannel = toOtpChannel(String(otpChannel || 'email'));
+      const channel: OtpChannel = requestedChannel;
       const deliveryTargetPhone = normalizedPhone || user.phone || '';
       const results: Array<{ channel: 'email' | 'whatsapp' | 'sms'; sent: boolean; error?: string }> = [];
 
@@ -154,23 +161,6 @@ export async function POST(req: NextRequest) {
       }
 
       const sentChannels = results.filter((item: any) => item.sent).map((item: any) => item.channel);
-      if (sentChannels.length === 0 && channel !== 'email' && normalizedEmail) {
-        try {
-          await sendEmail({
-            to: normalizedEmail,
-            subject: 'Your Sapphura Verification Code',
-            html: getOTPEmail(generatedOTP, user.name || 'Customer'),
-          });
-          results.push({ channel: 'email', sent: true });
-          sentChannels.push('email');
-        } catch (error) {
-          results.push({
-            channel: 'email',
-            sent: false,
-            error: error instanceof Error ? error.message : 'Email fallback failed',
-          });
-        }
-      }
 
       if (sentChannels.length === 0) {
         const reasons = results
