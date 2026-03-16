@@ -1,22 +1,8 @@
 import { NextResponse } from 'next/server';
-import type { Prisma } from '@prisma/client';
 import prisma from '../../../lib/db';
 import { getPrimaryMedia } from '../../../lib/media';
 
 export const dynamic = 'force-dynamic';
-
-type CategoryWithPreview = Prisma.CategoryGetPayload<{
-  include: {
-    _count: {
-      select: { products: true };
-    };
-    products: {
-      select: { images: true };
-      where: { status: 'active' };
-      take: 1;
-    };
-  };
-}>;
 
 export async function GET() {
   try {
@@ -35,7 +21,12 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      categories: categories.map((c: CategoryWithPreview) => ({
+      categories: categories.map((c: {
+        id: number;
+        name: string;
+        _count: { products: number };
+        products: Array<{ images: string | null | undefined }>;
+      }) => ({
         id: c.id,
         name: c.name,
         products: c._count.products,
