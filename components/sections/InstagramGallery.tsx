@@ -55,8 +55,8 @@ export default function InstagramGallery() {
 				.insta-tile {
 					display: block;
 					position: relative;
-					width: 52px;
-					height: 52px;
+					width: 30px;
+					height: 30px;
 					flex-shrink: 0;
 					border-radius: 0.4rem;
 					overflow: hidden;
