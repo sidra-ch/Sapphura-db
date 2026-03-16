@@ -38,17 +38,59 @@ function pickEnv(...keys: string[]): string {
   return '';
 }
 
-export function getTwilioBaseConfig() {
-  const accountSid = pickEnv('TWILIO_ACCOUNT_SID');
+export interface TwilioBaseConfig {
+  accountSid: string;
+  authUsername: string;
+  authPassword: string;
+  authMode: 'auth-token' | 'api-key' | 'none';
+  missing: string[];
+}
+
+export function getTwilioBaseConfig(): TwilioBaseConfig {
+  const accountSid = pickEnv('TWILIO_ACCOUNT_SID', 'TWILIO_MAIN_ACCOUNT_SID');
   const authToken = pickEnv('TWILIO_AUTH_TOKEN');
+  const apiKeySid = pickEnv('TWILIO_API_KEY_SID', 'TWILIO_KEY_SID');
+  const apiKeySecret = pickEnv('TWILIO_API_KEY_SECRET', 'TWILIO_API_SECRET', 'TWILIO_KEY_SECRET');
+
+  if (accountSid && authToken) {
+    return {
+      accountSid,
+      authUsername: accountSid,
+      authPassword: authToken,
+      authMode: 'auth-token',
+      missing: [],
+    };
+  }
+
+  if (accountSid && apiKeySid && apiKeySecret) {
+    return {
+      accountSid,
+      authUsername: apiKeySid,
+      authPassword: apiKeySecret,
+      authMode: 'api-key',
+      missing: [],
+    };
+  }
+
+  const missing: string[] = [];
+  if (!accountSid) {
+    missing.push('TWILIO_ACCOUNT_SID (or TWILIO_MAIN_ACCOUNT_SID)');
+  }
+
+  if (!authToken && !(apiKeySid && apiKeySecret)) {
+    missing.push('TWILIO_AUTH_TOKEN or (TWILIO_API_KEY_SID + TWILIO_API_KEY_SECRET)');
+  }
+
+  if ((apiKeySid && !apiKeySecret) || (!apiKeySid && apiKeySecret)) {
+    missing.push('TWILIO_API_KEY_SID and TWILIO_API_KEY_SECRET must be set together');
+  }
 
   return {
     accountSid,
-    authToken,
-    missing: [
-      ...(accountSid ? [] : ['TWILIO_ACCOUNT_SID']),
-      ...(authToken ? [] : ['TWILIO_AUTH_TOKEN']),
-    ],
+    authUsername: '',
+    authPassword: '',
+    authMode: 'none',
+    missing,
   };
 }
 
