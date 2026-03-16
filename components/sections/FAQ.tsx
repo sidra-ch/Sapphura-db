@@ -18,7 +18,7 @@ const faqs = [
 
 export default function FAQ() {
 	return (
-		<section className="py-16 px-4 md:px-16 bg-[#1a1a40]">
+		<section className="py-5 px-4 md:px-16 bg-[#1a1a40]">
 			<h2 className="text-3xl md:text-5xl font-bold text-gold mb-10 text-center">Frequently Asked Questions</h2>
 			<Accordion.Root type="single" collapsible className="w-full max-w-2xl mx-auto">
 				{faqs.map((faq, idx) => (
