@@ -18,7 +18,7 @@ interface OrderPayloadItem {
 }
 
 interface OrderPayload {
-  email: string;
+  email?: string;
   firstName: string;
   lastName: string;
   phone: string;
@@ -45,6 +45,22 @@ interface OrderPayload {
 }
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+
+function normalizePhoneForIdentity(phone: string): string {
+  return phone.replace(/\D/g, '');
+}
+
+function deriveCheckoutIdentityEmail(email: string | undefined, phone: string): string {
+  const normalizedEmail = normalizeEmail(String(email || ''));
+  if (normalizedEmail) return normalizedEmail;
+  const digits = normalizePhoneForIdentity(String(phone || ''));
+  return digits ? `phone-${digits}@otp.local` : '';
+}
+
+function isPaymentTransactionTableMissing(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error || '');
+  return message.includes('PaymentTransaction') && message.toLowerCase().includes('does not exist');
+}
 
 export async function GET() {
   const orders = await prisma.order.findMany({
@@ -84,7 +100,7 @@ export async function POST(req: NextRequest) {
       paymentVerification,
     } = body;
 
-    const normalizedEmail = normalizeEmail(String(email || ''));
+    const normalizedEmail = deriveCheckoutIdentityEmail(email, phone);
     const normalizedAddress = normalizeShippingAddress({
       address,
       city,
@@ -119,12 +135,20 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Stripe is not configured on server' }, { status: 500 });
       }
 
-      const existingIntentUse = await prisma.paymentTransaction.findFirst({
-        where: {
-          provider: 'stripe',
-          providerTransactionId: paymentIntentId,
-        },
-      });
+      let existingIntentUse: { id: number } | null = null;
+      try {
+        existingIntentUse = await prisma.paymentTransaction.findFirst({
+          where: {
+            provider: 'stripe',
+            providerTransactionId: paymentIntentId,
+          },
+          select: { id: true },
+        });
+      } catch (error) {
+        if (!isPaymentTransactionTableMissing(error)) {
+          throw error;
+        }
+      }
 
       if (existingIntentUse) {
         return NextResponse.json({ error: 'Payment authorization has already been used' }, { status: 409 });
@@ -143,7 +167,11 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      if (paymentIntent.receipt_email && normalizeEmail(paymentIntent.receipt_email) !== normalizedEmail) {
+      const receiptEmail = paymentIntent.receipt_email
+        ? deriveCheckoutIdentityEmail(paymentIntent.receipt_email, phone)
+        : '';
+
+      if (receiptEmail && receiptEmail !== normalizedEmail) {
         return NextResponse.json({ error: 'Payment authorization identity mismatch' }, { status: 400 });
       }
     }
@@ -249,29 +277,6 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      if (paymentMethod === 'card') {
-        await tx.paymentTransaction.create({
-          data: {
-            orderId: order.id,
-            provider: 'stripe',
-            merchantReference: `STRIPE-${order.id}-${Date.now()}`,
-            providerTransactionId: paymentVerification?.stripePaymentIntentId || null,
-            amount: Number(total),
-            currency: 'USD',
-            status: 'paid',
-            requestPayload: {
-              otpVerifiedAt: paymentVerification?.otpVerifiedAt || null,
-              cardAuthorizedAt: paymentVerification?.cardAuthorizedAt || null,
-            },
-            responsePayload: {
-              paymentIntentId: paymentVerification?.stripePaymentIntentId || null,
-            },
-            signatureValid: true,
-            reconciledAt: new Date(),
-          },
-        });
-      }
-
       await tx.orderItem.createMany({
         data: productsForOrder.map((entry: any) => ({
           orderId: order.id,
@@ -298,6 +303,35 @@ export async function POST(req: NextRequest) {
 
       return orderWithItems;
     });
+
+    if (paymentMethod === 'card') {
+      try {
+        await prisma.paymentTransaction.create({
+          data: {
+            orderId: created.id,
+            provider: 'stripe',
+            merchantReference: `STRIPE-${created.id}-${Date.now()}`,
+            providerTransactionId: paymentVerification?.stripePaymentIntentId || null,
+            amount: Number(total),
+            currency: 'USD',
+            status: 'paid',
+            requestPayload: {
+              otpVerifiedAt: paymentVerification?.otpVerifiedAt || null,
+              cardAuthorizedAt: paymentVerification?.cardAuthorizedAt || null,
+            },
+            responsePayload: {
+              paymentIntentId: paymentVerification?.stripePaymentIntentId || null,
+            },
+            signatureValid: true,
+            reconciledAt: new Date(),
+          },
+        });
+      } catch (error) {
+        if (!isPaymentTransactionTableMissing(error)) {
+          throw error;
+        }
+      }
+    }
 
     if (!created) {
       return NextResponse.json({ error: 'Order creation failed' }, { status: 500 });

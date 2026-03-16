@@ -58,7 +58,7 @@ export default function CheckoutPage() {
   const [otpVerifiedAt, setOtpVerifiedAt] = useState('');
   const [otpExpiry, setOtpExpiry] = useState('');
   const [otpCooldown, setOtpCooldown] = useState(0);
-  const [otpChannel] = useState<'email'>('email');
+  const [otpChannel, setOtpChannel] = useState<'email' | 'sms' | 'whatsapp'>('email');
   const [cardAuthorized, setCardAuthorized] = useState(false);
   const [cardPaymentIntentId, setCardPaymentIntentId] = useState('');
   const [cardAuthorizedAt, setCardAuthorizedAt] = useState('');
@@ -97,10 +97,13 @@ export default function CheckoutPage() {
   const validateInfoStep = (): boolean => {
     const newErrors: FormErrors = {};
     
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!validateEmail(formData.email)) {
+    if (formData.email && !validateEmail(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
+    }
+
+    if (!formData.email.trim() && !formData.phone.trim()) {
+      newErrors.email = 'Email or phone is required';
+      newErrors.phone = 'Email or phone is required';
     }
     
     if (!formData.firstName.trim()) {
@@ -170,8 +173,13 @@ export default function CheckoutPage() {
   };
 
   const sendPaymentOtp = async () => {
-    if (!formData.email || !validateEmail(formData.email)) {
-      setOtpError('Please enter a valid email in contact information first');
+    if (otpChannel === 'email' && (!formData.email || !validateEmail(formData.email))) {
+      setOtpError('Please enter a valid email for email OTP');
+      return;
+    }
+
+    if ((otpChannel === 'sms' || otpChannel === 'whatsapp') && !validatePhone(formData.phone)) {
+      setOtpError('Please enter a valid phone number for SMS/WhatsApp OTP');
       return;
     }
 
@@ -191,7 +199,7 @@ export default function CheckoutPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'send',
-          email: normalizedEmail,
+          email: normalizedEmail || undefined,
           phone: formData.phone,
           otpChannel,
           purpose: `payment-${formData.paymentMethod}`,
@@ -234,7 +242,9 @@ export default function CheckoutPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'verify',
-          email: formData.email.trim().toLowerCase(),
+          email: formData.email.trim().toLowerCase() || undefined,
+          phone: formData.phone,
+          otpChannel,
           otp: otpCode.trim(),
           purpose: `payment-${formData.paymentMethod}`,
         }),
@@ -827,8 +837,26 @@ export default function CheckoutPage() {
                   <div className="mt-6 p-4 bg-[#0a0a23] rounded-lg border border-gold/40">
                     <h3 className="text-gold font-semibold mb-3">Payment OTP Verification</h3>
                     <p className="text-white/70 text-sm mb-3">
-                      OTP will be sent to your email address for verification.
+                      Choose where to receive OTP: email, SMS, or WhatsApp.
                     </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
+                      {([
+                        { key: 'email', label: 'Email OTP' },
+                        { key: 'sms', label: 'SMS OTP' },
+                        { key: 'whatsapp', label: 'WhatsApp OTP' },
+                      ] as const).map((channel) => (
+                        <button
+                          key={channel.key}
+                          type="button"
+                          onClick={() => setOtpChannel(channel.key)}
+                          className={`px-3 py-2 rounded-lg text-sm border transition ${otpChannel === channel.key ? 'bg-gold text-[#0a0a23] border-gold' : 'text-white/80 border-gold/30 hover:border-gold/70'}`}
+                        >
+                          {channel.label}
+                        </button>
+                      ))}
+                    </div>
+
                     <div className="flex flex-col md:flex-row gap-3">
                       <button
                         type="button"

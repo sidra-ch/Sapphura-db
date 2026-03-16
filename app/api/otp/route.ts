@@ -8,7 +8,7 @@ import { sendSmsOtp } from '../../../lib/sms';
 import { normalizeEmail } from '../../../lib/request';
 
 type OtpChannel = 'email' | 'whatsapp' | 'sms' | 'all';
-const OTP_EMAIL_ONLY_MODE = process.env.OTP_EMAIL_ONLY_MODE !== 'false';
+const OTP_EMAIL_ONLY_MODE = process.env.OTP_EMAIL_ONLY_MODE === 'true';
 
 function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -31,21 +31,33 @@ function isOtpVerificationTableMissing(error: unknown): boolean {
   return message.includes('OTPVerification') && message.toLowerCase().includes('does not exist');
 }
 
+function normalizePhoneForIdentity(phone: string): string {
+  return phone.replace(/\D/g, '');
+}
+
+function buildPhoneIdentityEmail(phone: string): string {
+  const digits = normalizePhoneForIdentity(phone);
+  return `phone-${digits}@otp.local`;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { action, email, orderId, otp, purpose = 'payment', phone, otpChannel = 'email' } = await req.json();
     const normalizedEmail = email ? normalizeEmail(String(email)) : '';
+    const normalizedPhone = phone ? String(phone).trim() : '';
+    const phoneDigits = normalizePhoneForIdentity(normalizedPhone);
+    const identityEmail = normalizedEmail || (phoneDigits ? buildPhoneIdentityEmail(normalizedPhone) : '');
     const purposeKey = getPurposeKey(purpose);
 
-    if (!normalizedEmail) {
-      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+    if (!identityEmail) {
+      return NextResponse.json({ error: 'Email or phone is required' }, { status: 400 });
     }
 
     const user = await prisma.user.upsert({
-      where: { email: normalizedEmail },
+      where: { email: identityEmail },
       update: {},
       create: {
-        email: normalizedEmail,
+        email: identityEmail,
         password: await hashOTP(`guest-${Date.now()}-${Math.random()}`),
         role: 'customer',
         isActive: false,
@@ -60,7 +72,7 @@ export async function POST(req: NextRequest) {
       await prisma.user.update({
         where: { id: user.id },
         data: {
-          phone: phone ? String(phone) : user.phone,
+          phone: normalizedPhone || user.phone,
         },
       });
 
@@ -99,23 +111,27 @@ export async function POST(req: NextRequest) {
 
       const requestedChannel = String(otpChannel).toLowerCase() as OtpChannel;
       const channel: OtpChannel = OTP_EMAIL_ONLY_MODE ? 'email' : requestedChannel;
-      const deliveryTargetPhone = phone ? String(phone) : user.phone || '';
+      const deliveryTargetPhone = normalizedPhone || user.phone || '';
       const results: Array<{ channel: 'email' | 'whatsapp' | 'sms'; sent: boolean; error?: string }> = [];
 
       if (channel === 'email' || channel === 'all') {
-        try {
-          await sendEmail({
-            to: normalizedEmail,
-            subject: 'Your Sapphura Verification Code',
-            html: getOTPEmail(generatedOTP, user.name || 'Customer'),
-          });
-          results.push({ channel: 'email', sent: true });
-        } catch (error) {
-          results.push({
-            channel: 'email',
-            sent: false,
-            error: error instanceof Error ? error.message : 'Email delivery failed',
-          });
+        if (!normalizedEmail) {
+          results.push({ channel: 'email', sent: false, error: 'Email is required for email OTP delivery' });
+        } else {
+          try {
+            await sendEmail({
+              to: normalizedEmail,
+              subject: 'Your Sapphura Verification Code',
+              html: getOTPEmail(generatedOTP, user.name || 'Customer'),
+            });
+            results.push({ channel: 'email', sent: true });
+          } catch (error) {
+            results.push({
+              channel: 'email',
+              sent: false,
+              error: error instanceof Error ? error.message : 'Email delivery failed',
+            });
+          }
         }
       }
 
@@ -138,7 +154,7 @@ export async function POST(req: NextRequest) {
       }
 
       const sentChannels = results.filter((item: any) => item.sent).map((item: any) => item.channel);
-      if (sentChannels.length === 0 && channel !== 'email') {
+      if (sentChannels.length === 0 && channel !== 'email' && normalizedEmail) {
         try {
           await sendEmail({
             to: normalizedEmail,
@@ -173,6 +189,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         message: `OTP sent via ${sentChannels.join(', ')}`,
+        identity: identityEmail,
         requestedChannel,
         effectiveChannel: channel,
         channels: sentChannels,
@@ -271,7 +288,7 @@ export async function POST(req: NextRequest) {
       }
 
       const verificationToken = generateOtpProofToken({
-        email: normalizedEmail,
+        email: identityEmail,
         purpose: purposeKey,
       });
 
@@ -279,6 +296,7 @@ export async function POST(req: NextRequest) {
         success: true,
         message: 'OTP verified successfully',
         orderId: orderId || null,
+        identity: identityEmail,
         verificationToken,
       });
     }
