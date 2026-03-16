@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const created = await prisma.$transaction(async (tx) => {
+    const created = await prisma.$transaction(async (tx: any) => {
       const order = await tx.order.create({
         data: {
           userId: user.id,
@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
       });
 
       await tx.orderItem.createMany({
-        data: productsForOrder.map((entry) => ({
+        data: productsForOrder.map((entry: any) => ({
           orderId: order.id,
           productId: entry.productId,
           quantity: entry.quantity,
@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
           orderId: String(created.id),
           customerName: created.shippingName || `${firstName} ${lastName}`,
           total,
-          items: created.items.map((i) => ({
+          items: created.items.map((i: any) => ({
             name: i.product.name,
             quantity: i.quantity,
             price: i.price,
@@ -203,7 +203,7 @@ export async function POST(req: NextRequest) {
         shippingName: created.shippingName,
         shippingPhone: created.shippingPhone,
         shippingAddress: created.shippingAddress,
-        items: created.items.map((entry) => ({
+        items: created.items.map((entry: any) => ({
           id: String(entry.productId),
           name: entry.product.name,
           price: entry.price,
