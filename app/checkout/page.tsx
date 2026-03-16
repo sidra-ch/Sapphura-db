@@ -23,6 +23,12 @@ interface FormErrors {
   payment?: string;
 }
 
+interface OtpChannelAvailability {
+  email: boolean;
+  sms: boolean;
+  whatsapp: boolean;
+}
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, totalPrice, clearCart } = useCart();
@@ -59,6 +65,11 @@ export default function CheckoutPage() {
   const [otpExpiry, setOtpExpiry] = useState('');
   const [otpCooldown, setOtpCooldown] = useState(0);
   const [otpChannel, setOtpChannel] = useState<'email' | 'sms' | 'whatsapp'>('email');
+  const [availableOtpChannels, setAvailableOtpChannels] = useState<OtpChannelAvailability>({
+    email: true,
+    sms: false,
+    whatsapp: false,
+  });
   const [cardAuthorized, setCardAuthorized] = useState(false);
   const [cardPaymentIntentId, setCardPaymentIntentId] = useState('');
   const [cardAuthorizedAt, setCardAuthorizedAt] = useState('');
@@ -93,6 +104,33 @@ export default function CheckoutPage() {
     }, 1000);
     return () => clearInterval(timer);
   }, [otpCooldown]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadOtpChannelAvailability() {
+      try {
+        const response = await fetch('/api/otp/channels', { cache: 'no-store' });
+        if (!response.ok) return;
+
+        const data = await response.json();
+        const channels = data?.channels as OtpChannelAvailability | undefined;
+        if (!isMounted || !channels) return;
+
+        setAvailableOtpChannels(channels);
+        if (!channels[otpChannel]) {
+          setOtpChannel(channels.whatsapp ? 'whatsapp' : channels.sms ? 'sms' : 'email');
+        }
+      } catch {
+        // keep defaults on network failure
+      }
+    }
+
+    loadOtpChannelAvailability();
+    return () => {
+      isMounted = false;
+    };
+  }, [otpChannel]);
 
   const validateInfoStep = (): boolean => {
     const newErrors: FormErrors = {};
@@ -175,6 +213,11 @@ export default function CheckoutPage() {
   const sendPaymentOtp = async () => {
     if (otpChannel === 'email' && (!formData.email || !validateEmail(formData.email))) {
       setOtpError('Please enter a valid email for email OTP');
+      return;
+    }
+
+    if (!availableOtpChannels[otpChannel]) {
+      setOtpError(`Selected OTP channel (${otpChannel}) is not configured yet. Please select another channel.`);
       return;
     }
 
@@ -850,9 +893,10 @@ export default function CheckoutPage() {
                           key={channel.key}
                           type="button"
                           onClick={() => setOtpChannel(channel.key)}
-                          className={`px-3 py-2 rounded-lg text-sm border transition ${otpChannel === channel.key ? 'bg-gold text-[#0a0a23] border-gold' : 'text-white/80 border-gold/30 hover:border-gold/70'}`}
+                          disabled={!availableOtpChannels[channel.key]}
+                          className={`px-3 py-2 rounded-lg text-sm border transition ${otpChannel === channel.key ? 'bg-gold text-[#0a0a23] border-gold' : 'text-white/80 border-gold/30 hover:border-gold/70'} ${!availableOtpChannels[channel.key] ? 'opacity-40 cursor-not-allowed' : ''}`}
                         >
-                          {channel.label}
+                          {channel.label}{!availableOtpChannels[channel.key] ? ' (Not Configured)' : ''}
                         </button>
                       ))}
                     </div>
