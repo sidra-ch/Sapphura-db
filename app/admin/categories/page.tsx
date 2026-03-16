@@ -40,18 +40,18 @@ export default function CategoriesPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a23]">
-      <div className="p-4 lg:p-8">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8">
-          <div className="flex items-center gap-4">
+      <div className="p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 lg:mb-8">
+          <div className="flex items-start sm:items-center gap-4">
             <Link href="/admin" className="p-2 bg-[#1a1a40] rounded-lg text-gold hover:bg-gold/20 transition">
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-white">Categories</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">Categories</h1>
               <p className="text-white/50">Manage product categories</p>
             </div>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-gold text-[#0a0a23] rounded-lg font-semibold hover:bg-yellow-400 transition-colors">
+          <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-gold text-[#0a0a23] rounded-lg font-semibold hover:bg-yellow-400 transition-colors">
             <Plus className="w-5 h-5" /> Add Category
           </button>
         </div>
@@ -67,7 +67,7 @@ export default function CategoriesPage() {
           />
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {filteredCategories.map((category, index) => (
             <motion.div
               key={category.id}
@@ -78,13 +78,13 @@ export default function CategoriesPage() {
             >
               <div className="relative h-32">
                 <img src={category.image} alt={category.name} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                <div className="absolute inset-0 bg-black/50 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                   <button className="p-2 bg-gold text-[#0a0a23] rounded-full hover:scale-110 transition-transform"><Edit className="w-4 h-4" /></button>
                   <button className="p-2 bg-red-500 text-white rounded-full hover:scale-110 transition-transform"><Trash2 className="w-4 h-4" /></button>
                 </div>
               </div>
               <div className="p-4">
-                <h3 className="text-gold font-bold text-lg">{category.name}</h3>
+                <h3 className="text-gold font-bold text-base sm:text-lg">{category.name}</h3>
                 <p className="text-white/50 text-sm">{category.products} products</p>
               </div>
             </motion.div>

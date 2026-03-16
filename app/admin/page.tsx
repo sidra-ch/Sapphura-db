@@ -213,10 +213,10 @@ export default function AdminPage() {
           </div>
         </header>
 
-        <div className="p-4 lg:p-8">
-          <header className="hidden lg:flex justify-between items-center mb-8">
+        <div className="p-4 sm:p-6 lg:p-8">
+          <header className="hidden lg:flex justify-between items-center mb-6 lg:mb-8">
             <div>
-              <h2 className="text-2xl lg:text-3xl font-bold text-white">Dashboard</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-white">Dashboard</h2>
               <p className="text-white/50">Welcome back, {user.name || 'Admin'}</p>
             </div>
             <div className="flex items-center gap-4">

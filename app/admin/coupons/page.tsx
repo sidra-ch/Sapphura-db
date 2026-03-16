@@ -20,18 +20,18 @@ export default function CouponsPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a23]">
-      <div className="p-4 lg:p-8">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8">
-          <div className="flex items-center gap-4">
+      <div className="p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 lg:mb-8">
+          <div className="flex items-start sm:items-center gap-4">
             <Link href="/admin" className="p-2 bg-[#1a1a40] rounded-lg text-gold hover:bg-gold/20 transition">
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-white">Coupons</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">Coupons</h1>
               <p className="text-white/50">Manage discount coupons</p>
             </div>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-gold text-[#0a0a23] rounded-lg font-semibold hover:bg-yellow-400 transition">
+          <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-gold text-[#0a0a23] rounded-lg font-semibold hover:bg-yellow-400 transition">
             <Plus className="w-5 h-5" /> Create Coupon
           </button>
         </div>
@@ -46,13 +46,13 @@ export default function CouponsPage() {
               className="bg-[#1a1a40] border border-gold/20 rounded-xl p-4 lg:p-6 hover:border-gold transition"
             >
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 min-w-0">
                   <div className="p-3 bg-gold/20 rounded-lg">
                     <Tag className="w-6 h-6 text-gold" />
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-gold font-bold text-xl">{coupon.code}</h3>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-gold font-bold text-xl break-all">{coupon.code}</h3>
                       <span className={`px-2 py-1 rounded text-xs ${coupon.status === 'Active' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
                         {coupon.status}
                       </span>
@@ -60,7 +60,7 @@ export default function CouponsPage() {
                     <p className="text-white/50 text-sm">{coupon.discount} discount • Min order: ${coupon.minOrder}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto justify-between sm:justify-start">
                   <div className="text-center">
                     <p className="text-white font-bold">{coupon.used}/{coupon.maxUses}</p>
                     <p className="text-white/50 text-xs">Uses</p>

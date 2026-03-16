@@ -323,20 +323,20 @@ export default function ProductsPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a23]">
-      <div className="p-4 lg:p-8">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8">
+      <div className="p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 lg:mb-8">
           <div className="flex items-center gap-4">
             <Link href="/admin" className="p-2 bg-[#1a1a40] rounded-lg text-gold hover:bg-gold/20 transition">
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-white">Products</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">Products</h1>
               <p className="text-white/50">Manage your product catalog</p>
             </div>
           </div>
           <button
             onClick={openAddModal}
-            className="flex items-center gap-2 px-4 py-2 bg-gold text-[#0a0a23] rounded-lg font-semibold hover:bg-yellow-400 transition"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-gold text-[#0a0a23] rounded-lg font-semibold hover:bg-yellow-400 transition"
           >
             <Plus className="w-5 h-5" />
             Add Product
@@ -354,12 +354,12 @@ export default function ProductsPage() {
               className="w-full pl-10 pr-4 py-3 bg-[#1a1a40] border border-gold/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-gold"
             />
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-2 overflow-x-auto pb-1">
             {categoryNames.slice(0, 6).map((cat) => (
               <button
                 key={cat}
                 onClick={() => setCategoryFilter(cat)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition ${
                   categoryFilter === cat
                     ? 'bg-gold text-[#0a0a23]'
                     : 'bg-[#1a1a40] text-white/70 hover:bg-gold/20 hover:text-gold border border-gold/20'
@@ -385,7 +385,7 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
           <AnimatePresence>
             {filteredProducts.map((product, index) => (
               <motion.div
@@ -449,11 +449,11 @@ export default function ProductsPage() {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-[#1a1a40] border border-gold/20 rounded-2xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+                className="bg-[#1a1a40] border border-gold/20 rounded-2xl p-4 sm:p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-gold">Add New Product</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-gold">Add New Product</h2>
                   <button onClick={closeAddModal} className="text-white/70 hover:text-white">
                     <X className="w-6 h-6" />
                   </button>
@@ -636,7 +636,7 @@ export default function ProductsPage() {
                   {formError && <p className="text-red-400 text-sm">{formError}</p>}
                   {formMessage && <p className="text-green-400 text-sm">{formMessage}</p>}
 
-                  <div className="flex gap-4 pt-4">
+                  <div className="flex flex-col sm:flex-row gap-4 pt-4">
                     <button
                       type="button"
                       onClick={closeAddModal}

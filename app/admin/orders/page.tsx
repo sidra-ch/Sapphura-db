@@ -115,18 +115,18 @@ export default function OrdersPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a23]">
-      <div className="p-4 lg:p-8">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8">
-          <div className="flex items-center gap-4">
+      <div className="p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 lg:mb-8">
+          <div className="flex items-start sm:items-center gap-4">
             <Link href="/admin" className="p-2 bg-[#1a1a40] rounded-lg text-gold hover:bg-gold/20 transition">
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-white">Orders</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">Orders</h1>
               <p className="text-white/50">Manage all customer orders</p>
             </div>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-gold text-[#0a0a23] rounded-lg font-semibold hover:bg-yellow-400 transition">
+          <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-gold text-[#0a0a23] rounded-lg font-semibold hover:bg-yellow-400 transition">
             <Download className="w-5 h-5" />
             Export
           </button>
@@ -185,7 +185,7 @@ export default function OrdersPage() {
                           <StatusIcon className="w-6 h-6" />
                         </div>
                         <div>
-                          <div className="flex items-center gap-3">
+                          <div className="flex flex-wrap items-center gap-3">
                             <h3 className="text-gold font-bold text-lg">{order.id}</h3>
                             <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                               {order.status}
@@ -195,7 +195,7 @@ export default function OrdersPage() {
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-6">
+                      <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto justify-between sm:justify-start">
                         <div className="text-right">
                           <p className="text-white font-bold text-xl">${order.total}</p>
                           <p className="text-white/50 text-sm">{order.items.length} items</p>
@@ -230,10 +230,10 @@ export default function OrdersPage() {
                               </h4>
                               <div className="space-y-3">
                                 {order.items.map((item, idx) => (
-                                  <div key={idx} className="flex items-center gap-3 p-2 bg-[#1a1a40] rounded-lg">
+                                  <div key={idx} className="flex items-center gap-3 p-2 bg-[#1a1a40] rounded-lg min-w-0">
                                     <img src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />
-                                    <div className="flex-1">
-                                      <p className="text-white text-sm font-medium">{item.name}</p>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-white text-sm font-medium truncate">{item.name}</p>
                                       <p className="text-white/50 text-xs">Qty: {item.quantity}</p>
                                     </div>
                                     <p className="text-gold font-bold">${item.price * item.quantity}</p>
