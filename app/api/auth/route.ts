@@ -137,7 +137,7 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      const sentChannels = deliveryResults.filter((item) => item.sent).map((item) => item.channel);
+      const sentChannels = deliveryResults.filter((item: any) => item.sent).map((item: any) => item.channel);
       if (sentChannels.length === 0 && otpChannel !== 'email') {
         try {
           await sendEmail({
@@ -158,8 +158,8 @@ export async function POST(req: NextRequest) {
 
       if (sentChannels.length === 0) {
         const reasons = deliveryResults
-          .filter((item) => !item.sent)
-          .map((item) => `${item.channel}: ${item.error || 'delivery failed'}`)
+          .filter((item: any) => !item.sent)
+          .map((item: any) => `${item.channel}: ${item.error || 'delivery failed'}`)
           .join(' | ');
         return NextResponse.json(
           { error: reasons || 'Failed to deliver OTP on selected channel(s)', delivery: deliveryResults },
@@ -400,7 +400,7 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      const sentChannels = deliveryResults.filter((item) => item.sent).map((item) => item.channel);
+      const sentChannels = deliveryResults.filter((item: any) => item.sent).map((item: any) => item.channel);
       if (sentChannels.length === 0 && otpChannel !== 'email') {
         try {
           await sendEmail({
@@ -421,8 +421,8 @@ export async function POST(req: NextRequest) {
 
       if (sentChannels.length === 0) {
         const reasons = deliveryResults
-          .filter((item) => !item.sent)
-          .map((item) => `${item.channel}: ${item.error || 'delivery failed'}`)
+          .filter((item: any) => !item.sent)
+          .map((item: any) => `${item.channel}: ${item.error || 'delivery failed'}`)
           .join(' | ');
         return NextResponse.json(
           { error: reasons || 'Failed to deliver OTP on selected channel(s)', delivery: deliveryResults },

@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json({
-      products: products.map((p) => ({
+      products: products.map((p: any) => ({
         id: p.id,
         name: p.name,
         slug: p.slug,

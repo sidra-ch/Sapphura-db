@@ -137,7 +137,7 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      const sentChannels = results.filter((item) => item.sent).map((item) => item.channel);
+      const sentChannels = results.filter((item: any) => item.sent).map((item: any) => item.channel);
       if (sentChannels.length === 0 && channel !== 'email') {
         try {
           await sendEmail({
@@ -158,8 +158,8 @@ export async function POST(req: NextRequest) {
 
       if (sentChannels.length === 0) {
         const reasons = results
-          .filter((item) => !item.sent)
-          .map((item) => `${item.channel}: ${item.error || 'delivery failed'}`)
+          .filter((item: any) => !item.sent)
+          .map((item: any) => `${item.channel}: ${item.error || 'delivery failed'}`)
           .join(' | ');
         return NextResponse.json(
           {
