@@ -10,8 +10,9 @@ import 'react-loading-skeleton/dist/skeleton.css';
 import { useCart } from '../../../components/cart/CartContext';
 import { useWishlist } from '../../../components/wishlist/WishlistContext';
 import { PRODUCT_BY_SLUG } from '../../../lib/products-catalog';
+import { FALLBACK_PRODUCT_IMAGE } from '../../../lib/media';
 
-const FALLBACK_IMAGE = 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569411/neckles-1_hpggw5.jpg';
+const FALLBACK_IMAGE = FALLBACK_PRODUCT_IMAGE;
 
 export default function ProductDetailPage() {
   const params = useParams();

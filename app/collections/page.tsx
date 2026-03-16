@@ -10,9 +10,19 @@ import 'react-loading-skeleton/dist/skeleton.css';
 import { useCart } from '../../components/cart/CartContext';
 import { useWishlist } from '../../components/wishlist/WishlistContext';
 import { PRODUCT_CATALOG } from '../../lib/products-catalog';
+import { FALLBACK_PRODUCT_IMAGE } from '../../lib/media';
 
 const products = PRODUCT_CATALOG;
-const FALLBACK_IMAGE = 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569411/neckles-1_hpggw5.jpg';
+const FALLBACK_IMAGE = FALLBACK_PRODUCT_IMAGE;
+const LIVE_IMAGE_POOL = [
+  'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635074/newcollection-1_w3fvox.jpg',
+  'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635077/newcollection-3_tacjvs.jpg',
+  'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635070/neckles-2_ifgegk.jpg',
+  'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635113/suit-20_rquv3r.jpg',
+  'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635056/earing-2_rst8xu.jpg',
+  'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635036/bangals-2_wjknoh.jpg',
+  'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635512/summer-4_ga77ea.jpg',
+];
 
 const categories = ['All', 'Jewelry', 'Abaya', 'Accessories', 'Clothing', 'Makeup'];
 const priceRanges = ['All', 'Under $100', '$100 - $200', '$200 - $300', 'Over $300'];
@@ -98,10 +108,24 @@ function CollectionsContent() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [galleryProduct]);
 
-  const getProductImage = (images: string[]) => {
-    if (!images || !images.length) return FALLBACK_IMAGE;
-    const firstImage = images[0];
-    return typeof firstImage === 'string' && firstImage.startsWith('http') ? firstImage : FALLBACK_IMAGE;
+  const normalizeCatalogImage = (imageUrl: string | undefined, seed = 0) => {
+    const fallback = LIVE_IMAGE_POOL[seed % LIVE_IMAGE_POOL.length] || FALLBACK_IMAGE;
+    if (!imageUrl) return fallback;
+
+    const normalized = imageUrl.trim();
+    if (!normalized.startsWith('http')) return fallback;
+
+    // Older generated pools contain versioned URLs that now 404.
+    if (normalized.includes('/v177356') || normalized.includes('/v177300')) {
+      return fallback;
+    }
+
+    return normalized;
+  };
+
+  const getProductImage = (images: string[], seed = 0) => {
+    if (!images || !images.length) return normalizeCatalogImage(undefined, seed);
+    return normalizeCatalogImage(images[0], seed);
   };
 
   const getCategoryName = (categoryId: number) => {
@@ -362,8 +386,10 @@ function CollectionsContent() {
             ) : (
               sortedProducts.map((product, index) => {
                 const inWishlist = isInWishlist(product.id);
-                const productImage = getProductImage(product.images);
-                const productGalleryImages = product.images.length ? product.images : [FALLBACK_IMAGE];
+                const productImage = getProductImage(product.images, index);
+                const productGalleryImages = (product.images.length ? product.images : [FALLBACK_IMAGE]).map((img, imgIdx) =>
+                  normalizeCatalogImage(img, index + imgIdx)
+                );
                 const categoryName = getCategoryName(product.categoryId);
                 return (
               <motion.div
