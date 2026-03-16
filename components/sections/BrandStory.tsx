@@ -86,24 +86,24 @@ export default function BrandStory() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-4">
                 <img 
-                  src="https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569412/neckles-2_nwgwbk.jpg" 
+                  src="https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635070/neckles-2_ifgegk.jpg" 
                   alt="Jewelry" 
                   className="rounded-xl border-2 border-gold/30"
                 />
                 <img 
-                  src="https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569423/suit-30_mm11yj.jpg" 
+                  src="https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635129/suit-30_gdgbdt.jpg" 
                   alt="Fashion" 
                   className="rounded-xl border-2 border-gold/30"
                 />
               </div>
               <div className="space-y-4 pt-8">
                 <img 
-                  src="https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569402/bracelet-1_n7qbu8.jpg" 
+                  src="https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635043/bracelet-1_eb7gcf.jpg" 
                   alt="Accessories" 
                   className="rounded-xl border-2 border-gold/30"
                 />
                 <img 
-                  src="https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569401/bangals-1_gtyjuw.jpg" 
+                  src="https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635036/bangals-1_d4pzeq.jpg" 
                   alt="Craft" 
                   className="rounded-xl border-2 border-gold/30"
                 />

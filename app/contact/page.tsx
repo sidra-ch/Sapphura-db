@@ -40,8 +40,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="text-gold font-bold">Email</h3>
-                  <p className="text-white/70">info@sapphura.com</p>
-                  <p className="text-white/70">support@sapphura.com</p>
+                  <p className="text-white/70">admin@sapphura.com</p>
                 </div>
               </div>
               
@@ -115,7 +114,7 @@ export default function ContactPage() {
                 <input 
                   type="email" 
                   className="w-full px-4 py-3 bg-[#0B1C3F] border border-gold/30 rounded-lg text-white focus:border-gold focus:outline-none"
-                  placeholder="john@example.com"
+                  placeholder="Enter your email address"
                 />
               </div>
               <div>

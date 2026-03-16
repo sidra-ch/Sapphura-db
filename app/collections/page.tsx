@@ -123,6 +123,14 @@ function CollectionsContent() {
     setGalleryImageIndex(0);
   };
 
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category);
+    // Reset collection-level filtering when user chooses All categories.
+    if (category === 'All') {
+      setSelectedCollection('all');
+    }
+  };
+
   const matchesCollection = (product: Product, collectionKey: string) => {
     const collectionSlugMap: Record<string, string[]> = {
       suits: ['navy-velvet-abaya', 'silk-abaya-set', 'royal-abaya', 'summer-suit', 'party-wear-saree'],
@@ -220,12 +228,24 @@ function CollectionsContent() {
               <Filter className="w-4 h-4" />
               Filters
             </button>
+
+            {selectedCollection !== 'all' && (
+              <button
+                onClick={() => {
+                  setSelectedCollection('all');
+                  setSelectedCategory('All');
+                }}
+                className="px-4 py-2 rounded-lg border border-gold/40 text-gold hover:bg-gold hover:text-[#0a0a23] transition"
+              >
+                All Collections
+              </button>
+            )}
             
             <div className="hidden md:flex items-center gap-2 flex-wrap">
               {categories.slice(0, 6).map(cat => (
                 <button
                   key={cat}
-                  onClick={() => setSelectedCategory(cat)}
+                  onClick={() => handleCategorySelect(cat)}
                   className={`px-4 py-2 rounded-lg transition ${
                     selectedCategory === cat
                       ? 'bg-gold text-[#0a0a23]'
@@ -286,7 +306,7 @@ function CollectionsContent() {
                   {categories.map(cat => (
                     <button
                       key={cat}
-                      onClick={() => setSelectedCategory(cat)}
+                      onClick={() => handleCategorySelect(cat)}
                       className={`px-3 py-1 rounded-full text-sm transition ${
                         selectedCategory === cat
                           ? 'bg-gold text-[#0a0a23]'
@@ -335,7 +355,7 @@ function CollectionsContent() {
             {isLoading ? (
               Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="bg-[#1a1a40] border border-gold/20 rounded-xl overflow-hidden">
-                  <Skeleton height={250} baseColor="#0a0a23" highlightColor="#1a1a40" />
+                  <Skeleton height={190} baseColor="#0a0a23" highlightColor="#1a1a40" />
                   <div className="p-4">
                     <Skeleton height={16} width="60%" baseColor="#0a0a23" highlightColor="#1a1a40" />
                     <Skeleton height={20} width="80%" baseColor="#0a0a23" highlightColor="#1a1a40" className="mt-2" />
@@ -355,14 +375,18 @@ function CollectionsContent() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
               >
-                <div className="bg-[#1a1a40] border border-gold/20 rounded-xl overflow-hidden hover:border-gold transition group">
+                <div className="bg-[#1a1a40] border border-gold/20 rounded-xl overflow-hidden hover:border-gold transition group h-full flex flex-col">
                     <div className="relative">
                       <img
                         src={productImage}
                         alt={product.name}
-                        className="w-full h-64 object-cover group-hover:scale-110 transition duration-300"
+                        className="w-full h-44 object-cover group-hover:scale-110 transition duration-300"
                         loading="lazy"
                       />
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-3 py-2">
+                        <h3 className="text-white text-sm font-semibold line-clamp-1">{product.name}</h3>
+                        <p className="text-white/80 text-[11px] line-clamp-1">{categoryName}</p>
+                      </div>
                       <span className="absolute top-3 left-3 bg-gold text-[#0a0a23] text-xs font-bold px-2 py-1 rounded">
                         {categoryName}
                       </span>
@@ -424,17 +448,16 @@ function CollectionsContent() {
                       </div>
                     </div>
                     <Link href={`/product/${product.slug}`}>
-                    <div className="p-4">
-                      <h3 className="text-gold font-semibold mb-1">{product.name}</h3>
+                    <div className="p-3 flex-1 flex flex-col">
                       <p className="text-white/60 text-xs mb-2">{product.images.length} images</p>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-white font-bold text-xl">${product.price}</span>
+                      <div className="flex items-center justify-between gap-2 mt-auto">
+                        <span className="text-white font-bold text-lg">${product.price}</span>
                         <button
                           onClick={(e) => {
                             e.preventDefault();
                             openGallery(product, 0);
                           }}
-                          className="text-xs px-3 py-1.5 rounded-md border border-gold text-gold hover:bg-gold hover:text-[#0a0a23] transition"
+                          className="text-[11px] px-2.5 py-1.5 rounded-md border border-gold text-gold hover:bg-gold hover:text-[#0a0a23] transition"
                         >
                           Show More
                         </button>

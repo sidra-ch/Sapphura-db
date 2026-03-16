@@ -23,7 +23,7 @@ export default function QuickViewModal({ product, open, onClose }: { product: an
           exit={{ scale: 0.8 }}
         >
           <button onClick={onClose} className="absolute top-4 right-4 text-gold text-xl font-bold">×</button>
-          <img src={product.image} alt={product.name} className="w-full h-56 object-cover rounded-xl mb-6 border border-gold" />
+          <img src={product.image} alt={product.name} className="w-full h-44 object-cover rounded-xl mb-5 border border-gold" />
           <h2 className="text-2xl font-bold text-gold mb-2">{product.name}</h2>
           <div className="flex items-center gap-2 mb-2">
             <span className="text-lg font-bold text-gold">{product.discountPrice || product.price}</span>

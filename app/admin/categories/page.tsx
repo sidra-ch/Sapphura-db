@@ -1,23 +1,40 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Search, Plus, Edit, Trash2 } from 'lucide-react';
 
-const categories = [
-  { id: 1, name: 'Necklaces', products: 45, image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=200&h=200&fit=crop' },
-  { id: 2, name: 'Earrings', products: 38, image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=200&h=200&fit=crop' },
-  { id: 3, name: 'Rings', products: 28, image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=200&h=200&fit=crop' },
-  { id: 4, name: 'Bracelets', products: 32, image: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=200&h=200&fit=crop' },
-  { id: 5, name: 'Bangles', products: 50, image: 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=200&h=200&fit=crop' },
-  { id: 6, name: 'Bridal Sets', products: 25, image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=200&h=200&fit=crop' },
-  { id: 7, name: 'Abayas', products: 42, image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=200&h=200&fit=crop' },
-  { id: 8, name: 'Suits', products: 35, image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=200&h=200&fit=crop' },
-];
+type CategoryRow = {
+  id: number;
+  name: string;
+  products: number;
+  image: string;
+};
 
 export default function CategoriesPage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [categories, setCategories] = useState<CategoryRow[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadCategories() {
+      try {
+        const res = await fetch('/api/categories', { cache: 'no-store' });
+        const data = await res.json();
+        if (!res.ok || !Array.isArray(data.categories) || !mounted) return;
+        setCategories(data.categories);
+      } catch {
+        // keep page stable
+      }
+    }
+
+    loadCategories();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const filteredCategories = categories.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()));
 

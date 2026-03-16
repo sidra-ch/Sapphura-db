@@ -11,7 +11,7 @@ const testimonials = [
     location: 'Lahore, Pakistan',
     rating: 5,
     comment: 'Absolutely stunning jewelry! The quality exceeded my expectations. Fast delivery and beautiful packaging. Will definitely shop again!',
-    image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569411/neckles-1_hpggw5.jpg',
+    image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635069/neckles-1_rbhzgd.jpg',
     verified: true,
     date: 'January 2024'
   },
@@ -21,7 +21,7 @@ const testimonials = [
     location: 'Dubai, UAE',
     rating: 5,
     comment: 'The best online shopping experience. Products are exactly as shown, and the gold quality is exceptional. Highly recommended!',
-    image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569408/earing-1_onddex.jpg',
+    image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635055/earing-1_iobl42.jpg',
     verified: true,
     date: 'January 2024'
   },
@@ -31,7 +31,7 @@ const testimonials = [
     location: 'Karachi, Pakistan',
     rating: 4,
     comment: 'Great customer service and beautiful collection. The abaya quality is premium. Will order more soon!',
-    image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569423/suit-31_ty5xq7.jpg',
+    image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635130/suit-31_nnxefy.jpg',
     verified: true,
     date: 'December 2023'
   },
@@ -41,7 +41,7 @@ const testimonials = [
     location: 'London, UK',
     rating: 5,
     comment: 'Living abroad, I was skeptical about online jewelry shopping. But Sappura delivered perfectly to the UK. Love my necklace!',
-    image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569402/bracelet-1_n7qbu8.jpg',
+    image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635043/bracelet-1_eb7gcf.jpg',
     verified: true,
     date: 'December 2023'
   },
@@ -59,7 +59,7 @@ export default function Testimonials() {
   };
 
   return (
-    <section className="py-20 bg-gradient-to-b from-[#0a0a23] to-[#1a1a40]">
+    <section className="py-12 bg-gradient-to-b from-[#0a0a23] to-[#1a1a40]">
       <div className="max-w-7xl mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -83,11 +83,14 @@ export default function Testimonials() {
             <Quote className="absolute top-6 left-6 w-16 h-16 text-gold/20" />
             
             <div className="flex flex-col md:flex-row gap-8 items-center">
-              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gold flex-shrink-0">
+              <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-gold flex-shrink-0">
                 <img 
                   src={testimonials[currentIndex].image} 
                   alt={testimonials[currentIndex].name}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635069/neckles-1_rbhzgd.jpg';
+                  }}
                 />
               </div>
               

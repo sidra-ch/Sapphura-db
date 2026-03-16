@@ -13,7 +13,6 @@ const orders = [
   { 
     id: 'ORD-001', 
     customer: 'John Doe', 
-    email: 'john@example.com',
     phone: '+92 300 1234567',
     address: '123 Main St, Lahore',
     total: 599, 
@@ -27,7 +26,6 @@ const orders = [
   { 
     id: 'ORD-002', 
     customer: 'Jane Smith', 
-    email: 'jane@example.com',
     phone: '+92 300 2345678',
     address: '456 Oak Ave, Karachi',
     total: 299, 
@@ -40,7 +38,6 @@ const orders = [
   { 
     id: 'ORD-003', 
     customer: 'Mike Johnson', 
-    email: 'mike@example.com',
     phone: '+92 300 3456789',
     address: '789 Pine Rd, Islamabad',
     total: 449, 
@@ -54,7 +51,6 @@ const orders = [
   { 
     id: 'ORD-004', 
     customer: 'Sarah Wilson', 
-    email: 'sarah@example.com',
     phone: '+92 300 4567890',
     address: '321 Elm St, Rawalpindi',
     total: 799, 
@@ -69,7 +65,6 @@ const orders = [
   { 
     id: 'ORD-005', 
     customer: 'Ahmed Khan', 
-    email: 'ahmed@example.com',
     phone: '+92 300 5678901',
     address: '654 Maple Dr, Lahore',
     total: 199, 

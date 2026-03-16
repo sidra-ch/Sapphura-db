@@ -5,14 +5,21 @@ export default function VideoBrandStory() {
   return (
     <section className="relative w-full h-[400px] md:h-[600px] overflow-hidden bg-[#0a0a23]">
       <video
-        src="https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773004789/eid_collection_video_dk9q4l.mp4"
+        src="https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773642077/eid_collection_vl7lxr.mp4"
         autoPlay
         loop
         muted
         playsInline
+        controls
         preload="auto"
+        poster="https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635074/newcollection-1_w3fvox.jpg"
         className="w-full h-full object-cover"
         style={{ maxHeight: "100%", maxWidth: "100%" }}
+        onCanPlay={(e) => {
+          e.currentTarget.play().catch(() => {
+            // manual controls remain available
+          });
+        }}
       />
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="bg-black/60 rounded-xl p-8 md:p-16 shadow-xl text-center">

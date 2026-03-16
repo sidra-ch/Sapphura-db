@@ -15,7 +15,7 @@ export default function SocialIcons() {
     { icon: TikTokIcon, href: 'https://tiktok.com/@sapphura', label: 'TikTok' },
     { icon: Twitter, href: 'https://twitter.com/sapphura', label: 'Twitter' },
     { icon: Youtube, href: 'https://youtube.com/sapphura', label: 'YouTube' },
-    { icon: Mail, href: 'mailto:info@sapphura.com', label: 'Email' },
+    { icon: Mail, href: 'mailto:admin@sapphura.com', label: 'Email' },
   ];
 
   return (

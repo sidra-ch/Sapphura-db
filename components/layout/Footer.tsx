@@ -16,10 +16,10 @@ export default function Footer() {
 				   <div>
 					   <h4 className="text-gold font-bold mb-4">Quick Links</h4>
 					   <ul className="space-y-2">
-						   <li><a href="/bangles" className="hover:text-gold transition">Bangles</a></li>
-						   <li><a href="/bracelets" className="hover:text-gold transition">Bracelets</a></li>
-						   <li><a href="/necklace-sets" className="hover:text-gold transition">Necklace Sets</a></li>
-						   <li><a href="/earrings" className="hover:text-gold transition">Earrings</a></li>
+						   <li><a href="/collections?category=bangles" className="hover:text-gold transition">Bangles</a></li>
+						   <li><a href="/collections?category=bracelets" className="hover:text-gold transition">Bracelets</a></li>
+						   <li><a href="/collections?category=necklaces" className="hover:text-gold transition">Necklace Sets</a></li>
+						   <li><a href="/collections?category=earrings" className="hover:text-gold transition">Earrings</a></li>
 					   </ul>
 				   </div>
 				   <div>
@@ -28,7 +28,7 @@ export default function Footer() {
 						   <li><a href="/about" className="hover:text-gold transition">About Us</a></li>
 						   <li><a href="/contact" className="hover:text-gold transition">Contact Us</a></li>
 						   <li><a href="/blogs" className="hover:text-gold transition">Blogs</a></li>
-						   <li><a href="/faqs" className="hover:text-gold transition">FAQs</a></li>
+						   <li><a href="/faq" className="hover:text-gold transition">FAQs</a></li>
 					   </ul>
 				   </div>
 				   <div>

@@ -1,49 +1,53 @@
 "use client";
 import { motion } from 'framer-motion';
+import CompactCommerceCard from '../ui/CompactCommerceCard';
 
 const looks = [
 	{
 		title: 'Gold & Navy Harmony',
-		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569414/newcollection-1_jthfl7.jpg',
+		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635074/newcollection-1_w3fvox.jpg',
 		description: 'Pair gold jewelry with navy abaya for a timeless look.'
 	},
 	{
 		title: 'Ramadan Chic',
-		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569414/newcollection-2_pupo2j.jpg',
+		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635075/newcollection-2_y84q01.jpg',
 		description: 'Celebrate Ramadan in style with our exclusive collection.'
 	},
 	{
 		title: 'Summer Breeze',
-		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569424/summer-4_qa42me.jpg',
+		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635512/summer-4_ga77ea.jpg',
 		description: 'Light and elegant summer outfit ideas.'
 	},
 	{
 		title: 'Winter Elegance',
-		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569425/wintercollection-2_ij3z2z.jpg',
+		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635133/suit-33_oy1nkf.jpg',
 		description: 'Luxurious winter collection for special occasions.'
 	}
 ];
 
 export default function ShopTheLook() {
 	return (
-		<section className="py-16 px-4 md:px-16 bg-[#0a0a23]">
-			<h2 className="text-3xl md:text-5xl font-bold text-gold mb-10 text-center">Shop The Look</h2>
-			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+		<section className="py-6 px-4 md:px-8 bg-[#0a0a23]">
+			<h2 className="text-3xl md:text-4xl font-bold text-gold mb-6 text-center">Shop The Look</h2>
+			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
 				{looks.map((look, idx) => (
 					<motion.div
 						key={look.title}
-						className="rounded-xl overflow-hidden shadow-lg bg-[#1a1a40] border border-gold flex flex-col items-center"
+						className="h-full"
 						initial={{ opacity: 0, y: 40 }}
 						whileInView={{ opacity: 1, y: 0 }}
 						transition={{ duration: 0.5, delay: idx * 0.1 }}
 						viewport={{ once: true }}
+						whileHover={{ y: -8 }}
 					>
-						<img src={look.image} alt={look.title} className="w-full h-48 object-cover" />
-						<div className="p-4 flex flex-col items-center">
-							<h3 className="text-lg font-semibold text-gold mb-1">{look.title}</h3>
-							<p className="text-white/70 text-sm mb-2 text-center">{look.description}</p>
-							<button className="px-4 py-2 rounded-full bg-gold text-[#0a0a23] font-semibold text-sm hover:bg-yellow-400 transition">Shop This Look</button>
-						</div>
+						<CompactCommerceCard
+							title={look.title}
+							description={look.description}
+							image={look.image}
+							ctaLabel="Shop This Look"
+							contentPlacement="overlay"
+							className="bg-[#1a1a40]"
+						/>
 					</motion.div>
 				))}
 			</div>

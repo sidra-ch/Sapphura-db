@@ -22,32 +22,42 @@ const menuItems = [
   { id: 'settings', label: 'Settings', icon: Settings, href: '/admin/settings' },
 ];
 
-const stats = [
-  { label: 'Total Sales', value: '$12,450', change: '+12%', icon: DollarSign, color: 'text-green-400', trend: 'up' },
-  { label: 'Total Orders', value: '156', change: '+8%', icon: ShoppingCart, color: 'text-blue-400', trend: 'up' },
-  { label: 'Customers', value: '89', change: '+15%', icon: Users, color: 'text-purple-400', trend: 'up' },
-  { label: 'Revenue', value: '$8,230', change: '+22%', icon: TrendingUp, color: 'text-gold', trend: 'up' },
-];
+type DashboardStat = {
+  label: string;
+  value: string;
+  change: string;
+  icon: typeof DollarSign;
+  color: string;
+};
 
-const recentOrders = [
-  { id: 'ORD-001', customer: 'John Doe', total: 599, status: 'Delivered', date: '2024-01-15', items: 3 },
-  { id: 'ORD-002', customer: 'Jane Smith', total: 299, status: 'Shipped', date: '2024-01-14', items: 1 },
-  { id: 'ORD-003', customer: 'Mike Johnson', total: 449, status: 'Processing', date: '2024-01-13', items: 2 },
-  { id: 'ORD-004', customer: 'Sarah Wilson', total: 799, status: 'Pending', date: '2024-01-12', items: 4 },
-  { id: 'ORD-005', customer: 'Ahmed Khan', total: 199, status: 'Delivered', date: '2024-01-11', items: 1 },
-];
+type RecentOrderRow = {
+  id: string;
+  customer: string;
+  total: number;
+  status: string;
+  date: string;
+};
 
-const topProducts = [
-  { id: 1, name: 'Gold Crescent Necklace', sold: 45, revenue: 13455, image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=100&h=100&fit=crop' },
-  { id: 2, name: 'Diamond Bracelet', sold: 38, revenue: 15162, image: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=100&h=100&fit=crop' },
-  { id: 3, name: 'Bridal Necklace Set', sold: 25, revenue: 14975, image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=100&h=100&fit=crop' },
-  { id: 4, name: 'Royal Embroidered Abaya', sold: 32, revenue: 7968, image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=100&h=100&fit=crop' },
-];
+type TopProductRow = {
+  id: number;
+  name: string;
+  sold: number;
+  revenue: number;
+  image: string;
+};
 
 export default function AdminPage() {
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [stats, setStats] = useState<DashboardStat[]>([
+    { label: 'Total Sales', value: '$0', change: 'Live', icon: DollarSign, color: 'text-green-400' },
+    { label: 'Total Orders', value: '0', change: 'Live', icon: ShoppingCart, color: 'text-blue-400' },
+    { label: 'Customers', value: '0', change: 'Live', icon: Users, color: 'text-purple-400' },
+    { label: 'Revenue', value: '$0', change: 'Live', icon: TrendingUp, color: 'text-gold' },
+  ]);
+  const [recentOrders, setRecentOrders] = useState<RecentOrderRow[]>([]);
+  const [topProducts, setTopProducts] = useState<TopProductRow[]>([]);
 
   useEffect(() => {
     if (!user || user.role !== 'admin') {
@@ -55,16 +65,87 @@ export default function AdminPage() {
     }
   }, [user]);
 
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadDashboardData() {
+      try {
+        const [ordersRes, usersRes, productsRes] = await Promise.all([
+          fetch('/api/orders', { cache: 'no-store' }),
+          fetch('/api/users', { cache: 'no-store' }),
+          fetch('/api/products', { cache: 'no-store' }),
+        ]);
+
+        const [ordersData, usersData, productsData] = await Promise.all([
+          ordersRes.json(),
+          usersRes.json(),
+          productsRes.json(),
+        ]);
+
+        if (!mounted) return;
+
+        const orders = Array.isArray(ordersData.orders) ? ordersData.orders : [];
+        const users = Array.isArray(usersData.users) ? usersData.users : [];
+        const products = Array.isArray(productsData.products) ? productsData.products : [];
+
+        const totalSales = orders.reduce((sum: number, o: { total: number }) => sum + (Number(o.total) || 0), 0);
+        const paidRevenue = orders
+          .filter((o: { paymentStatus: string }) => o.paymentStatus === 'paid')
+          .reduce((sum: number, o: { total: number }) => sum + (Number(o.total) || 0), 0);
+        const customerCount = users.filter((u: { role: string }) => u.role === 'customer').length;
+
+        setStats([
+          { label: 'Total Sales', value: `$${Math.round(totalSales).toLocaleString()}`, change: 'Live', icon: DollarSign, color: 'text-green-400' },
+          { label: 'Total Orders', value: String(orders.length), change: 'Live', icon: ShoppingCart, color: 'text-blue-400' },
+          { label: 'Customers', value: String(customerCount), change: 'Live', icon: Users, color: 'text-purple-400' },
+          { label: 'Revenue', value: `$${Math.round(paidRevenue).toLocaleString()}`, change: 'Live', icon: TrendingUp, color: 'text-gold' },
+        ]);
+
+        setRecentOrders(
+          orders.slice(0, 5).map((o: { id: number; shippingName?: string | null; total: number; status: string; createdAt: string }) => ({
+            id: `ORD-${String(o.id).padStart(3, '0')}`,
+            customer: o.shippingName || 'Customer',
+            total: Number(o.total) || 0,
+            status: o.status || 'Pending',
+            date: new Date(o.createdAt).toISOString().slice(0, 10),
+          }))
+        );
+
+        setTopProducts(
+          products.slice(0, 4).map((p: { id: number; name: string; image: string; price: number }) => ({
+            id: p.id,
+            name: p.name,
+            sold: 0,
+            revenue: Number(p.price) || 0,
+            image: p.image,
+          }))
+        );
+      } catch {
+        // keep dashboard stable
+      }
+    }
+
+    loadDashboardData();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   if (!user || user.role !== 'admin') {
     return null;
   }
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Delivered': return 'bg-green-500/20 text-green-400';
-      case 'Shipped': return 'bg-blue-500/20 text-blue-400';
-      case 'Processing': return 'bg-yellow-500/20 text-yellow-400';
-      case 'Pending': return 'bg-red-500/20 text-red-400';
+    switch (status.toLowerCase()) {
+      case 'delivered':
+      case 'paid':
+        return 'bg-green-500/20 text-green-400';
+      case 'shipped':
+        return 'bg-blue-500/20 text-blue-400';
+      case 'processing':
+        return 'bg-yellow-500/20 text-yellow-400';
+      case 'pending':
+        return 'bg-red-500/20 text-red-400';
       default: return 'bg-gray-500/20 text-gray-400';
     }
   };
@@ -176,10 +257,10 @@ export default function AdminPage() {
                       <div className={`p-2 lg:p-3 rounded-lg bg-gold/10 ${stat.color}`}>
                         <Icon className="w-4 h-4 lg:w-6 lg:h-6" />
                       </div>
-                      <span className="text-green-400 text-xs lg:text-sm flex items-center gap-1">
-                        {stat.change}
-                        <TrendingUp className="w-3 h-3" />
-                      </span>
+                        <span className="text-green-400 text-xs lg:text-sm flex items-center gap-1">
+                          {stat.change}
+                          <TrendingUp className="w-3 h-3" />
+                        </span>
                     </div>
                     <h3 className="text-lg lg:text-2xl font-bold text-white mb-1">{stat.value}</h3>
                     <p className="text-white/50 text-xs lg:text-sm">{stat.label}</p>
@@ -213,7 +294,7 @@ export default function AdminPage() {
                   </thead>
                   <tbody>
                     {recentOrders.map((order) => (
-                      <motion.tr 
+                      <motion.tr
                         key={order.id} 
                         className="border-b border-gold/10 hover:bg-gold/5 cursor-pointer transition-colors"
                         whileHover={{ backgroundColor: 'rgba(212, 175, 55, 0.1)' }}

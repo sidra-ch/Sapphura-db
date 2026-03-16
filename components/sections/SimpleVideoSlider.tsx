@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 
 const media = [
-  "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773004789/eid_collection_video_dk9q4l.mp4",
+  "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773642089/video-1_n61vcd.mp4",
 ];
 
 export default function SimpleVideoSlider() {
@@ -42,9 +42,16 @@ export default function SimpleVideoSlider() {
           loop={false}
           muted
           playsInline
+          controls
           preload="auto"
+          poster="https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635074/newcollection-1_w3fvox.jpg"
           className="w-full h-full object-cover rounded-xl border-4 border-gold shadow-xl"
           style={{ maxHeight: "100%", maxWidth: "100%" }}
+          onCanPlay={(e) => {
+            e.currentTarget.play().catch(() => {
+              // allow manual play from controls
+            });
+          }}
         />
       ) : (
         <img

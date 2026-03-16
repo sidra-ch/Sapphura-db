@@ -17,15 +17,13 @@ async function main() {
     `);
     console.log('Categories created');
 
-    // Create users
+    // Create admin user only
     await client.query(`
       INSERT INTO "User" (email, password, name, phone, role, "createdAt", "updatedAt") VALUES 
-      ('admin@sapphura.com', '$2a$10$rVQ2YqNxLxL5HxkVxqYxXeF5Yx5YxYxYxYxYxYxYxYxYxYxYxYx', 'Admin User', '+923001234567', 'admin', NOW(), NOW()),
-      ('manager@sapphura.com', '$2a$10$rVQ2YqNxLxL5HxkVxqYxXeF5Yx5YxYxYxYxYxYxYxYxYxYxYxYx', 'Manager User', '+923001234568', 'manager', NOW(), NOW()),
-      ('customer@sapphura.com', '$2a$10$rVQ2YqNxLxL5HxkVxqYxXeF5Yx5YxYxYxYxYxYxYxYxYxYxYxYx', 'Demo Customer', '+923001234569', 'customer', NOW(), NOW())
+      ('admin@sapphura.com', '$2a$10$rVQ2YqNxLxL5HxkVxqYxXeF5Yx5YxYxYxYxYxYxYxYxYxYxYxYx', 'Admin User', '+923001234567', 'admin', NOW(), NOW())
       ON CONFLICT (email) DO NOTHING
     `);
-    console.log('Users created');
+    console.log('Admin user created');
 
     // Create products
     await client.query(`
@@ -43,10 +41,8 @@ async function main() {
     console.log('Products created');
 
     console.log('\n✅ Seed completed!');
-    console.log('Demo accounts:');
+    console.log('Admin account:');
     console.log('  Admin: admin@sapphura.com / 123456');
-    console.log('  Manager: manager@sapphura.com / 123456');
-    console.log('  Customer: customer@sapphura.com / 123456');
   } catch (e) {
     console.error(e);
   } finally {

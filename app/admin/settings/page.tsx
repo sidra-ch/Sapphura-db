@@ -3,10 +3,20 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Save, User, Bell, Shield, Palette, Globe } from 'lucide-react';
+import { ArrowLeft, Save, User, Bell, Shield, Palette, Globe, Smartphone, Loader2 } from 'lucide-react';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('general');
+  const [otpDebug, setOtpDebug] = useState({
+    email: '',
+    phone: '',
+    channel: 'email' as 'email' | 'whatsapp' | 'sms' | 'all',
+    otp: '',
+  });
+  const [otpDebugLoading, setOtpDebugLoading] = useState(false);
+  const [otpDebugMessage, setOtpDebugMessage] = useState('');
+  const [otpDebugError, setOtpDebugError] = useState('');
+  const [otpDebugResponse, setOtpDebugResponse] = useState<string>('');
 
   const tabs = [
     { id: 'general', label: 'General', icon: User },
@@ -14,7 +24,77 @@ export default function SettingsPage() {
     { id: 'security', label: 'Security', icon: Shield },
     { id: 'appearance', label: 'Appearance', icon: Palette },
     { id: 'store', label: 'Store Settings', icon: Globe },
+    { id: 'otp-debug', label: 'OTP Debug', icon: Smartphone },
   ];
+
+  const sendDebugOtp = async () => {
+    setOtpDebugLoading(true);
+    setOtpDebugError('');
+    setOtpDebugMessage('');
+    setOtpDebugResponse('');
+
+    try {
+      const res = await fetch('/api/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'send',
+          email: otpDebug.email,
+          phone: otpDebug.phone,
+          otpChannel: otpDebug.channel,
+          purpose: 'admin-debug',
+        }),
+      });
+
+      const data = await res.json();
+      setOtpDebugResponse(JSON.stringify(data, null, 2));
+
+      if (!res.ok) {
+        setOtpDebugError(data.error || 'Failed to send OTP');
+        return;
+      }
+
+      setOtpDebugMessage(data.message || 'OTP sent successfully');
+    } catch {
+      setOtpDebugError('Failed to send OTP.');
+    } finally {
+      setOtpDebugLoading(false);
+    }
+  };
+
+  const verifyDebugOtp = async () => {
+    setOtpDebugLoading(true);
+    setOtpDebugError('');
+    setOtpDebugMessage('');
+    setOtpDebugResponse('');
+
+    try {
+      const res = await fetch('/api/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'verify',
+          email: otpDebug.email,
+          otp: otpDebug.otp,
+          purpose: 'admin-debug',
+        }),
+      });
+
+      const data = await res.json();
+      setOtpDebugResponse(JSON.stringify(data, null, 2));
+
+      if (!res.ok) {
+        setOtpDebugError(data.error || 'OTP verify failed');
+        return;
+      }
+
+      setOtpDebugMessage(data.message || 'OTP verified successfully');
+    } catch {
+      setOtpDebugError('Failed to verify OTP.');
+    } finally {
+      setOtpDebugLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#0a0a23]">
@@ -61,7 +141,7 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <label className="block text-white/70 text-sm mb-2">Store Email</label>
-                    <input type="email" defaultValue="info@sapphura.com" className="w-full px-4 py-3 bg-[#0a0a23] border border-gold/20 rounded-lg text-white focus:outline-none focus:border-gold" />
+                    <input type="email" defaultValue="admin@sapphura.com" className="w-full px-4 py-3 bg-[#0a0a23] border border-gold/20 rounded-lg text-white focus:outline-none focus:border-gold" />
                   </div>
                   <div>
                     <label className="block text-white/70 text-sm mb-2">Phone Number</label>
@@ -163,6 +243,87 @@ export default function SettingsPage() {
                     <label className="block text-white/70 text-sm mb-2">Free Shipping Threshold</label>
                     <input type="number" defaultValue="500" className="w-full px-4 py-3 bg-[#0a0a23] border border-gold/20 rounded-lg text-white focus:outline-none focus:border-gold" />
                   </div>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'otp-debug' && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <h2 className="text-xl font-bold text-gold mb-3">OTP Delivery Debug</h2>
+                <p className="text-white/60 text-sm mb-6">
+                  OTP is temporarily locked to email delivery mode. Use this panel to send and verify email OTP and inspect response.
+                </p>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Email</label>
+                    <input
+                      type="email"
+                      value={otpDebug.email}
+                      onChange={(e) => setOtpDebug((prev) => ({ ...prev, email: e.target.value }))}
+                      className="w-full px-4 py-3 bg-[#0a0a23] border border-gold/20 rounded-lg text-white focus:outline-none focus:border-gold"
+                      placeholder="customer@email.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Phone (PK)</label>
+                    <input
+                      type="tel"
+                      value={otpDebug.phone}
+                      onChange={(e) => setOtpDebug((prev) => ({ ...prev, phone: e.target.value }))}
+                      className="w-full px-4 py-3 bg-[#0a0a23] border border-gold/20 rounded-lg text-white focus:outline-none focus:border-gold"
+                      placeholder="03344020777 or +923344020777"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">OTP Channel</label>
+                    <p className="px-4 py-3 bg-[#0a0a23] border border-gold/20 rounded-lg text-white/80 text-sm">
+                      EMAIL (temporary mode)
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">OTP Code (for verify)</label>
+                    <input
+                      type="text"
+                      value={otpDebug.otp}
+                      onChange={(e) => setOtpDebug((prev) => ({ ...prev, otp: e.target.value.replace(/\D/g, '').slice(0, 6) }))}
+                      className="w-full px-4 py-3 bg-[#0a0a23] border border-gold/20 rounded-lg text-white focus:outline-none focus:border-gold"
+                      placeholder="6-digit OTP"
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      onClick={sendDebugOtp}
+                      disabled={otpDebugLoading || !otpDebug.email}
+                      className="px-5 py-2.5 bg-gold text-[#0a0a23] rounded-lg font-semibold hover:bg-yellow-400 transition disabled:opacity-60 flex items-center gap-2"
+                    >
+                      {otpDebugLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                      Send OTP
+                    </button>
+                    <button
+                      type="button"
+                      onClick={verifyDebugOtp}
+                      disabled={otpDebugLoading || !otpDebug.email || otpDebug.otp.length !== 6}
+                      className="px-5 py-2.5 border border-gold text-gold rounded-lg font-semibold hover:bg-gold/10 transition disabled:opacity-60"
+                    >
+                      Verify OTP
+                    </button>
+                  </div>
+
+                  {otpDebugMessage && <p className="text-green-400 text-sm">{otpDebugMessage}</p>}
+                  {otpDebugError && <p className="text-red-400 text-sm">{otpDebugError}</p>}
+
+                  {otpDebugResponse && (
+                    <div>
+                      <p className="text-white/70 text-sm mb-2">Latest API Response</p>
+                      <pre className="text-xs text-white/80 bg-[#0a0a23] border border-gold/20 rounded-lg p-3 overflow-auto max-h-56">{otpDebugResponse}</pre>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             )}

@@ -1,20 +1,58 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Search, Plus, Eye, Mail, Phone } from 'lucide-react';
 
-const customers = [
-  { id: 1, name: 'John Doe', email: 'john@example.com', phone: '+92 300 1234567', orders: 5, spent: 2450, joinDate: '2024-01-01', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
-  { id: 2, name: 'Jane Smith', email: 'jane@example.com', phone: '+92 300 2345678', orders: 3, spent: 1890, joinDate: '2024-01-05', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop' },
-  { id: 3, name: 'Mike Johnson', email: 'mike@example.com', phone: '+92 300 3456789', orders: 8, spent: 4520, joinDate: '2023-12-15', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop' },
-  { id: 4, name: 'Sarah Wilson', email: 'sarah@example.com', phone: '+92 300 4567890', orders: 2, spent: 890, joinDate: '2024-01-10', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop' },
-  { id: 5, name: 'Ahmed Khan', email: 'ahmed@example.com', phone: '+92 300 5678901', orders: 12, spent: 6780, joinDate: '2023-11-20', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop' },
-];
+type CustomerRow = {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  orders: number;
+  spent: number;
+  joinDate: string;
+  avatar: string;
+};
 
 export default function CustomersPage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [customers, setCustomers] = useState<CustomerRow[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadCustomers() {
+      try {
+        const res = await fetch('/api/users', { cache: 'no-store' });
+        const data = await res.json();
+        if (!res.ok || !Array.isArray(data.users) || !mounted) return;
+
+        setCustomers(
+          data.users
+            .filter((u: { role: string }) => u.role === 'customer')
+            .map((u: { id: number; name: string | null; email: string; phone: string | null; createdAt: string }) => ({
+              id: u.id,
+              name: u.name || 'Customer',
+              email: u.email,
+              phone: u.phone || 'N/A',
+              orders: 0,
+              spent: 0,
+              joinDate: new Date(u.createdAt).toISOString().slice(0, 10),
+              avatar: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569411/neckles-1_hpggw5.jpg',
+            }))
+        );
+      } catch {
+        // keep page stable
+      }
+    }
+
+    loadCustomers();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const filteredCustomers = customers.filter(c => 
     c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

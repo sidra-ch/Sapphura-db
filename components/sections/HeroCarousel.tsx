@@ -8,27 +8,27 @@ import { Navigation, Pagination, Autoplay } from "swiper/modules";
 
 const slides = [
   {
-    src: "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773004789/eid_collection_video_dk9q4l.mp4",
+    src: "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773642077/eid_collection_vl7lxr.mp4",
     title: "Sapphura Signature Collection",
     description: "Discover timeless elegance with our exclusive signature pieces."
   },
   {
-    src: "https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569414/new-collection_nqgbws.jpg",
+    src: "/winter-collection1.jpeg",
     title: "Winter Collection",
     description: "Warm up your style with luxurious winter jewellery."
   },
   {
-    src: "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773004789/eid_collection_video_dk9q4l.mp4",
+    src: "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773642089/video-1_n61vcd.mp4",
     title: "Designer Bangals",
     description: "Experience the beauty of Kashmiri craftsmanship in every bangle."
   },
   {
-    src: "https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569424/summer-2_zmuo2p.jpg",
+    src: "https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635140/summer-2_bykcf3.jpg",
     title: "Royal Glam",
     description: "Shine bright with our royal-inspired glamour collection."
   },
   {
-    src: "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773004789/eid_collection_video_dk9q4l.mp4",
+    src: "https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773642074/eid_collection_video_azi53n.mp4",
     title: "Kashmiri Bangals",
     description: "Elevate your look with our stunning designer bangles collection."
   },
@@ -55,15 +55,30 @@ function HeroCarousel() {
                   loop={false}
                   muted
                   playsInline
+                  controls
                   preload="auto"
+                  poster="https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635074/newcollection-1_w3fvox.jpg"
                   className="w-full h-full object-cover rounded-xl border-4 border-gold shadow-xl"
                   style={{ maxHeight: "100%", maxWidth: "100%" }}
-                />
+                  onCanPlay={(e) => {
+                    e.currentTarget.play().catch(() => {
+                      // ignore autoplay rejections; controls are visible for manual play
+                    });
+                  }}
+                  onError={(e) => {
+                    e.currentTarget.poster = 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635074/newcollection-1_w3fvox.jpg';
+                  }}
+                >
+                  <source src={slide.src} type="video/mp4" />
+                </video>
               ) : (
                 <img
                   src={slide.src}
                   alt={slide.title}
                   className="w-full h-full object-cover rounded-xl border-4 border-gold shadow-xl"
+                  onError={(e) => {
+                    e.currentTarget.src = 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635074/newcollection-1_w3fvox.jpg';
+                  }}
                 />
               )}
               <div className="absolute top-1/2 right-8 md:right-16 -translate-y-1/2 bg-black/60 rounded-xl p-6 md:p-8 shadow-lg max-w-xs md:max-w-md text-right z-10">

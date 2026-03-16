@@ -2,34 +2,78 @@
 import { motion } from 'framer-motion';
 
 const instagramImages = [
-	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569414/newcollection-3_ghbfql.jpg',
-	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569414/newcollection-4_dvvzcc.jpg',
-	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569414/newcollection-5_jlamzp.jpg',
-	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569415/newcollection-6_ew91ud.jpg',
-	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569424/summer-5_nalb95.jpg',
-	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569424/summer-6_k4ugyt.jpg',
-	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569426/wintercollection-3_gtsisz.jpg',
-	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773569426/wintercollection-4_demd3s.jpg',
+	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635077/newcollection-3_tacjvs.jpg',
+	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635078/newcollection-4_ijlsmi.jpg',
+	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635080/newcollection-5_u8sk9n.jpg',
+	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635081/newcollection-6_ogng4l.jpg',
+	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635513/summer-5_r3pptq.jpg',
+	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635512/summer-4_ga77ea.jpg',
+	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635133/suit-33_oy1nkf.jpg',
+	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635132/suit-32_gmhzyl.jpg',
+	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635074/newcollection-1_w3fvox.jpg',
+	'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635113/suit-20_rquv3r.jpg',
 ];
 
 export default function InstagramGallery() {
+	const loopImages = [...instagramImages, ...instagramImages];
+
 	return (
-		<section className="py-16 px-4 md:px-16 bg-[#1a1a40]">
-			<h2 className="text-3xl md:text-5xl font-bold text-gold mb-10 text-center">Instagram Gallery</h2>
-			<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-				{instagramImages.map((img, idx) => (
-					<motion.div
-						key={idx}
-						className="rounded-xl overflow-hidden shadow-lg border border-gold"
-						initial={{ opacity: 0, scale: 0.9 }}
-						whileInView={{ opacity: 1, scale: 1 }}
-						transition={{ duration: 0.5, delay: idx * 0.1 }}
-						viewport={{ once: true }}
-					>
-						<img src={img} alt={`Instagram ${idx + 1}`} className="w-full h-40 object-cover hover:scale-110 transition-transform duration-300" />
-					</motion.div>
-				))}
+		<section className="py-5 px-4 md:px-8 bg-[#1a1a40]">
+			<h2 className="text-3xl md:text-4xl font-bold text-gold mb-4 text-center">Instagram Gallery</h2>
+			<div className="overflow-hidden border-y border-gold/30 py-1">
+				<div className="insta-track">
+					{loopImages.map((img, idx) => (
+						<motion.a
+							key={`${img}-${idx}`}
+							href={img}
+							target="_blank"
+							rel="noreferrer"
+							className="insta-tile"
+							initial={{ opacity: 0.7 }}
+							whileHover={{ opacity: 1, y: -2 }}
+						>
+							<img
+								src={img}
+								alt={`Instagram ${idx + 1}`}
+								className="insta-image"
+								onError={(e) => {
+									e.currentTarget.src = 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635069/neckles-1_rbhzgd.jpg';
+								}}
+							/>
+						</motion.a>
+					))}
+				</div>
 			</div>
+			<style jsx>{`
+				.insta-track {
+					display: flex;
+					gap: 0.5rem;
+					width: max-content;
+					animation: instagram-scroll 34s linear infinite;
+				}
+
+				.insta-tile {
+					display: block;
+					width: 76px;
+					height: 76px;
+					flex-shrink: 0;
+					border-radius: 0.5rem;
+					overflow: hidden;
+					border: 1px solid rgba(212, 175, 55, 0.45);
+					background: #0d1230;
+				}
+
+				.insta-image {
+					width: 100%;
+					height: 100%;
+					object-fit: cover;
+				}
+
+				@keyframes instagram-scroll {
+					0% { transform: translateX(0); }
+					100% { transform: translateX(-50%); }
+				}
+			`}</style>
 		</section>
 	);
 }

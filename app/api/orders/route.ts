@@ -21,7 +21,7 @@ interface OrderPayload {
   country?: string;
   postalCode?: string;
   shippingMethod?: string;
-  paymentMethod: 'cod' | 'card';
+  paymentMethod: 'cod' | 'card' | 'jazzcash' | 'easypaisa';
   items: OrderPayloadItem[];
   subtotal: number;
   shippingCost: number;
@@ -120,7 +120,14 @@ export async function POST(req: NextRequest) {
           shippingCost,
           status: paymentMethod === 'card' ? 'paid' : 'pending',
           paymentStatus: paymentMethod === 'card' ? 'paid' : 'pending',
-          paymentMethod: paymentMethod === 'card' ? 'stripe' : 'cod',
+          paymentMethod:
+            paymentMethod === 'card'
+              ? 'stripe'
+              : paymentMethod === 'jazzcash'
+              ? 'jazzcash'
+              : paymentMethod === 'easypaisa'
+              ? 'easypaisa'
+              : 'cod',
           shippingName: `${firstName} ${lastName}`.trim(),
           shippingPhone: phone,
           shippingAddress: `${address}, ${city}${country ? `, ${country}` : ''}${postalCode ? ` ${postalCode}` : ''}`,
@@ -159,24 +166,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Order creation failed' }, { status: 500 });
     }
 
-    await sendEmail({
-      to: email,
-      subject: `Sapphura Order Confirmation #${created.id}`,
-      html: getOrderConfirmationEmail({
-        orderId: String(created.id),
-        customerName: created.shippingName || `${firstName} ${lastName}`,
-        total,
-        items: created.items.map((i) => ({
-          name: i.product.name,
-          quantity: i.quantity,
-          price: i.price,
-        })),
-        shippingAddress: created.shippingAddress || `${address}, ${city}`,
-      }),
-    });
+    let confirmationEmailSent = false;
+    let confirmationEmailError: string | null = null;
+
+    try {
+      await sendEmail({
+        to: email.trim().toLowerCase(),
+        subject: `Sapphura Order Confirmation #${created.id}`,
+        html: getOrderConfirmationEmail({
+          orderId: String(created.id),
+          customerName: created.shippingName || `${firstName} ${lastName}`,
+          total,
+          items: created.items.map((i) => ({
+            name: i.product.name,
+            quantity: i.quantity,
+            price: i.price,
+          })),
+          shippingAddress: created.shippingAddress || `${address}, ${city}`,
+        }),
+      });
+      confirmationEmailSent = true;
+    } catch (error) {
+      confirmationEmailError = error instanceof Error ? error.message : 'Failed to send order confirmation email';
+      console.error('Order confirmation email error:', confirmationEmailError);
+    }
 
     return NextResponse.json({
       success: true,
+      confirmationEmailSent,
+      confirmationEmailError,
       order: {
         id: created.id,
         total: created.total,

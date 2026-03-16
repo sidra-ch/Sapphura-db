@@ -5,12 +5,16 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useCart } from '../cart/CartContext';
 import { useWishlist } from '../wishlist/WishlistContext';
+import { useAuth } from '../auth/AuthContext';
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [collectionsOpen, setCollectionsOpen] = useState(false);
   const { totalItems } = useCart();
   const { totalItems: wishlistCount } = useWishlist();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+  const accountHref = isAdmin ? '/admin' : '/account';
   
   return (
     <header className="sticky top-0 z-50 w-full flex items-center justify-between px-4 md:px-6 py-3 md:py-4 bg-[#0B1A2F] border-b border-gold shadow-xl transition-all duration-200">
@@ -18,7 +22,7 @@ export default function Header() {
         href="/"
         className="flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-gold rounded-lg"
       >
-        <img src="https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773004790/logo-1_gzmux1.png" alt="Sapphura Logo" className="w-10 md:w-14 h-10 md:h-14 rounded-full shadow-lg border-2 border-gold" />
+        <img src="https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635065/logo-1_nsterf.png" alt="Sapphura Logo" className="w-10 md:w-14 h-10 md:h-14 rounded-full shadow-lg border-2 border-gold" />
         <span className="text-xl md:text-4xl font-extrabold text-gold tracking-widest drop-shadow-lg ml-1 md:ml-2">Sapphura</span>
       </Link>
       
@@ -71,6 +75,12 @@ export default function Header() {
           <span className="relative z-10">Contact</span>
           <span className="absolute bottom-2 left-2 right-2 h-0.5 bg-gold scale-x-0 group-hover:scale-x-100 transition-transform duration-200 ease-out origin-left"></span>
         </Link>
+        {isAdmin && (
+          <Link href="/admin" className="relative py-4 px-2 group text-white hover:text-gold">
+            <span className="relative z-10">Dashboard</span>
+            <span className="absolute bottom-2 left-2 right-2 h-0.5 bg-gold scale-x-0 group-hover:scale-x-100 transition-transform duration-200 ease-out origin-left"></span>
+          </Link>
+        )}
       </nav>
       
       <div className="flex items-center gap-2 md:gap-4">
@@ -89,7 +99,7 @@ export default function Header() {
             <span className="absolute -top-1 -right-1 bg-gold text-[#0a0a23] rounded-full px-1.5 text-xs font-bold">{totalItems}</span>
           )}
         </Link>
-        <Link href="/account" className="text-gold hover:text-yellow-400 hover:scale-110 transition-all duration-150 p-2">
+        <Link href={accountHref} className="text-gold hover:text-yellow-400 hover:scale-110 transition-all duration-150 p-2">
           <User className="w-5 md:w-6 h-5 md:h-6" />
         </Link>
         <button 
@@ -106,9 +116,12 @@ export default function Header() {
           <nav className="flex flex-col gap-2">
             <Link href="/" className="text-white hover:text-gold py-2 px-3 rounded hover:bg-gold/10" onClick={() => setMobileMenuOpen(false)}>Home</Link>
             <Link href="/collections" className="text-white hover:text-gold py-2 px-3 rounded hover:bg-gold/10" onClick={() => setMobileMenuOpen(false)}>Collections</Link>
-            <Link href="/shop" className="text-white hover:text-gold py-2 px-3 rounded hover:bg-gold/10" onClick={() => setMobileMenuOpen(false)}>Shop</Link>
+            <Link href="/collections" className="text-white hover:text-gold py-2 px-3 rounded hover:bg-gold/10" onClick={() => setMobileMenuOpen(false)}>Shop</Link>
             <Link href="/about" className="text-white hover:text-gold py-2 px-3 rounded hover:bg-gold/10" onClick={() => setMobileMenuOpen(false)}>About</Link>
             <Link href="/contact" className="text-white hover:text-gold py-2 px-3 rounded hover:bg-gold/10" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
+            {isAdmin && (
+              <Link href="/admin" className="text-white hover:text-gold py-2 px-3 rounded hover:bg-gold/10" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
+            )}
           </nav>
         </div>
       )}

@@ -19,7 +19,10 @@ export default function RegisterPage() {
   const [step, setStep] = useState<'register' | 'verify'>('register');
   const [userId, setUserId] = useState<number | null>(null);
   const [otp, setOtp] = useState('');
+  const [otpChannel] = useState<'email'>('email');
   const [error, setError] = useState('');
+  const [otpInfo, setOtpInfo] = useState('');
+  const [resendLoading, setResendLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -37,15 +40,17 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
+      const normalizedEmail = formData.email.trim().toLowerCase();
       const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'signup',
           name: formData.name,
-          email: formData.email,
+          email: normalizedEmail,
           phone: formData.phone,
           password: formData.password,
+          otpChannel,
         }),
       });
 
@@ -57,11 +62,42 @@ export default function RegisterPage() {
       }
 
       setUserId(data.userId);
+      setOtpInfo(data.message || 'OTP sent successfully');
       setStep('verify');
     } catch {
       setError('Something went wrong');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setResendLoading(true);
+    setError('');
+
+    try {
+      const normalizedEmail = formData.email.trim().toLowerCase();
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'resend-signup-otp',
+          email: normalizedEmail,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Failed to resend OTP');
+        return;
+      }
+
+      setUserId(data.userId);
+      setOtpInfo(data.message || 'OTP sent successfully');
+    } catch {
+      setError('Something went wrong while resending OTP');
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -100,8 +136,9 @@ export default function RegisterPage() {
         <div className="w-full max-w-md">
           <div className="bg-[#1a1a40] border border-gold rounded-2xl p-8 shadow-xl">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-gold">Verify OTP</h1>
-              <p className="text-white/60 mt-2">Enter the 6-digit code sent to your email</p>
+              <h1 className="text-3xl font-bold text-gold">Step 2: Verify OTP</h1>
+              <p className="text-white/60 mt-2">We sent a 6-digit code to {formData.email}</p>
+              {otpInfo && <p className="text-green-400 mt-2 text-sm">{otpInfo}</p>}
             </div>
 
             {error && (
@@ -129,8 +166,30 @@ export default function RegisterPage() {
                 disabled={loading || otp.length !== 6}
                 className="w-full bg-gold text-[#0a0a23] py-3 rounded-lg font-bold hover:bg-yellow-400 transition disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Verify & Continue'}
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Verify & Create Account'}
               </button>
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={resendLoading}
+                  className="w-full border border-gold text-gold py-3 rounded-lg font-semibold hover:bg-gold/10 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {resendLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Resend OTP'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStep('register');
+                    setOtp('');
+                    setError('');
+                  }}
+                  className="w-full border border-gold/40 text-white py-3 rounded-lg font-semibold hover:border-gold transition"
+                >
+                  Edit Details
+                </button>
+              </div>
             </form>
           </div>
         </div>
@@ -143,8 +202,8 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         <div className="bg-[#1a1a40] border border-gold rounded-2xl p-8 shadow-xl">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gold">Create Account</h1>
-            <p className="text-white/60 mt-2">Join Sapphura for exclusive access</p>
+            <h1 className="text-3xl font-bold text-gold">Step 1: Create Account</h1>
+            <p className="text-white/60 mt-2">Fill details and click Send OTP to verify your email</p>
           </div>
 
           {error && (
@@ -194,6 +253,13 @@ export default function RegisterPage() {
             </div>
 
             <div>
+              <label className="block text-white/80 mb-2 text-sm font-medium">OTP Delivery</label>
+              <p className="w-full px-4 py-3 bg-[#0a0a23] border border-gold/30 rounded-lg text-white/80 text-sm">
+                Verification OTP will be sent to your email.
+              </p>
+            </div>
+
+            <div>
               <label className="block text-white/80 mb-2 text-sm font-medium">Password</label>
               <div className="relative">
                 <input
@@ -234,7 +300,7 @@ export default function RegisterPage() {
               disabled={loading}
               className="w-full bg-gold text-[#0a0a23] py-3 rounded-lg font-bold hover:bg-yellow-400 transition disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Create Account'}
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send OTP'}
             </button>
           </form>
 

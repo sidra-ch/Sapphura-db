@@ -24,7 +24,7 @@ export default function CategoryTicker() {
           {[...categories, ...categories].map((cat, idx) => (
             <a
               key={cat + idx}
-              href={`/category/${cat.toLowerCase().replace(/\s+/g, "-")}`}
+              href={`/collections?category=${cat.toLowerCase().replace(/\s+/g, "-")}`}
               className="marquee-chip"
             >
               {cat}

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useCart } from '../../components/cart/CartContext';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ShoppingCart, CreditCard, Truck, CheckCircle, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
+import { ShoppingCart, CreditCard, Truck, CheckCircle, ChevronLeft, ChevronRight, AlertCircle, Smartphone, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 
@@ -20,6 +20,7 @@ interface FormErrors {
   address?: string;
   city?: string;
   postalCode?: string;
+  payment?: string;
 }
 
 export default function CheckoutPage() {
@@ -47,6 +48,22 @@ export default function CheckoutPage() {
   const [discount, setDiscount] = useState(0);
   const [appliedCoupon, setAppliedCoupon] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpMessage, setOtpMessage] = useState('');
+  const [otpError, setOtpError] = useState('');
+  const [isOtpSending, setIsOtpSending] = useState(false);
+  const [isOtpVerifying, setIsOtpVerifying] = useState(false);
+  const [isOtpVerified, setIsOtpVerified] = useState(false);
+  const [otpExpiry, setOtpExpiry] = useState('');
+  const [otpCooldown, setOtpCooldown] = useState(0);
+  const [otpChannel] = useState<'email'>('email');
+  const [cardAuthorized, setCardAuthorized] = useState(false);
+  const [paymentDetails, setPaymentDetails] = useState({
+    cardNetwork: 'visa',
+    walletNumber: '',
+    accountTitle: '',
+    transactionReference: '',
+  });
 
   const steps = [
     { id: 'info', label: 'Information', icon: ShoppingCart },
@@ -64,6 +81,14 @@ export default function CheckoutPage() {
     const phoneRegex = /^[\d\s\-+()]{10,}$/;
     return phoneRegex.test(phone);
   };
+
+  useEffect(() => {
+    if (otpCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setOtpCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [otpCooldown]);
 
   const validateInfoStep = (): boolean => {
     const newErrors: FormErrors = {};
@@ -111,9 +136,133 @@ export default function CheckoutPage() {
     return Object.keys(newErrors).length === 0;
   };
 
+  const validatePaymentStep = (): boolean => {
+    const newErrors: FormErrors = {};
+
+    if (formData.paymentMethod === 'card' && !cardAuthorized) {
+      newErrors.payment = 'Please complete card authorization before continuing';
+    }
+
+    if (formData.paymentMethod === 'jazzcash' || formData.paymentMethod === 'easypaisa') {
+      if (!paymentDetails.walletNumber.trim()) {
+        newErrors.payment = 'Wallet number is required for mobile wallet payments';
+      } else if (!/^03\d{9}$/.test(paymentDetails.walletNumber.trim())) {
+        newErrors.payment = 'Enter a valid wallet number (03XXXXXXXXX)';
+      } else if (!paymentDetails.accountTitle.trim()) {
+        newErrors.payment = 'Account title is required for wallet payments';
+      }
+    }
+
+    if (!isOtpVerified) {
+      newErrors.payment = newErrors.payment
+        ? `${newErrors.payment}. OTP verification is also required.`
+        : 'Please verify OTP before continuing';
+    }
+
+    setErrors((prev) => ({ ...prev, payment: newErrors.payment }));
+    return !newErrors.payment;
+  };
+
+  const sendPaymentOtp = async () => {
+    if (!formData.email || !validateEmail(formData.email)) {
+      setOtpError('Please enter a valid email in contact information first');
+      return;
+    }
+
+    if (otpCooldown > 0) {
+      setOtpError(`Please wait ${otpCooldown}s before requesting another OTP.`);
+      return;
+    }
+
+    setIsOtpSending(true);
+    setOtpError('');
+    setOtpMessage('');
+
+    try {
+      const normalizedEmail = formData.email.trim().toLowerCase();
+      const response = await fetch('/api/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'send',
+          email: normalizedEmail,
+          phone: formData.phone,
+          otpChannel,
+          purpose: `payment-${formData.paymentMethod}`,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        setOtpError(data.error || 'Failed to send OTP');
+        return;
+      }
+
+      setOtpExpiry(data.expiry || '');
+      setOtpMessage(`OTP sent successfully via ${(data.channels || [otpChannel]).join(', ')}.`);
+      setIsOtpVerified(false);
+      setOtpCode('');
+      setOtpCooldown(60);
+    } catch {
+      setOtpError('Failed to send OTP. Please try again.');
+    } finally {
+      setIsOtpSending(false);
+    }
+  };
+
+  const verifyPaymentOtp = async () => {
+    if (!otpCode.trim()) {
+      setOtpError('Please enter OTP code');
+      return;
+    }
+
+    setIsOtpVerifying(true);
+    setOtpError('');
+    setOtpMessage('');
+
+    try {
+      const response = await fetch('/api/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'verify',
+          email: formData.email.trim().toLowerCase(),
+          otp: otpCode.trim(),
+          purpose: `payment-${formData.paymentMethod}`,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        setOtpError(data.error || 'OTP verification failed');
+        setIsOtpVerified(false);
+        return;
+      }
+
+      setIsOtpVerified(true);
+      setOtpMessage('OTP verified successfully. You can continue now.');
+      setErrors((prev) => ({ ...prev, payment: undefined }));
+    } catch {
+      setOtpError('OTP verification failed. Please try again.');
+      setIsOtpVerified(false);
+    } finally {
+      setIsOtpVerifying(false);
+    }
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    if (name === 'paymentMethod' || name === 'email' || name === 'phone') {
+      setCardAuthorized(false);
+      setIsOtpVerified(false);
+      setOtpCode('');
+      setOtpExpiry('');
+      setOtpCooldown(0);
+      setOtpError('');
+      setOtpMessage('');
+      setErrors((prev) => ({ ...prev, payment: undefined }));
+    }
     if (errors[name as keyof FormErrors]) {
       setErrors({ ...errors, [name]: undefined });
     }
@@ -134,6 +283,9 @@ export default function CheckoutPage() {
       return;
     }
     if (currentStep === 'shipping' && !validateShippingStep()) {
+      return;
+    }
+    if (currentStep === 'payment' && !validatePaymentStep()) {
       return;
     }
     
@@ -158,6 +310,11 @@ export default function CheckoutPage() {
     try {
       if (items.length === 0) {
         alert('Your cart is empty.');
+        return;
+      }
+
+      if (!validatePaymentStep()) {
+        alert('Please complete payment verification before placing order.');
         return;
       }
 
@@ -191,6 +348,35 @@ export default function CheckoutPage() {
       }
 
       const persistedOrder = data.order;
+
+      if (formData.paymentMethod === 'jazzcash' || formData.paymentMethod === 'easypaisa') {
+        const initResponse = await fetch('/api/payments/initiate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            provider: formData.paymentMethod,
+            orderId: persistedOrder.id,
+            amount: persistedOrder.total,
+            email: formData.email,
+            phone: formData.phone,
+          }),
+        });
+
+        const initData = await initResponse.json();
+
+        if (!initResponse.ok || !initData?.success) {
+          alert(initData?.error || 'Failed to initiate wallet payment. Please try again.');
+          return;
+        }
+
+        if (initData?.transaction?.paymentUrl) {
+          window.location.href = initData.transaction.paymentUrl;
+          return;
+        }
+
+        alert('Payment request initiated. Please complete payment in your wallet app.');
+      }
+
       const publicOrderId = `SAP${String(persistedOrder.id).padStart(6, '0')}`;
       setOrderId(publicOrderId);
 
@@ -454,12 +640,12 @@ export default function CheckoutPage() {
               {currentStep === 'payment' && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                   <h2 className="text-2xl font-bold text-gold mb-6">Payment Method</h2>
-                  <div className="space-y-3">
-                    <label className="flex items-center justify-between p-4 bg-[#0a0a23] rounded-lg cursor-pointer border border-gold">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                    <label className={`flex items-center justify-between p-4 bg-[#0a0a23] rounded-lg cursor-pointer border transition ${formData.paymentMethod === 'cod' ? 'border-gold' : 'border-gold/30 hover:border-gold/70'}`}>
                       <div className="flex items-center gap-3">
-                        <input 
-                          type="radio" 
-                          name="paymentMethod" 
+                        <input
+                          type="radio"
+                          name="paymentMethod"
                           value="cod"
                           checked={formData.paymentMethod === 'cod'}
                           onChange={handleInputChange}
@@ -468,34 +654,175 @@ export default function CheckoutPage() {
                         <span className="text-white">Cash on Delivery</span>
                       </div>
                     </label>
-                    <label className="flex items-center justify-between p-4 bg-[#0a0a23] rounded-lg cursor-pointer border border-gold/30">
+
+                    <label className={`flex items-center justify-between p-4 bg-[#0a0a23] rounded-lg cursor-pointer border transition ${formData.paymentMethod === 'card' ? 'border-gold' : 'border-gold/30 hover:border-gold/70'}`}>
                       <div className="flex items-center gap-3">
-                        <input 
-                          type="radio" 
-                          name="paymentMethod" 
+                        <input
+                          type="radio"
+                          name="paymentMethod"
                           value="card"
                           checked={formData.paymentMethod === 'card'}
                           onChange={handleInputChange}
                           className="w-4 h-4 text-gold"
                         />
-                        <span className="text-white">Credit/Debit Card</span>
+                        <span className="text-white">Visa / Mastercard</span>
                       </div>
-                      <div className="flex gap-2">
-                        <span className="text-white/50 text-xs">Visa</span>
-                        <span className="text-white/50 text-xs">Mastercard</span>
+                      <div className="flex gap-2 text-white/50 text-xs">
+                        <span>Visa</span>
+                        <span>Master</span>
                       </div>
                     </label>
+
+                    <label className={`flex items-center justify-between p-4 bg-[#0a0a23] rounded-lg cursor-pointer border transition ${formData.paymentMethod === 'jazzcash' ? 'border-gold' : 'border-gold/30 hover:border-gold/70'}`}>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="jazzcash"
+                          checked={formData.paymentMethod === 'jazzcash'}
+                          onChange={handleInputChange}
+                          className="w-4 h-4 text-gold"
+                        />
+                        <span className="text-white">JazzCash</span>
+                      </div>
+                      <Smartphone className="w-4 h-4 text-gold" />
+                    </label>
+
+                    <label className={`flex items-center justify-between p-4 bg-[#0a0a23] rounded-lg cursor-pointer border transition ${formData.paymentMethod === 'easypaisa' ? 'border-gold' : 'border-gold/30 hover:border-gold/70'}`}>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="easypaisa"
+                          checked={formData.paymentMethod === 'easypaisa'}
+                          onChange={handleInputChange}
+                          className="w-4 h-4 text-gold"
+                        />
+                        <span className="text-white">Easypaisa</span>
+                      </div>
+                      <Smartphone className="w-4 h-4 text-gold" />
+                    </label>
                   </div>
+
                   {formData.paymentMethod === 'card' && (
-                    <div className="mt-6 p-4 bg-[#0a0a23] rounded-lg border border-gold/30">
-                      <StripePayment 
-                        amount={finalTotal} 
+                    <div className="mt-4 p-4 bg-[#0a0a23] rounded-lg border border-gold/30 space-y-4">
+                      <div className="grid grid-cols-2 gap-3">
+                        <label className="flex items-center gap-2 text-white/80 text-sm">
+                          <input
+                            type="radio"
+                            name="cardNetwork"
+                            checked={paymentDetails.cardNetwork === 'visa'}
+                            onChange={() => setPaymentDetails((prev) => ({ ...prev, cardNetwork: 'visa' }))}
+                            className="w-4 h-4"
+                          />
+                          Visa
+                        </label>
+                        <label className="flex items-center gap-2 text-white/80 text-sm">
+                          <input
+                            type="radio"
+                            name="cardNetwork"
+                            checked={paymentDetails.cardNetwork === 'mastercard'}
+                            onChange={() => setPaymentDetails((prev) => ({ ...prev, cardNetwork: 'mastercard' }))}
+                            className="w-4 h-4"
+                          />
+                          Mastercard
+                        </label>
+                      </div>
+
+                      <StripePayment
+                        amount={finalTotal}
                         onSuccess={() => {
-                          placeOrder();
-                        }} 
-                        onCancel={() => setFormData({...formData, paymentMethod: 'cod'})} 
+                          setCardAuthorized(true);
+                          setErrors((prev) => ({ ...prev, payment: undefined }));
+                        }}
+                        onCancel={() => {
+                          setCardAuthorized(false);
+                          setFormData({ ...formData, paymentMethod: 'cod' });
+                        }}
+                      />
+
+                      {cardAuthorized && (
+                        <p className="text-green-400 text-sm flex items-center gap-2">
+                          <ShieldCheck className="w-4 h-4" /> Card authorization completed.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {(formData.paymentMethod === 'jazzcash' || formData.paymentMethod === 'easypaisa') && (
+                    <div className="mt-4 p-4 bg-[#0a0a23] rounded-lg border border-gold/30 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <input
+                        type="tel"
+                        value={paymentDetails.walletNumber}
+                        onChange={(e) => setPaymentDetails((prev) => ({ ...prev, walletNumber: e.target.value }))}
+                        placeholder="Wallet Number (03XXXXXXXXX)"
+                        className="w-full px-4 py-3 bg-[#10153a] border border-gold/30 rounded-lg text-white focus:outline-none focus:border-gold"
+                      />
+                      <input
+                        type="text"
+                        value={paymentDetails.accountTitle}
+                        onChange={(e) => setPaymentDetails((prev) => ({ ...prev, accountTitle: e.target.value }))}
+                        placeholder="Account Title"
+                        className="w-full px-4 py-3 bg-[#10153a] border border-gold/30 rounded-lg text-white focus:outline-none focus:border-gold"
+                      />
+                      <input
+                        type="text"
+                        value={paymentDetails.transactionReference}
+                        onChange={(e) => setPaymentDetails((prev) => ({ ...prev, transactionReference: e.target.value }))}
+                        placeholder="Transaction Reference (optional)"
+                        className="w-full px-4 py-3 bg-[#10153a] border border-gold/30 rounded-lg text-white focus:outline-none focus:border-gold md:col-span-2"
                       />
                     </div>
+                  )}
+
+                  <div className="mt-6 p-4 bg-[#0a0a23] rounded-lg border border-gold/40">
+                    <h3 className="text-gold font-semibold mb-3">Payment OTP Verification</h3>
+                    <p className="text-white/70 text-sm mb-3">
+                      OTP will be sent to your email address for verification.
+                    </p>
+                    <div className="flex flex-col md:flex-row gap-3">
+                      <button
+                        type="button"
+                        onClick={sendPaymentOtp}
+                        disabled={isOtpSending || otpCooldown > 0}
+                        className="px-4 py-2 rounded-lg border border-gold text-gold hover:bg-gold hover:text-[#0a0a23] transition disabled:opacity-50"
+                      >
+                        {isOtpSending ? 'Sending OTP...' : otpCooldown > 0 ? `Resend in ${otpCooldown}s` : 'Send OTP'}
+                      </button>
+                      <input
+                        type="text"
+                        value={otpCode}
+                        onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        placeholder="Enter OTP"
+                        className="flex-1 px-4 py-2 bg-[#10153a] border border-gold/30 rounded-lg text-white focus:outline-none focus:border-gold"
+                        maxLength={6}
+                      />
+                      <button
+                        type="button"
+                        onClick={verifyPaymentOtp}
+                        disabled={isOtpVerifying || otpCode.trim().length !== 6}
+                        className="px-4 py-2 rounded-lg bg-gold text-[#0a0a23] font-semibold hover:bg-yellow-300 transition disabled:opacity-50"
+                      >
+                        {isOtpVerifying ? 'Verifying...' : 'Verify OTP'}
+                      </button>
+                    </div>
+
+                    {otpMessage && <p className="text-green-400 text-sm mt-2">{otpMessage}</p>}
+                    {otpError && <p className="text-red-400 text-sm mt-2">{otpError}</p>}
+                    {otpExpiry && <p className="text-white/50 text-xs mt-1">Expires at: {new Date(otpExpiry).toLocaleTimeString()}</p>}
+                    {otpCooldown > 0 && <p className="text-white/50 text-xs mt-1">You can request a new OTP in {otpCooldown}s.</p>}
+
+                    {isOtpVerified && (
+                      <p className="text-green-400 text-sm mt-2 flex items-center gap-2">
+                        <ShieldCheck className="w-4 h-4" /> OTP verified for this payment method.
+                      </p>
+                    )}
+                  </div>
+
+                  {errors.payment && (
+                    <p className="text-red-400 text-sm mt-3 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" /> {errors.payment}
+                    </p>
                   )}
                 </motion.div>
               )}
@@ -517,7 +844,14 @@ export default function CheckoutPage() {
                     </div>
                     <div className="p-4 bg-[#0a0a23] rounded-lg">
                       <h3 className="text-gold font-semibold mb-2">Payment</h3>
-                      <p className="text-white/70">{formData.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Credit Card'}</p>
+                      <p className="text-white/70 capitalize">
+                        {formData.paymentMethod === 'card'
+                          ? `${paymentDetails.cardNetwork === 'mastercard' ? 'Mastercard' : 'Visa'} (Stripe)`
+                          : formData.paymentMethod === 'cod'
+                          ? 'Cash on Delivery'
+                          : formData.paymentMethod}
+                      </p>
+                      <p className="text-white/50 text-sm mt-1">OTP Verified: {isOtpVerified ? 'Yes' : 'No'}</p>
                     </div>
                   </div>
                 </motion.div>

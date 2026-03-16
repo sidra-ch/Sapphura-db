@@ -1,6 +1,8 @@
 // Email utility for sending transactional emails
 // In production, integrate with SendGrid, Mailgun, or AWS SES
 
+import nodemailer from 'nodemailer';
+
 interface EmailOptions {
   to: string;
   subject: string;
@@ -8,33 +10,73 @@ interface EmailOptions {
   from?: string;
 }
 
+let cachedTransporter: nodemailer.Transporter | null = null;
+
+function cleanEnv(value?: string): string {
+  if (!value) return '';
+  return value.trim().replace(/^['\"]|['\"]$/g, '');
+}
+
+function getTransporter(): nodemailer.Transporter | null {
+  if (cachedTransporter) {
+    return cachedTransporter;
+  }
+
+  const smtpHost = cleanEnv(process.env.SMTP_HOST || process.env.EMAIL_HOST);
+  const smtpPort = Number(cleanEnv(process.env.SMTP_PORT || process.env.EMAIL_PORT) || 587);
+  const smtpUser = cleanEnv(process.env.SMTP_USER || process.env.EMAIL_USER);
+  const smtpPassword = cleanEnv(process.env.SMTP_PASSWORD || process.env.EMAIL_PASS);
+
+  if (smtpHost && smtpUser && smtpPassword) {
+    cachedTransporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465,
+      auth: {
+        user: smtpUser,
+        pass: smtpPassword,
+      },
+    });
+    return cachedTransporter;
+  }
+
+  if (smtpPassword) {
+    cachedTransporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: smtpUser || 'sapphuraofficial@gmail.com',
+        pass: smtpPassword,
+      },
+    });
+    return cachedTransporter;
+  }
+
+  return null;
+}
+
 // In production, replace with actual email service
 export async function sendEmail(options: EmailOptions) {
-  const { to, subject, html } = options;
-  
-  // Log email for development
-  console.log('=== EMAIL SENT ===');
-  console.log(`To: ${to}`);
-  console.log(`Subject: ${subject}`);
-  console.log(`Body: ${html}`);
-  console.log('====================');
-  
-  // In production, integrate with email service like SendGrid
-  // const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-  //   method: 'POST',
-  //   headers: {
-  //     'Authorization': `Bearer ${process.env.SENDGRID_API_KEY}`,
-  //     'Content-Type': 'application/json',
-  //   },
-  //   body: JSON.stringify({
-  //     personalizations: [{ to: [{ email: to }] }],
-  //     from: { email: 'noreply@sapphura.com', name: 'Sapphura' },
-  //     subject,
-  //     content: [{ type: 'text/html', value: html }],
-  //   }),
-  // });
-  
-  return { success: true, message: 'Email logged (development mode)' };
+  const { to, subject, html, from } = options;
+  const transporter = getTransporter();
+
+  if (!transporter) {
+    console.log('=== EMAIL LOGGED (NO SMTP CONFIG) ===');
+    console.log(`To: ${to}`);
+    console.log(`Subject: ${subject}`);
+    console.log(`Body: ${html}`);
+    console.log('======================================');
+    return { success: true, message: 'Email logged (SMTP not configured)' };
+  }
+
+  const fromAddress = from || cleanEnv(process.env.SMTP_FROM || process.env.EMAIL_FROM) || 'Sapphura <sapphuraofficial@gmail.com>';
+  await transporter.sendMail({
+    from: fromAddress,
+    to,
+    subject,
+    html,
+  });
+
+  return { success: true, message: 'Email sent successfully' };
 }
 
 // Email Templates
