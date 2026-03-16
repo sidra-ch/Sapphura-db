@@ -46,9 +46,6 @@ export default function AboutPage() {
                 src="https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635065/logo-1_nsterf.png"
                 alt="Sapphura Luxury" 
                 className="w-full h-full object-contain bg-[#0B1C3F]"
-                onError={(event) => {
-                  event.currentTarget.src = 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635069/neckles-1_rbhzgd.jpg';
-                }}
               />
             </div>
             <div className="absolute -bottom-6 -left-6 bg-gold text-[#0B1C3F] p-6 rounded-xl">
