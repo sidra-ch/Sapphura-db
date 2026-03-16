@@ -36,19 +36,21 @@ export default function CompactCommerceCard({
 }: CompactCommerceCardProps) {
   const isOverlay = contentPlacement === 'overlay';
   const hasPricing = Boolean(price || originalPrice);
+  const hasCta = Boolean(ctaLabel || footer);
 
   return (
-    <div className={`h-full min-h-[216px] sm:min-h-[228px] lg:min-h-[238px] rounded-xl overflow-hidden border border-gold/35 bg-[#101534] shadow-md flex flex-col motion-safe:transition-all motion-safe:duration-300 motion-safe:hover:-translate-y-1 motion-safe:hover:shadow-[0_14px_34px_rgba(212,175,55,0.2)] ${className}`}>
-      <div className="relative">
+    <article className={`group h-full min-h-[260px] rounded-2xl overflow-hidden border border-gold/30 bg-[linear-gradient(180deg,#111736_0%,#0b1028_100%)] shadow-[0_10px_28px_rgba(6,8,20,0.45)] flex flex-col motion-safe:transition-all motion-safe:duration-300 motion-safe:hover:-translate-y-1.5 motion-safe:hover:border-gold/75 motion-safe:hover:shadow-[0_22px_42px_rgba(212,175,55,0.22)] ${className}`}>
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/30 z-10" />
         {badge && (
-          <span className="absolute top-2.5 left-2.5 bg-gold text-[#0a0a23] font-bold px-2.5 py-1 rounded-full text-[11px] shadow z-20">
+          <span className="absolute top-3 left-3 bg-gold text-[#0a0a23] font-extrabold tracking-wide px-2.5 py-1 rounded-full text-[10px] uppercase shadow z-30">
             {badge}
           </span>
         )}
         <img
           src={image || FALLBACK_PRODUCT_IMAGE}
           alt={title}
-          className="w-full h-[112px] sm:h-[120px] lg:h-[128px] object-cover"
+          className="w-full h-[180px] sm:h-[190px] lg:h-[204px] object-cover motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-110"
           loading={imageLoading}
           decoding="async"
           fetchPriority={imageFetchPriority}
@@ -61,37 +63,40 @@ export default function CompactCommerceCard({
           }}
         />
         {isOverlay && (
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/55 to-transparent px-2.5 py-1.5 sm:py-2">
-            <h3 className={`text-sm leading-5 font-semibold text-white line-clamp-1 ${titleClassName}`}>{title}</h3>
-            <p className="text-[11px] leading-4 text-white/85 line-clamp-2">{description}</p>
+          <div className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/95 via-black/70 to-transparent px-3.5 py-3">
+            <h3 className={`text-base leading-5 font-semibold text-white line-clamp-1 ${titleClassName}`}>{title}</h3>
+            <p className="text-xs leading-4 text-white/85 line-clamp-2 mt-1">{description}</p>
           </div>
         )}
         {mediaOverlay}
       </div>
 
-      <div className={`p-2 ${isOverlay && !hasPricing && !footer ? '' : 'flex-1 flex flex-col'}`}>
+      <div className={`p-3.5 ${isOverlay && !hasPricing && !hasCta ? '' : 'flex-1 flex flex-col'} bg-[radial-gradient(circle_at_top_left,rgba(212,175,55,0.12),transparent_45%)]`}>
         {!isOverlay && (
           <>
-            <h3 className={`text-[15px] leading-5 font-semibold text-gold mb-1 line-clamp-2 ${titleClassName}`}>{title}</h3>
+            <h3 className={`text-base leading-5 font-semibold text-gold mb-1.5 line-clamp-2 ${titleClassName}`}>{title}</h3>
             <p className="text-white/70 text-xs leading-4 line-clamp-2">{description}</p>
           </>
         )}
 
         {hasPricing && (
-          <div className={`flex items-center gap-2 ${isOverlay ? '' : 'mt-2'}`}>
-            {price ? <span className="text-[18px] font-bold text-gold">{price}</span> : null}
-            {originalPrice ? <span className="text-xs line-through text-white/50">{originalPrice}</span> : null}
+          <div className={`flex items-center gap-2 ${isOverlay ? '' : 'mt-3'}`}>
+            {price ? <span className="text-xl font-black tracking-tight text-gold">{price}</span> : null}
+            {originalPrice ? <span className="text-xs line-through text-white/45">{originalPrice}</span> : null}
+            {price && originalPrice ? (
+              <span className="ml-auto rounded-full border border-gold/45 px-2 py-0.5 text-[10px] uppercase tracking-wide text-gold/95">Deal</span>
+            ) : null}
           </div>
         )}
 
         {footer ? (
-          <div className="mt-auto">{footer}</div>
+          <div className="mt-auto pt-3">{footer}</div>
         ) : ctaLabel ? (
-          <button type="button" className={`${isOverlay && !hasPricing ? '' : 'mt-auto'} w-full px-3 py-2 rounded-lg bg-gold text-[#0a0a23] font-semibold text-xs hover:bg-yellow-400 motion-safe:transition`}>
+          <button type="button" className={`${isOverlay && !hasPricing ? '' : 'mt-auto'} w-full px-3 py-2.5 rounded-xl bg-gold text-[#0a0a23] font-bold text-xs tracking-wide uppercase hover:bg-yellow-400 motion-safe:transition shadow-[0_10px_20px_rgba(212,175,55,0.25)]`}>
             {ctaLabel}
           </button>
         ) : null}
       </div>
-    </div>
+    </article>
   );
 }

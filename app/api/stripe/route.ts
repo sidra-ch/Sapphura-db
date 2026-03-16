@@ -5,18 +5,40 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
 
 export async function POST(req: NextRequest) {
   try {
-    const { amount, currency = 'usd', email, items } = await req.json();
+    const { amount, currency = 'usd', email, items, orderFingerprint } = await req.json();
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return NextResponse.json({ error: 'Invalid payment amount' }, { status: 400 });
+    }
+
+    const amountInMinorUnit = Math.round(amount * 100);
+    if (amountInMinorUnit < 50) {
+      return NextResponse.json({ error: 'Minimum charge amount is too low' }, { status: 400 });
+    }
+
+    const idempotencyKey = typeof orderFingerprint === 'string' && orderFingerprint.trim().length > 0
+      ? `stripe-intent-${orderFingerprint.trim()}`
+      : undefined;
 
     // Create payment intent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to cents
-      currency,
-      metadata: {
-        email,
-        items: JSON.stringify(items),
+    const paymentIntent = await stripe.paymentIntents.create(
+      {
+        amount: amountInMinorUnit,
+        currency,
+        automatic_payment_methods: { enabled: true },
+        payment_method_options: {
+          card: {
+            request_three_d_secure: 'automatic',
+          },
+        },
+        metadata: {
+          email: email || '',
+          items: JSON.stringify(items || []),
+        },
+        receipt_email: email || undefined,
       },
-      receipt_email: email,
-    });
+      idempotencyKey ? { idempotencyKey } : undefined
+    );
 
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,

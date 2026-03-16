@@ -7,7 +7,33 @@ import { Lock, CreditCard } from 'lucide-react';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_51RpWKNJgbJcc67pKHTgE6rkbTlHVpH9TMXdHAAUgnxOxbFgnPQtDnCEucwNto8RIDPjn6oNRCdAzLBXM6pwbB6ZF00HEslEGYi');
 
-function CheckoutForm({ amount, onSuccess, onCancel }: { amount: number; onSuccess: () => void; onCancel: () => void }) {
+interface BillingDetailsInput {
+  email?: string;
+  fullName?: string;
+  phone?: string;
+  city?: string;
+  country?: string;
+  postalCode?: string;
+  addressLine1?: string;
+}
+
+interface CheckoutSuccessPayload {
+  paymentIntentId: string;
+  status: string;
+  amount: number;
+}
+
+function CheckoutForm({
+  amount,
+  billingDetails,
+  onSuccess,
+  onCancel,
+}: {
+  amount: number;
+  billingDetails?: BillingDetailsInput;
+  onSuccess: (payload: CheckoutSuccessPayload) => void;
+  onCancel: () => void;
+}) {
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
@@ -25,7 +51,12 @@ function CheckoutForm({ amount, onSuccess, onCancel }: { amount: number; onSucce
       const res = await fetch('/api/stripe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount, currency: 'usd' }),
+        body: JSON.stringify({
+          amount,
+          currency: 'usd',
+          email: billingDetails?.email,
+          orderFingerprint: `${billingDetails?.email || 'guest'}-${Math.round(amount * 100)}`,
+        }),
       });
 
       const { clientSecret, error: apiError } = await res.json();
@@ -45,7 +76,20 @@ function CheckoutForm({ amount, onSuccess, onCancel }: { amount: number; onSucce
       }
 
       const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: { card: cardElement },
+        payment_method: {
+          card: cardElement,
+          billing_details: {
+            name: billingDetails?.fullName,
+            email: billingDetails?.email,
+            phone: billingDetails?.phone,
+            address: {
+              city: billingDetails?.city,
+              country: billingDetails?.country,
+              postal_code: billingDetails?.postalCode,
+              line1: billingDetails?.addressLine1,
+            },
+          },
+        },
       });
 
       if (stripeError) {
@@ -55,7 +99,13 @@ function CheckoutForm({ amount, onSuccess, onCancel }: { amount: number; onSucce
       }
 
       if (paymentIntent?.status === 'succeeded') {
-        onSuccess();
+        onSuccess({
+          paymentIntentId: paymentIntent.id,
+          status: paymentIntent.status,
+          amount,
+        });
+      } else {
+        setError('Payment requires additional action or is not completed yet.');
       }
     } catch (err: any) {
       setError(err.message || 'Payment failed');
@@ -122,14 +172,15 @@ function CheckoutForm({ amount, onSuccess, onCancel }: { amount: number; onSucce
 
 interface StripePaymentProps {
   amount: number;
-  onSuccess: () => void;
+  billingDetails?: BillingDetailsInput;
+  onSuccess: (payload: CheckoutSuccessPayload) => void;
   onCancel: () => void;
 }
 
-export default function StripePayment({ amount, onSuccess, onCancel }: StripePaymentProps) {
+export default function StripePayment({ amount, billingDetails, onSuccess, onCancel }: StripePaymentProps) {
   return (
     <Elements stripe={stripePromise}>
-      <CheckoutForm amount={amount} onSuccess={onSuccess} onCancel={onCancel} />
+      <CheckoutForm amount={amount} billingDetails={billingDetails} onSuccess={onSuccess} onCancel={onCancel} />
     </Elements>
   );
 }

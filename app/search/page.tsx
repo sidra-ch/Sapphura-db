@@ -52,7 +52,7 @@ function SearchContent() {
               </button>
             </div>
             <Suspense fallback={<div className="text-white/60">Loading results...</div>}>
-              <SearchResultsDropdown query={query} />
+              <SearchResultsDropdown query={query} className="relative mt-2 z-0" />
             </Suspense>
           </div>
         )}

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '../../../lib/db';
-import { compareOTP, hashOTP } from '../../../lib/auth';
+import { compareOTP, generateOtpProofToken, hashOTP } from '../../../lib/auth';
 import { getOTPEmail, sendEmail } from '../../../lib/email';
 import { sendWhatsAppOtp } from '../../../lib/whatsapp';
 import { checkRateLimit } from '../../../lib/rate-limit';
@@ -270,10 +270,16 @@ export async function POST(req: NextRequest) {
         });
       }
 
+      const verificationToken = generateOtpProofToken({
+        email: normalizedEmail,
+        purpose: purposeKey,
+      });
+
       return NextResponse.json({
         success: true,
         message: 'OTP verified successfully',
         orderId: orderId || null,
+        verificationToken,
       });
     }
 

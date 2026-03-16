@@ -107,8 +107,8 @@ export default function OrderConfirmationPage() {
           <div className="flex items-center gap-3 p-4 bg-[#0a0a23] rounded-xl">
             <Truck className="w-6 h-6 text-gold" />
             <div>
-              <p className="text-white font-medium">Order is being processed</p>
-              <p className="text-white/60 text-sm">You will receive updates via email</p>
+              <p className="text-white font-medium">Order verified and processing</p>
+              <p className="text-white/60 text-sm">Identity, payment, and fraud checks completed successfully</p>
             </div>
           </div>
         </motion.div>

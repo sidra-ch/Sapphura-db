@@ -46,7 +46,7 @@ export default function RamadanOffers() {
 	return (
 		<section className="py-6 px-4 md:px-8 bg-[#1a1a40]">
 			<h2 className="text-3xl md:text-4xl font-bold text-gold mb-6 text-center">Ramadan Offers</h2>
-			   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+			   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 				   {offers.map((offer, idx) => (
 					   <Link key={offer.title} href={offer.href} prefetch className="block h-full">
 					   <motion.div
@@ -55,7 +55,6 @@ export default function RamadanOffers() {
 						   whileInView={{ opacity: 1, y: 0 }}
 						   transition={{ duration: 0.5, delay: idx * 0.1 }}
 						   viewport={{ once: true }}
-						   whileHover={{ y: -8 }}
 					   >
 						   <CompactCommerceCard
 							   title={offer.title}
@@ -64,9 +63,8 @@ export default function RamadanOffers() {
 							   badge={offer.discount}
 							   price={offer.discountPrice}
 							   originalPrice={offer.originalPrice}
-							   ctaLabel="Shop Offer"
+							   ctaLabel="Claim Offer"
 							   contentPlacement="overlay"
-							   className="bg-[#0a0a23]"
 						   />
 					   </motion.div>
 					   </Link>

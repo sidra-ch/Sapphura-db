@@ -54,10 +54,14 @@ export default function CheckoutPage() {
   const [isOtpSending, setIsOtpSending] = useState(false);
   const [isOtpVerifying, setIsOtpVerifying] = useState(false);
   const [isOtpVerified, setIsOtpVerified] = useState(false);
+  const [otpVerificationToken, setOtpVerificationToken] = useState('');
+  const [otpVerifiedAt, setOtpVerifiedAt] = useState('');
   const [otpExpiry, setOtpExpiry] = useState('');
   const [otpCooldown, setOtpCooldown] = useState(0);
   const [otpChannel] = useState<'email'>('email');
   const [cardAuthorized, setCardAuthorized] = useState(false);
+  const [cardPaymentIntentId, setCardPaymentIntentId] = useState('');
+  const [cardAuthorizedAt, setCardAuthorizedAt] = useState('');
   const [paymentDetails, setPaymentDetails] = useState({
     cardNetwork: 'visa',
     walletNumber: '',
@@ -139,8 +143,10 @@ export default function CheckoutPage() {
   const validatePaymentStep = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (formData.paymentMethod === 'card' && !cardAuthorized) {
-      newErrors.payment = 'Please complete card authorization before continuing';
+    if (formData.paymentMethod === 'card') {
+      if (!cardAuthorized || !cardPaymentIntentId) {
+        newErrors.payment = 'Please complete secure card authorization before continuing';
+      }
     }
 
     if (formData.paymentMethod === 'jazzcash' || formData.paymentMethod === 'easypaisa') {
@@ -153,7 +159,7 @@ export default function CheckoutPage() {
       }
     }
 
-    if (!isOtpVerified) {
+    if (!isOtpVerified || !otpVerificationToken) {
       newErrors.payment = newErrors.payment
         ? `${newErrors.payment}. OTP verification is also required.`
         : 'Please verify OTP before continuing';
@@ -201,6 +207,8 @@ export default function CheckoutPage() {
       setOtpExpiry(data.expiry || '');
       setOtpMessage(`OTP sent successfully via ${(data.channels || [otpChannel]).join(', ')}.`);
       setIsOtpVerified(false);
+      setOtpVerificationToken('');
+      setOtpVerifiedAt('');
       setOtpCode('');
       setOtpCooldown(60);
     } catch {
@@ -240,6 +248,8 @@ export default function CheckoutPage() {
       }
 
       setIsOtpVerified(true);
+      setOtpVerificationToken(data.verificationToken || '');
+      setOtpVerifiedAt(new Date().toISOString());
       setOtpMessage('OTP verified successfully. You can continue now.');
       setErrors((prev) => ({ ...prev, payment: undefined }));
     } catch {
@@ -255,7 +265,11 @@ export default function CheckoutPage() {
     setFormData({ ...formData, [name]: value });
     if (name === 'paymentMethod' || name === 'email' || name === 'phone') {
       setCardAuthorized(false);
+      setCardPaymentIntentId('');
+      setCardAuthorizedAt('');
       setIsOtpVerified(false);
+      setOtpVerificationToken('');
+      setOtpVerifiedAt('');
       setOtpCode('');
       setOtpExpiry('');
       setOtpCooldown(0);
@@ -318,7 +332,7 @@ export default function CheckoutPage() {
         return;
       }
 
-      const response = await fetch('/api/orders', {
+      const response = await fetch('/api/checkout/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -337,6 +351,24 @@ export default function CheckoutPage() {
           shippingCost,
           discount,
           total: finalTotal,
+          paymentVerification: {
+            otpVerificationToken,
+            otpVerifiedAt,
+            stripePaymentIntentId: formData.paymentMethod === 'card' ? cardPaymentIntentId : undefined,
+            cardAuthorizedAt: formData.paymentMethod === 'card' ? cardAuthorizedAt : undefined,
+            walletNumberMasked:
+              formData.paymentMethod === 'jazzcash' || formData.paymentMethod === 'easypaisa'
+                ? paymentDetails.walletNumber.replace(/\d(?=\d{4})/g, '*')
+                : undefined,
+            walletAccountTitle:
+              formData.paymentMethod === 'jazzcash' || formData.paymentMethod === 'easypaisa'
+                ? paymentDetails.accountTitle
+                : undefined,
+            walletTransactionReference:
+              formData.paymentMethod === 'jazzcash' || formData.paymentMethod === 'easypaisa'
+                ? paymentDetails.transactionReference || undefined
+                : undefined,
+          },
         }),
       });
 
@@ -731,12 +763,25 @@ export default function CheckoutPage() {
 
                       <StripePayment
                         amount={finalTotal}
-                        onSuccess={() => {
+                        billingDetails={{
+                          email: formData.email,
+                          fullName: `${formData.firstName} ${formData.lastName}`.trim(),
+                          phone: formData.phone,
+                          city: formData.city,
+                          country: formData.country,
+                          postalCode: formData.postalCode,
+                          addressLine1: formData.address,
+                        }}
+                        onSuccess={(result) => {
                           setCardAuthorized(true);
+                          setCardPaymentIntentId(result.paymentIntentId);
+                          setCardAuthorizedAt(new Date().toISOString());
                           setErrors((prev) => ({ ...prev, payment: undefined }));
                         }}
                         onCancel={() => {
                           setCardAuthorized(false);
+                          setCardPaymentIntentId('');
+                          setCardAuthorizedAt('');
                           setFormData({ ...formData, paymentMethod: 'cod' });
                         }}
                       />
@@ -745,6 +790,10 @@ export default function CheckoutPage() {
                         <p className="text-green-400 text-sm flex items-center gap-2">
                           <ShieldCheck className="w-4 h-4" /> Card authorization completed.
                         </p>
+                      )}
+
+                      {cardAuthorized && cardPaymentIntentId && (
+                        <p className="text-white/60 text-xs">Authorization Reference: {cardPaymentIntentId}</p>
                       )}
                     </div>
                   )}
@@ -817,6 +866,15 @@ export default function CheckoutPage() {
                         <ShieldCheck className="w-4 h-4" /> OTP verified for this payment method.
                       </p>
                     )}
+
+                    <div className="mt-4 rounded-lg border border-gold/30 bg-[#10153a] p-3">
+                      <h4 className="text-gold text-sm font-semibold mb-2">Advanced Security Checks</h4>
+                      <ul className="space-y-1.5 text-xs text-white/70">
+                        <li>Contact and address verification: {formData.email && formData.address ? 'Ready' : 'Pending'}</li>
+                        <li>Payment OTP proof token: {otpVerificationToken ? 'Verified' : 'Pending'}</li>
+                        <li>Card authorization reference: {cardPaymentIntentId ? 'Captured' : formData.paymentMethod === 'card' ? 'Pending' : 'Not required'}</li>
+                      </ul>
+                    </div>
                   </div>
 
                   {errors.payment && (
@@ -852,6 +910,14 @@ export default function CheckoutPage() {
                           : formData.paymentMethod}
                       </p>
                       <p className="text-white/50 text-sm mt-1">OTP Verified: {isOtpVerified ? 'Yes' : 'No'}</p>
+                      {formData.paymentMethod === 'card' && cardPaymentIntentId && (
+                        <p className="text-white/50 text-sm mt-1">Authorization ID: {cardPaymentIntentId}</p>
+                      )}
+                    </div>
+
+                    <div className="p-4 bg-[#0a0a23] rounded-lg border border-gold/30">
+                      <h3 className="text-gold font-semibold mb-2">Verification Pattern</h3>
+                      <p className="text-white/70 text-sm">This checkout follows layered verification: customer identity check, payment authorization, OTP proof, and server-side final payment validation before order confirmation.</p>
                     </div>
                   </div>
                 </motion.div>

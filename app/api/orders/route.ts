@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import Stripe from 'stripe';
 import prisma from '../../../lib/db';
-import { hashPassword } from '../../../lib/auth';
+import { hashPassword, verifyOtpProofToken } from '../../../lib/auth';
+import { normalizeShippingAddress } from '../../../lib/address';
 import { getOrderConfirmationEmail, sendEmail } from '../../../lib/email';
+import { evaluateCheckoutRisk } from '../../../lib/payment-risk';
+import { checkRateLimit } from '../../../lib/rate-limit';
+import { getClientIp } from '../../../lib/request';
+import { normalizeEmail } from '../../../lib/request';
 
 interface OrderPayloadItem {
   id: string;
@@ -27,7 +33,18 @@ interface OrderPayload {
   shippingCost: number;
   discount: number;
   total: number;
+  paymentVerification?: {
+    otpVerificationToken?: string;
+    otpVerifiedAt?: string;
+    stripePaymentIntentId?: string;
+    cardAuthorizedAt?: string;
+    walletNumberMasked?: string;
+    walletAccountTitle?: string;
+    walletTransactionReference?: string;
+  };
 }
+
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
 export async function GET() {
   const orders = await prisma.order.findMany({
@@ -39,6 +56,15 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req);
+    const requestLimit = checkRateLimit({ key: `orders:create:${ip}`, max: 20, windowMs: 60_000 });
+    if (!requestLimit.allowed) {
+      return NextResponse.json(
+        { error: 'Too many checkout attempts. Please wait before retrying.' },
+        { status: 429, headers: { 'Retry-After': String(requestLimit.retryAfterSeconds) } }
+      );
+    }
+
     const body = (await req.json()) as OrderPayload;
     const {
       email,
@@ -55,14 +81,96 @@ export async function POST(req: NextRequest) {
       shippingCost,
       discount,
       total,
+      paymentVerification,
     } = body;
 
-    if (!email || !firstName || !lastName || !phone || !address || !city) {
+    const normalizedEmail = normalizeEmail(String(email || ''));
+    const normalizedAddress = normalizeShippingAddress({
+      address,
+      city,
+      country,
+      postalCode,
+    });
+
+    if (!normalizedEmail || !firstName || !lastName || !phone || !address || !city) {
       return NextResponse.json({ error: 'Shipping details are required' }, { status: 400 });
     }
 
     if (!Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
+    }
+
+    if (!paymentVerification?.otpVerificationToken) {
+      return NextResponse.json({ error: 'Missing payment verification token' }, { status: 400 });
+    }
+
+    const otpProof = verifyOtpProofToken(paymentVerification.otpVerificationToken);
+    const expectedPurpose = `payment-${paymentMethod}`;
+    if (!otpProof || otpProof.email !== normalizedEmail || otpProof.purpose !== `payment:${expectedPurpose}`) {
+      return NextResponse.json({ error: 'Invalid payment OTP verification proof' }, { status: 400 });
+    }
+
+    if (paymentMethod === 'card') {
+      const paymentIntentId = paymentVerification?.stripePaymentIntentId?.trim();
+      if (!paymentIntentId) {
+        return NextResponse.json({ error: 'Stripe payment authorization is required' }, { status: 400 });
+      }
+      if (!stripe) {
+        return NextResponse.json({ error: 'Stripe is not configured on server' }, { status: 500 });
+      }
+
+      const existingIntentUse = await prisma.paymentTransaction.findFirst({
+        where: {
+          provider: 'stripe',
+          providerTransactionId: paymentIntentId,
+        },
+      });
+
+      if (existingIntentUse) {
+        return NextResponse.json({ error: 'Payment authorization has already been used' }, { status: 409 });
+      }
+
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      if (paymentIntent.status !== 'succeeded') {
+        return NextResponse.json({ error: 'Payment authorization is not completed' }, { status: 400 });
+      }
+
+      const expectedAmount = Math.round(Number(total) * 100);
+      if (paymentIntent.amount_received !== expectedAmount) {
+        return NextResponse.json(
+          { error: 'Authorized amount does not match order total. Please retry payment.' },
+          { status: 400 }
+        );
+      }
+
+      if (paymentIntent.receipt_email && normalizeEmail(paymentIntent.receipt_email) !== normalizedEmail) {
+        return NextResponse.json({ error: 'Payment authorization identity mismatch' }, { status: 400 });
+      }
+    }
+
+    const riskResult = await evaluateCheckoutRisk({
+      email: normalizedEmail,
+      phone,
+      ip,
+      paymentMethod,
+      total: Number(total),
+      itemCount: items.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0),
+      otpVerifiedAt: paymentVerification.otpVerifiedAt,
+      cardAuthorizedAt: paymentVerification.cardAuthorizedAt,
+    });
+
+    if (riskResult.level === 'high') {
+      return NextResponse.json(
+        {
+          error: 'This payment requires manual review. Please contact support to proceed.',
+          risk: {
+            score: riskResult.score,
+            level: riskResult.level,
+            flags: riskResult.flags,
+          },
+        },
+        { status: 403 }
+      );
     }
 
     const productsForOrder = [] as Array<{ productId: number; quantity: number; price: number; name: string }>;
@@ -97,13 +205,13 @@ export async function POST(req: NextRequest) {
     }
 
     const user = await prisma.user.upsert({
-      where: { email },
+      where: { email: normalizedEmail },
       update: {
         name: `${firstName} ${lastName}`.trim(),
         phone,
       },
       create: {
-        email,
+        email: normalizedEmail,
         password: await hashPassword(`guest-${Date.now()}-${Math.random()}`),
         name: `${firstName} ${lastName}`.trim(),
         phone,
@@ -130,10 +238,39 @@ export async function POST(req: NextRequest) {
               : 'cod',
           shippingName: `${firstName} ${lastName}`.trim(),
           shippingPhone: phone,
-          shippingAddress: `${address}, ${city}${country ? `, ${country}` : ''}${postalCode ? ` ${postalCode}` : ''}`,
-          notes: shippingMethod || null,
+          shippingAddress: normalizedAddress.fullAddress,
+          notes: [
+            shippingMethod || null,
+            `risk:${riskResult.level}:${riskResult.score}`,
+            riskResult.flags.length ? `risk_flags:${riskResult.flags.join('|')}` : null,
+          ]
+            .filter(Boolean)
+            .join(' | '),
         },
       });
+
+      if (paymentMethod === 'card') {
+        await tx.paymentTransaction.create({
+          data: {
+            orderId: order.id,
+            provider: 'stripe',
+            merchantReference: `STRIPE-${order.id}-${Date.now()}`,
+            providerTransactionId: paymentVerification?.stripePaymentIntentId || null,
+            amount: Number(total),
+            currency: 'USD',
+            status: 'paid',
+            requestPayload: {
+              otpVerifiedAt: paymentVerification?.otpVerifiedAt || null,
+              cardAuthorizedAt: paymentVerification?.cardAuthorizedAt || null,
+            },
+            responsePayload: {
+              paymentIntentId: paymentVerification?.stripePaymentIntentId || null,
+            },
+            signatureValid: true,
+            reconciledAt: new Date(),
+          },
+        });
+      }
 
       await tx.orderItem.createMany({
         data: productsForOrder.map((entry: any) => ({
@@ -171,7 +308,7 @@ export async function POST(req: NextRequest) {
 
     try {
       await sendEmail({
-        to: email.trim().toLowerCase(),
+        to: normalizedEmail,
         subject: `Sapphura Order Confirmation #${created.id}`,
         html: getOrderConfirmationEmail({
           orderId: String(created.id),
@@ -182,7 +319,7 @@ export async function POST(req: NextRequest) {
             quantity: i.quantity,
             price: i.price,
           })),
-          shippingAddress: created.shippingAddress || `${address}, ${city}`,
+          shippingAddress: created.shippingAddress || normalizedAddress.fullAddress,
         }),
       });
       confirmationEmailSent = true;
@@ -193,6 +330,12 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      risk: {
+        score: riskResult.score,
+        level: riskResult.level,
+        flags: riskResult.flags,
+        externalProviderUsed: riskResult.externalProviderUsed,
+      },
       confirmationEmailSent,
       confirmationEmailError,
       order: {

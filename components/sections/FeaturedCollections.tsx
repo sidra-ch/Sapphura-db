@@ -71,7 +71,7 @@ export default function FeaturedCollections() {
 	return (
 		<section className="py-10 px-4 md:px-12 bg-[#1a1a40]">
 			<h2 className="text-3xl md:text-4xl font-bold text-gold mb-6 text-center">Featured Collections</h2>
-			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 				{visibleCollections.map((collection, index) => (
 					<Link
 						key={collection.id}
@@ -91,16 +91,15 @@ export default function FeaturedCollections() {
 							description={collection.description}
 							image={collection.image}
 							badge={collection.discount}
-							ctaLabel="Click to view products"
+							ctaLabel="Explore Collection"
 							contentPlacement="overlay"
-							className="bg-[#0a0a23] border-gold"
 							mediaOverlay={
-								<div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
-									<span className="p-3 rounded-full bg-gold text-[#0a0a23] transition transform hover:scale-110">
-										<Heart className="w-5 h-5" />
+								<div className="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 z-20">
+									<span className="p-2.5 rounded-full bg-gold text-[#0a0a23] transition transform hover:scale-110">
+										<Heart className="w-4 h-4" />
 									</span>
-									<span className="p-3 rounded-full bg-gold text-[#0a0a23] transition transform hover:scale-110">
-										<ShoppingCart className="w-5 h-5" />
+									<span className="p-2.5 rounded-full bg-gold text-[#0a0a23] transition transform hover:scale-110">
+										<ShoppingCart className="w-4 h-4" />
 									</span>
 								</div>
 							}

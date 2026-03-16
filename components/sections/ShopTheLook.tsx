@@ -34,7 +34,7 @@ export default function ShopTheLook() {
 	return (
 		<section className="py-6 px-4 md:px-8 bg-[#0a0a23]">
 			<h2 className="text-3xl md:text-4xl font-bold text-gold mb-6 text-center">Shop The Look</h2>
-			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 				{looks.map((look, idx) => (
 					<Link key={look.title} href={look.href} prefetch className="block h-full">
 					<motion.div
@@ -43,15 +43,13 @@ export default function ShopTheLook() {
 						whileInView={{ opacity: 1, y: 0 }}
 						transition={{ duration: 0.5, delay: idx * 0.1 }}
 						viewport={{ once: true }}
-						whileHover={{ y: -8 }}
 					>
 						<CompactCommerceCard
 							title={look.title}
 							description={look.description}
 							image={look.image}
-							ctaLabel="Shop This Look"
+							ctaLabel="Get The Look"
 							contentPlacement="overlay"
-							className="bg-[#1a1a40]"
 						/>
 					</motion.div>
 					</Link>

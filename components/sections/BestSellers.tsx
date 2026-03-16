@@ -72,7 +72,7 @@ export default function BestSellers() {
 			>
 				Best Sellers
 			</motion.h2>
-			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 				{bestSellers.map((product, idx) => {
 					const inWishlist = isInWishlist(product.id);
 					return (
@@ -83,7 +83,6 @@ export default function BestSellers() {
 							whileInView={{ opacity: 1, y: 0 }}
 							transition={{ duration: 0.5, delay: idx * 0.1 }}
 							viewport={{ once: true }}
-							whileHover={{ y: -8 }}
 						>
 							<CompactCommerceCard
 								title={product.name}
@@ -93,10 +92,10 @@ export default function BestSellers() {
 								price={`$${product.price}`}
 								originalPrice={`$${Math.floor(product.price * 1.2)}`}
 								contentPlacement="overlay"
-								className="bg-[#1a1a40]"
+								ctaLabel="Add to Bag"
 								mediaOverlay={
-									<div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-										<div className="absolute bottom-4 left-0 right-0 flex justify-center gap-3 opacity-0 group-hover:opacity-100 transition-all transform translate-y-4 group-hover:translate-y-0">
+									<div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-20">
+										<div className="absolute top-3 right-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-y-3 group-hover:translate-y-0">
 											<button
 												onClick={(e) => {
 													e.preventDefault();
@@ -106,20 +105,20 @@ export default function BestSellers() {
 														addToWishlist({ id: product.id, name: product.name, image: product.image, price: product.price });
 													}
 												}}
-												className={`p-3 rounded-full transition transform hover:scale-110 ${
+												className={`p-2.5 rounded-full transition transform hover:scale-110 ${
 													inWishlist ? 'bg-red-500 text-white' : 'bg-gold text-[#0a0a23] hover:bg-yellow-400'
 												}`}
 											>
-												<Heart className={`w-5 h-5 ${inWishlist ? 'fill-current' : ''}`} />
+												<Heart className={`w-4 h-4 ${inWishlist ? 'fill-current' : ''}`} />
 											</button>
 											<button
 												onClick={(e) => {
 													e.preventDefault();
 													addToCart({ id: product.id, name: product.name, image: product.image, price: product.price, quantity: 1 });
 												}}
-												className="p-3 rounded-full bg-gold text-[#0a0a23] hover:bg-yellow-400 transition transform hover:scale-110"
+												className="p-2.5 rounded-full bg-gold text-[#0a0a23] hover:bg-yellow-400 transition transform hover:scale-110"
 											>
-												<ShoppingCart className="w-5 h-5" />
+												<ShoppingCart className="w-4 h-4" />
 											</button>
 										</div>
 									</div>
