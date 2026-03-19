@@ -2,18 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '../../../lib/db';
 import { compareOTP, generateOtpProofToken, hashOTP } from '../../../lib/auth';
 import { getOTPEmail, sendEmail } from '../../../lib/email';
-import { sendWhatsAppOtp } from '../../../lib/whatsapp';
 import { checkRateLimit } from '../../../lib/rate-limit';
-import { sendSmsOtp } from '../../../lib/sms';
 import { normalizeEmail } from '../../../lib/request';
 
-type OtpChannel = 'email' | 'whatsapp' | 'sms' | 'all';
+type OtpChannel = 'email';
 
 function toOtpChannel(value: string): OtpChannel {
-  const normalized = value.toLowerCase();
-  if (normalized === 'email' || normalized === 'whatsapp' || normalized === 'sms' || normalized === 'all') {
-    return normalized;
-  }
   return 'email';
 }
 
@@ -117,46 +111,25 @@ export async function POST(req: NextRequest) {
       }
 
       const requestedChannel = toOtpChannel(String(otpChannel || 'email'));
-      const channel: OtpChannel = requestedChannel;
-      const deliveryTargetPhone = normalizedPhone || user.phone || '';
-      const results: Array<{ channel: 'email' | 'whatsapp' | 'sms'; sent: boolean; error?: string }> = [];
+      const channel: OtpChannel = 'email';
+      const results: Array<{ channel: 'email'; sent: boolean; error?: string }> = [];
 
-      if (channel === 'email' || channel === 'all') {
-        if (!normalizedEmail) {
-          results.push({ channel: 'email', sent: false, error: 'Email is required for email OTP delivery' });
-        } else {
-          try {
-            await sendEmail({
-              to: normalizedEmail,
-              subject: 'Your Sapphura Verification Code',
-              html: getOTPEmail(generatedOTP, user.name || 'Customer'),
-            });
-            results.push({ channel: 'email', sent: true });
-          } catch (error) {
-            results.push({
-              channel: 'email',
-              sent: false,
-              error: error instanceof Error ? error.message : 'Email delivery failed',
-            });
-          }
-        }
-      }
-
-      if (channel === 'whatsapp' || channel === 'all') {
-        if (!deliveryTargetPhone) {
-          results.push({ channel: 'whatsapp', sent: false, error: 'Phone number is required for WhatsApp OTP' });
-        } else {
-          const waResult = await sendWhatsAppOtp({ to: deliveryTargetPhone, otp: generatedOTP, name: user.name || 'Customer' });
-          results.push({ channel: 'whatsapp', sent: waResult.sent, error: waResult.error });
-        }
-      }
-
-      if (channel === 'sms' || channel === 'all') {
-        if (!deliveryTargetPhone) {
-          results.push({ channel: 'sms', sent: false, error: 'Phone number is required for SMS OTP' });
-        } else {
-          const smsResult = await sendSmsOtp({ to: deliveryTargetPhone, otp: generatedOTP, name: user.name || 'Customer' });
-          results.push({ channel: 'sms', sent: smsResult.sent, error: smsResult.error });
+      if (!normalizedEmail) {
+        results.push({ channel: 'email', sent: false, error: 'Email is required for email OTP delivery' });
+      } else {
+        try {
+          await sendEmail({
+            to: normalizedEmail,
+            subject: 'Your Sapphura Verification Code',
+            html: getOTPEmail(generatedOTP, user.name || 'Customer'),
+          });
+          results.push({ channel: 'email', sent: true });
+        } catch (error) {
+          results.push({
+            channel: 'email',
+            sent: false,
+            error: error instanceof Error ? error.message : 'Email delivery failed',
+          });
         }
       }
 

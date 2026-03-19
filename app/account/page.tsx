@@ -1,280 +1,107 @@
-"use client";
+import Link from 'next/link'
+import { auth } from '@clerk/nextjs/server'
+import { redirect } from 'next/navigation'
+import prisma from '../../lib/prisma'
+import { getOrCreatePrismaUser } from '../../lib/prismaUser'
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '../../components/auth/AuthContext';
-import { User, Package, Heart, MapPin, Lock, LogOut, ShoppingBag } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import Skeleton from 'react-loading-skeleton';
-import 'react-loading-skeleton/dist/skeleton.css';
+function formatMoney(value: number) {
+  return `$${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
 
-const tabs = [
-  { id: 'profile', label: 'My Profile', icon: User },
-  { id: 'orders', label: 'My Orders', icon: Package },
-  { id: 'wishlist', label: 'Wishlist', icon: Heart },
-  { id: 'addresses', label: 'Addresses', icon: MapPin },
-  { id: 'password', label: 'Change Password', icon: Lock },
-];
+function toStatusBadgeClass(status: string) {
+  const normalized = String(status || '').toLowerCase()
+  if (normalized === 'completed' || normalized === 'delivered' || normalized === 'paid') return 'bg-green-500/20 text-green-300 border-green-400/30'
+  if (normalized === 'shipped' || normalized === 'processing') return 'bg-blue-500/20 text-blue-300 border-blue-400/30'
+  if (normalized === 'cancelled' || normalized === 'failed') return 'bg-red-500/20 text-red-300 border-red-400/30'
+  return 'bg-yellow-500/20 text-yellow-300 border-yellow-400/30'
+}
 
-const demoOrders = [
-  { id: 'ORD-001', date: '2024-01-15', status: 'Delivered', total: 599, items: 3 },
-  { id: 'ORD-002', date: '2024-01-20', status: 'Shipped', total: 299, items: 1 },
-  { id: 'ORD-003', date: '2024-01-25', status: 'Processing', total: 449, items: 2 },
-];
-
-const demoWishlist = [
-  { id: '1', name: 'Gold Crescent Necklace', price: 299, image: '/neckles-1.jpeg' },
-  { id: '2', name: 'Diamond Bracelet', price: 399, image: '/bracelet-1.jpeg' },
-];
-
-export default function AccountPage() {
-  const { user, logout, isLoading } = useAuth();
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState('profile');
-
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push('/store/login');
-    }
-  }, [user, router, isLoading]);
-
-  const handleLogout = () => {
-    logout();
-    router.push('/');
-  };
-
-  if (isLoading || !user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0a0a23] to-[#1a1a40] py-12 px-4">
-        <div className="max-w-7xl mx-auto">
-          <Skeleton height={40} width={200} baseColor="#0a0a23" highlightColor="#1a1a40" className="mb-8" />
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            <div className="lg:col-span-1">
-              <div className="bg-[#1a1a40] border border-gold rounded-2xl p-6">
-                <div className="text-center mb-6">
-                  <Skeleton height={80} width={80} circle baseColor="#0a0a23" highlightColor="#1a1a40" className="mx-auto mb-4" />
-                  <Skeleton height={20} width="60%" baseColor="#0a0a23" highlightColor="#1a1a40" className="mx-auto" />
-                  <Skeleton height={16} width="80%" baseColor="#0a0a23" highlightColor="#1a1a40" className="mx-auto mt-2" />
-                </div>
-                <div className="space-y-2">
-                  {[1,2,3,4,5].map(i => (
-                    <Skeleton key={i} height={48} baseColor="#0a0a23" highlightColor="#1a1a40" className="rounded-lg" />
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="lg:col-span-3">
-              <div className="bg-[#1a1a40] border border-gold rounded-2xl p-6">
-                <Skeleton height={32} width={200} baseColor="#0a0a23" highlightColor="#1a1a40" className="mb-6" />
-                <Skeleton height={20} width="100%" baseColor="#0a0a23" highlightColor="#1a1a40" className="mb-2" />
-                <Skeleton height={20} width="100%" baseColor="#0a0a23" highlightColor="#1a1a40" className="mb-2" />
-                <Skeleton height={20} width="60%" baseColor="#0a0a23" highlightColor="#1a1a40" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+export default async function AccountPage() {
+  const authState = await auth()
+  if (!authState.userId) {
+    redirect('/sign-in')
   }
 
+  const prismaUser = await getOrCreatePrismaUser()
+
+  const orders = await prisma.order.findMany({
+    where: { userId: prismaUser.id },
+    include: {
+      items: {
+        include: {
+          product: {
+            select: { id: true, name: true, slug: true },
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 25,
+  })
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a0a23] to-[#1a1a40] py-12 px-4">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gold mb-8">My Account</h1>
-
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-[#1a1a40] border border-gold rounded-2xl p-6">
-              <div className="text-center mb-6">
-                <div className="w-20 h-20 bg-gold/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <User className="w-10 h-10 text-gold" />
-                </div>
-                <h3 className="text-white font-semibold">{user.name || 'User'}</h3>
-                <p className="text-white/50 text-sm">{user.email}</p>
-                <span className="inline-block bg-gold/20 text-gold text-xs px-3 py-1 rounded-full mt-2 capitalize">
-                  {user.role}
-                </span>
-              </div>
-
-              <nav className="space-y-2">
-                {tabs.map((tab) => {
-                  const Icon = tab.icon;
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-                        activeTab === tab.id
-                          ? 'bg-gold text-[#0a0a23]'
-                          : 'text-white/70 hover:bg-gold/10 hover:text-gold'
-                      }`}
-                    >
-                      <Icon className="w-5 h-5" />
-                      {tab.label}
-                    </button>
-                  );
-                })}
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-400 hover:bg-red-500/10 transition"
-                >
-                  <LogOut className="w-5 h-5" />
-                  Logout
-                </button>
-              </nav>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="lg:col-span-3">
-            <div
-              key={activeTab}
-              className="bg-[#1a1a40] border border-gold rounded-2xl p-6 animate-fade-in"
-            >
-              {activeTab === 'profile' && (
-                <div>
-                  <h2 className="text-2xl font-bold text-gold mb-6">Profile Information</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-white/70 text-sm mb-2">Full Name</label>
-                      <input
-                        type="text"
-                        defaultValue={user.name || ''}
-                        className="w-full px-4 py-3 bg-[#0a0a23] border border-gold/30 rounded-lg text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-white/70 text-sm mb-2">Email</label>
-                      <input
-                        type="email"
-                        defaultValue={user.email}
-                        disabled
-                        className="w-full px-4 py-3 bg-[#0a0a23] border border-gold/30 rounded-lg text-white/50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-white/70 text-sm mb-2">Phone</label>
-                      <input
-                        type="tel"
-                        defaultValue={user.phone || ''}
-                        className="w-full px-4 py-3 bg-[#0a0a23] border border-gold/30 rounded-lg text-white"
-                      />
-                    </div>
-                  </div>
-                  <button className="mt-6 px-6 py-3 bg-gold text-[#0a0a23] rounded-lg font-bold hover:bg-yellow-400 transition">
-                    Save Changes
-                  </button>
-                </div>
-              )}
-
-              {activeTab === 'orders' && (
-                <div>
-                  <h2 className="text-2xl font-bold text-gold mb-6">My Orders</h2>
-                  {demoOrders.length === 0 ? (
-                    <div className="text-center py-12">
-                      <Package className="w-16 h-16 text-gold/30 mx-auto mb-4" />
-                      <p className="text-white/60">No orders yet</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {demoOrders.map((order) => (
-                        <div key={order.id} className="bg-[#0a0a23] rounded-xl p-4 border border-gold/20">
-                          <div className="flex justify-between items-start mb-4">
-                            <div>
-                              <h3 className="text-gold font-semibold">{order.id}</h3>
-                              <p className="text-white/50 text-sm">{order.date}</p>
-                            </div>
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                              order.status === 'Delivered' ? 'bg-green-500/20 text-green-400' :
-                              order.status === 'Shipped' ? 'bg-blue-500/20 text-blue-400' :
-                              'bg-yellow-500/20 text-yellow-400'
-                            }`}>
-                              {order.status}
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-white/70">{order.items} items</span>
-                            <span className="text-gold font-bold text-xl">${order.total}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {activeTab === 'wishlist' && (
-                <div>
-                  <h2 className="text-2xl font-bold text-gold mb-6">My Wishlist</h2>
-                  {demoWishlist.length === 0 ? (
-                    <div className="text-center py-12">
-                      <Heart className="w-16 h-16 text-gold/30 mx-auto mb-4" />
-                      <p className="text-white/60">Your wishlist is empty</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {demoWishlist.map((item) => (
-                        <div key={item.id} className="bg-[#0a0a23] rounded-xl p-4 border border-gold/20 flex items-center gap-4">
-                          <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded-lg border border-gold" />
-                          <div className="flex-1">
-                            <h3 className="text-gold font-medium">{item.name}</h3>
-                            <p className="text-white font-bold">${item.price}</p>
-                          </div>
-                          <button className="p-2 bg-gold text-[#0a0a23] rounded-full hover:bg-yellow-400 transition">
-                            <ShoppingBag className="w-5 h-5" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {activeTab === 'addresses' && (
-                <div>
-                  <h2 className="text-2xl font-bold text-gold mb-6">Saved Addresses</h2>
-                  <div className="bg-[#0a0a23] rounded-xl p-6 border border-gold/20">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="text-gold font-semibold">Home Address</h3>
-                        <p className="text-white/70 mt-2">123 Main Street<br />Lahore, Pakistan<br />+92 300 1234567</p>
-                      </div>
-                      <span className="text-xs bg-gold/20 text-gold px-2 py-1 rounded">Default</span>
-                    </div>
-                    <button className="text-gold text-sm hover:text-yellow-300">Edit Address</button>
-                  </div>
-                  <button className="mt-4 w-full py-3 border-2 border-dashed border-gold/30 text-gold rounded-lg hover:border-gold transition">
-                    + Add New Address
-                  </button>
-                </div>
-              )}
-
-              {activeTab === 'password' && (
-                <div>
-                  <h2 className="text-2xl font-bold text-gold mb-6">Change Password</h2>
-                  <div className="space-y-4 max-w-md">
-                    <div>
-                      <label className="block text-white/70 text-sm mb-2">Current Password</label>
-                      <input type="password" className="w-full px-4 py-3 bg-[#0a0a23] border border-gold/30 rounded-lg text-white" />
-                    </div>
-                    <div>
-                      <label className="block text-white/70 text-sm mb-2">New Password</label>
-                      <input type="password" className="w-full px-4 py-3 bg-[#0a0a23] border border-gold/30 rounded-lg text-white" />
-                    </div>
-                    <div>
-                      <label className="block text-white/70 text-sm mb-2">Confirm New Password</label>
-                      <input type="password" className="w-full px-4 py-3 bg-[#0a0a23] border border-gold/30 rounded-lg text-white" />
-                    </div>
-                    <button className="px-6 py-3 bg-gold text-[#0a0a23] rounded-lg font-bold hover:bg-yellow-400 transition">
-                      Update Password
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+    <main className="mx-auto max-w-5xl px-4 py-10">
+      <div className="mb-8 flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-semibold">My Account</h1>
+          <p className="mt-2 text-sm text-white/70">Welcome back, {prismaUser.name || prismaUser.email}</p>
         </div>
+        <Link href="/collections" className="rounded border border-gold px-4 py-2 text-gold">Continue Shopping</Link>
       </div>
-    </div>
-  );
+
+      <section className="mb-8 rounded-xl border border-white/20 bg-white/5 p-5">
+        <h2 className="mb-4 text-xl font-semibold">Profile</h2>
+        <div className="grid gap-3 text-sm sm:grid-cols-2">
+          <p><strong>Email:</strong> {prismaUser.email}</p>
+          <p><strong>Role:</strong> {prismaUser.role}</p>
+          <p><strong>User ID:</strong> {prismaUser.id}</p>
+          <p><strong>Joined:</strong> {new Date(prismaUser.createdAt).toLocaleDateString()}</p>
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-white/20 bg-white/5 p-5">
+        <h2 className="mb-4 text-xl font-semibold">My Orders</h2>
+
+        {orders.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-white/20 p-6 text-center text-white/70">
+            No orders yet. Place your first order from the store.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {orders.map((order) => (
+              <article key={order.id} className="rounded-lg border border-white/20 bg-[#0a0a23]/40 p-4">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm text-white/70">Order #{order.publicId || order.id}</p>
+                  <span className={`rounded-full border px-3 py-1 text-xs ${toStatusBadgeClass(order.status)}`}>
+                    {order.status}
+                  </span>
+                </div>
+
+                <div className="mb-3 grid gap-2 text-sm sm:grid-cols-4">
+                  <p><strong>Total:</strong> {formatMoney(order.total)}</p>
+                  <p><strong>Payment:</strong> {order.paymentStatus}</p>
+                  <p><strong>Method:</strong> {order.paymentMethod || 'N/A'}</p>
+                  <p><strong>Date:</strong> {new Date(order.createdAt).toLocaleString()}</p>
+                </div>
+
+                <div className="rounded-md border border-white/10 p-3">
+                  <p className="mb-2 text-xs uppercase tracking-wide text-white/60">Items</p>
+                  <ul className="space-y-1 text-sm">
+                    {order.items.map((item) => (
+                      <li key={item.id} className="flex items-center justify-between gap-2">
+                        <span>
+                          {item.product?.name || `Product #${item.productId}`} x {item.quantity}
+                        </span>
+                        <span>{formatMoney(item.price * item.quantity)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+    </main>
+  )
 }

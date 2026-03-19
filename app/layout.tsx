@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import Link from 'next/link';
+import { ClerkProvider } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 import "./globals.css";
 import { Providers } from "../components/Providers";
 import CartDrawer from "../components/cart/CartDrawer";
@@ -9,11 +12,13 @@ export const metadata: Metadata = {
   description: "Discover timeless elegance with Sapphura's exclusive collection.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const authState = await auth();
+
   return (
     <html lang="en">
       <head>
@@ -22,11 +27,23 @@ export default function RootLayout({
       <body
         className="antialiased"
       >
-        <Providers>
-          <GlobalHeader />
-          {children}
-          <CartDrawer />
-        </Providers>
+        <ClerkProvider>
+          <header className="flex items-center justify-end gap-2 bg-[#0a0a23] px-4 py-2 text-sm text-white">
+            {!authState.userId ? (
+              <>
+              <Link href="/sign-in" className="rounded border border-gold px-3 py-1 text-gold">Sign in</Link>
+              <Link href="/sign-up" className="rounded bg-gold px-3 py-1 text-[#0a0a23]">Sign up</Link>
+              </>
+            ) : (
+              <Link href="/account" className="rounded border border-gold px-3 py-1 text-gold">My Account</Link>
+            )}
+          </header>
+          <Providers>
+            <GlobalHeader />
+            {children}
+            <CartDrawer />
+          </Providers>
+        </ClerkProvider>
       </body>
     </html>
   );

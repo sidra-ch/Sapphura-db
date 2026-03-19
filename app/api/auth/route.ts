@@ -4,16 +4,10 @@ import { hashPassword, comparePassword, generateToken, generateOTP, hashOTP, com
 import { getOTPEmail, sendEmail } from '../../../lib/email';
 import { checkRateLimit } from '../../../lib/rate-limit';
 import { getClientIp, normalizeEmail } from '../../../lib/request';
-import { sendWhatsAppOtp } from '../../../lib/whatsapp';
-import { sendSmsOtp } from '../../../lib/sms';
 
-type OtpChannel = 'email' | 'whatsapp' | 'sms' | 'all';
+type OtpChannel = 'email';
 
 function toOtpChannel(value: string): OtpChannel {
-  const normalized = value.toLowerCase();
-  if (normalized === 'email' || normalized === 'whatsapp' || normalized === 'sms' || normalized === 'all') {
-    return normalized;
-  }
   return 'email';
 }
 
@@ -44,7 +38,7 @@ export async function POST(req: NextRequest) {
     const userId = Number(body.userId || 0);
     const otpInput = body.otp ? String(body.otp).trim() : '';
     const requestedOtpChannel = toOtpChannel(String(body.otpChannel || 'email'));
-    const otpChannel: OtpChannel = requestedOtpChannel;
+    const otpChannel: OtpChannel = 'email';
 
     if (email) {
       const emailLimit = checkRateLimit({ key: `auth:email:${email}`, max: 15, windowMs: 15 * 60_000 });
@@ -106,42 +100,21 @@ export async function POST(req: NextRequest) {
             },
           });
 
-      const deliveryResults: Array<{ channel: 'email' | 'whatsapp' | 'sms'; sent: boolean; error?: string }> = [];
-      const deliveryPhone = phone || '';
+      const deliveryResults: Array<{ channel: 'email'; sent: boolean; error?: string }> = [];
 
-      if (otpChannel === 'email' || otpChannel === 'all') {
-        try {
-          await sendEmail({
-            to: email,
-            subject: 'Your Sapphura Verification Code',
-            html: getOTPEmail(otpCode, name),
-          });
-          deliveryResults.push({ channel: 'email', sent: true });
-        } catch (error) {
-          deliveryResults.push({
-            channel: 'email',
-            sent: false,
-            error: error instanceof Error ? error.message : 'Email delivery failed',
-          });
-        }
-      }
-
-      if (otpChannel === 'whatsapp' || otpChannel === 'all') {
-        if (!deliveryPhone) {
-          deliveryResults.push({ channel: 'whatsapp', sent: false, error: 'Phone number is required for WhatsApp OTP' });
-        } else {
-          const waResult = await sendWhatsAppOtp({ to: deliveryPhone, otp: otpCode, name });
-          deliveryResults.push({ channel: 'whatsapp', sent: waResult.sent, error: waResult.error });
-        }
-      }
-
-      if (otpChannel === 'sms' || otpChannel === 'all') {
-        if (!deliveryPhone) {
-          deliveryResults.push({ channel: 'sms', sent: false, error: 'Phone number is required for SMS OTP' });
-        } else {
-          const smsResult = await sendSmsOtp({ to: deliveryPhone, otp: otpCode, name });
-          deliveryResults.push({ channel: 'sms', sent: smsResult.sent, error: smsResult.error });
-        }
+      try {
+        await sendEmail({
+          to: email,
+          subject: 'Your Sapphura Verification Code',
+          html: getOTPEmail(otpCode, name),
+        });
+        deliveryResults.push({ channel: 'email', sent: true });
+      } catch (error) {
+        deliveryResults.push({
+          channel: 'email',
+          sent: false,
+          error: error instanceof Error ? error.message : 'Email delivery failed',
+        });
       }
 
       const sentChannels = deliveryResults.filter((item: any) => item.sent).map((item: any) => item.channel);
@@ -352,63 +325,24 @@ export async function POST(req: NextRequest) {
         data: { otp: hashedOtp, otpExpiry: new Date(Date.now() + OTP_TTL_MS) },
       });
 
-      const deliveryResults: Array<{ channel: 'email' | 'whatsapp' | 'sms'; sent: boolean; error?: string }> = [];
-      const deliveryPhone = user.phone || phone;
+      const deliveryResults: Array<{ channel: 'email'; sent: boolean; error?: string }> = [];
 
-      if (otpChannel === 'email' || otpChannel === 'all') {
-        try {
-          await sendEmail({
-            to: user.email,
-            subject: 'Your Sapphura Login Code',
-            html: getOTPEmail(otpCode, user.name || 'Customer'),
-          });
-          deliveryResults.push({ channel: 'email', sent: true });
-        } catch (error) {
-          deliveryResults.push({
-            channel: 'email',
-            sent: false,
-            error: error instanceof Error ? error.message : 'Email delivery failed',
-          });
-        }
-      }
-
-      if (otpChannel === 'whatsapp' || otpChannel === 'all') {
-        if (!deliveryPhone) {
-          deliveryResults.push({ channel: 'whatsapp', sent: false, error: 'Phone number is required for WhatsApp OTP' });
-        } else {
-          const waResult = await sendWhatsAppOtp({ to: deliveryPhone, otp: otpCode, name: user.name || 'Customer' });
-          deliveryResults.push({ channel: 'whatsapp', sent: waResult.sent, error: waResult.error });
-        }
-      }
-
-      if (otpChannel === 'sms' || otpChannel === 'all') {
-        if (!deliveryPhone) {
-          deliveryResults.push({ channel: 'sms', sent: false, error: 'Phone number is required for SMS OTP' });
-        } else {
-          const smsResult = await sendSmsOtp({ to: deliveryPhone, otp: otpCode, name: user.name || 'Customer' });
-          deliveryResults.push({ channel: 'sms', sent: smsResult.sent, error: smsResult.error });
-        }
+      try {
+        await sendEmail({
+          to: user.email,
+          subject: 'Your Sapphura Login Code',
+          html: getOTPEmail(otpCode, user.name || 'Customer'),
+        });
+        deliveryResults.push({ channel: 'email', sent: true });
+      } catch (error) {
+        deliveryResults.push({
+          channel: 'email',
+          sent: false,
+          error: error instanceof Error ? error.message : 'Email delivery failed',
+        });
       }
 
       const sentChannels = deliveryResults.filter((item: any) => item.sent).map((item: any) => item.channel);
-      if (sentChannels.length === 0 && otpChannel !== 'email') {
-        try {
-          await sendEmail({
-            to: user.email,
-            subject: 'Your Sapphura Login Code',
-            html: getOTPEmail(otpCode, user.name || 'Customer'),
-          });
-          deliveryResults.push({ channel: 'email', sent: true });
-          sentChannels.push('email');
-        } catch (error) {
-          deliveryResults.push({
-            channel: 'email',
-            sent: false,
-            error: error instanceof Error ? error.message : 'Email fallback failed',
-          });
-        }
-      }
-
       if (sentChannels.length === 0) {
         const reasons = deliveryResults
           .filter((item: any) => !item.sent)

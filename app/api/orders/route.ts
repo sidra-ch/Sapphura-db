@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { auth } from '@clerk/nextjs/server';
 import prisma from '../../../lib/db';
 import { hashPassword, verifyOtpProofToken } from '../../../lib/auth';
 import { normalizeShippingAddress } from '../../../lib/address';
@@ -8,6 +9,8 @@ import { evaluateCheckoutRisk } from '../../../lib/payment-risk';
 import { checkRateLimit } from '../../../lib/rate-limit';
 import { getClientIp } from '../../../lib/request';
 import { normalizeEmail } from '../../../lib/request';
+import { requireClerkRole } from '../../../lib/clerk-rbac';
+import { getOrCreatePrismaUser } from '../../../lib/prismaUser';
 
 interface OrderPayloadItem {
   id: string;
@@ -62,12 +65,70 @@ function isPaymentTransactionTableMissing(error: unknown): boolean {
   return message.includes('PaymentTransaction') && message.toLowerCase().includes('does not exist');
 }
 
-export async function GET() {
+async function findProductByItemId(itemId: string) {
+  const numericId = Number(itemId)
+  if (Number.isInteger(numericId) && numericId > 0) {
+    const byNumeric = await prisma.product.findUnique({ where: { id: numericId } })
+    if (byNumeric) return byNumeric
+  }
+
+  const byPublicId = await prisma.product.findUnique({ where: { publicId: itemId } })
+  if (byPublicId) return byPublicId
+
+  return prisma.product.findUnique({ where: { slug: itemId } })
+}
+
+export async function GET(req: NextRequest) {
+  const guard = await requireClerkRole('admin');
+  if (guard) {
+    return guard;
+  }
+
   const orders = await prisma.order.findMany({
-    include: { items: { include: { product: true } }, user: true },
+    include: {
+      items: { include: { product: true } },
+      user: {
+        select: {
+          id: true,
+          publicId: true,
+          email: true,
+          name: true,
+          phone: true,
+          role: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+    },
     orderBy: { createdAt: 'desc' },
   });
-  return NextResponse.json({ orders });
+  return NextResponse.json({
+    orders: orders.map((order) => ({
+      ...order,
+      id: order.publicId || String(order.id),
+      legacyId: order.id,
+      user: order.user
+        ? {
+            ...order.user,
+            id: order.user.publicId || String(order.user.id),
+            legacyId: order.user.id,
+          }
+        : null,
+      items: Array.isArray(order.items)
+        ? order.items.map((item) => ({
+            ...item,
+            product: item.product
+              ? {
+                  ...item.product,
+                  id: item.product.publicId || String(item.product.id),
+                  legacyId: item.product.id,
+                }
+              : null,
+          }))
+        : [],
+    })),
+  });
 }
 
 export async function POST(req: NextRequest) {
@@ -208,10 +269,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Invalid order items' }, { status: 400 });
       }
 
-      const numericId = Number(item.id);
-      const product = Number.isInteger(numericId)
-        ? await prisma.product.findUnique({ where: { id: numericId } })
-        : await prisma.product.findUnique({ where: { slug: item.id } });
+      const product = await findProductByItemId(item.id);
 
       if (!product) {
         return NextResponse.json({ error: `Product not found: ${item.name || item.id}` }, { status: 404 });
@@ -232,20 +290,46 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const user = await prisma.user.upsert({
-      where: { email: normalizedEmail },
-      update: {
-        name: `${firstName} ${lastName}`.trim(),
-        phone,
-      },
-      create: {
-        email: normalizedEmail,
-        password: await hashPassword(`guest-${Date.now()}-${Math.random()}`),
-        name: `${firstName} ${lastName}`.trim(),
-        phone,
-        role: 'customer',
-      },
-    });
+    const authState = await auth();
+    let user: { id: number; email: string; name?: string | null; phone?: string | null };
+
+    if (authState.userId) {
+      const clerkUser = await getOrCreatePrismaUser();
+      user = await prisma.user.update({
+        where: { id: clerkUser.id },
+        data: {
+          name: `${firstName} ${lastName}`.trim(),
+          phone,
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          phone: true,
+        },
+      });
+    } else {
+      user = await prisma.user.upsert({
+        where: { email: normalizedEmail },
+        update: {
+          name: `${firstName} ${lastName}`.trim(),
+          phone,
+        },
+        create: {
+          email: normalizedEmail,
+          password: await hashPassword(`guest-${Date.now()}-${Math.random()}`),
+          name: `${firstName} ${lastName}`.trim(),
+          phone,
+          role: 'customer',
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          phone: true,
+        },
+      });
+    }
 
     const created = await prisma.$transaction(async (tx: any) => {
       const order = await tx.order.create({
@@ -373,7 +457,8 @@ export async function POST(req: NextRequest) {
       confirmationEmailSent,
       confirmationEmailError,
       order: {
-        id: created.id,
+        id: created.publicId || String(created.id),
+        legacyId: created.id,
         total: created.total,
         status: created.status,
         paymentStatus: created.paymentStatus,
@@ -381,7 +466,8 @@ export async function POST(req: NextRequest) {
         shippingPhone: created.shippingPhone,
         shippingAddress: created.shippingAddress,
         items: created.items.map((entry: any) => ({
-          id: String(entry.productId),
+          id: entry.product?.publicId || String(entry.productId),
+          legacyId: entry.productId,
           name: entry.product.name,
           price: entry.price,
           quantity: entry.quantity,

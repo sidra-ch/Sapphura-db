@@ -25,8 +25,6 @@ interface FormErrors {
 
 interface OtpChannelAvailability {
   email: boolean;
-  sms: boolean;
-  whatsapp: boolean;
 }
 
 export default function CheckoutPage() {
@@ -64,11 +62,9 @@ export default function CheckoutPage() {
   const [otpVerifiedAt, setOtpVerifiedAt] = useState('');
   const [otpExpiry, setOtpExpiry] = useState('');
   const [otpCooldown, setOtpCooldown] = useState(0);
-  const [otpChannel, setOtpChannel] = useState<'email' | 'sms' | 'whatsapp'>('email');
+  const [otpChannel] = useState<'email'>('email');
   const [availableOtpChannels, setAvailableOtpChannels] = useState<OtpChannelAvailability>({
     email: true,
-    sms: false,
-    whatsapp: false,
   });
   const [cardAuthorized, setCardAuthorized] = useState(false);
   const [cardPaymentIntentId, setCardPaymentIntentId] = useState('');
@@ -117,10 +113,7 @@ export default function CheckoutPage() {
         const channels = data?.channels as OtpChannelAvailability | undefined;
         if (!isMounted || !channels) return;
 
-        setAvailableOtpChannels(channels);
-        if (!channels[otpChannel]) {
-          setOtpChannel(channels.whatsapp ? 'whatsapp' : channels.sms ? 'sms' : 'email');
-        }
+        setAvailableOtpChannels({ email: Boolean(channels.email) });
       } catch {
         // keep defaults on network failure
       }
@@ -218,11 +211,6 @@ export default function CheckoutPage() {
 
     if (!availableOtpChannels[otpChannel]) {
       setOtpError(`Selected OTP channel (${otpChannel}) is not configured yet. Please select another channel.`);
-      return;
-    }
-
-    if ((otpChannel === 'sms' || otpChannel === 'whatsapp') && !validatePhone(formData.phone)) {
-      setOtpError('Please enter a valid phone number for SMS/WhatsApp OTP');
       return;
     }
 
@@ -880,25 +868,17 @@ export default function CheckoutPage() {
                   <div className="mt-6 p-4 bg-[#0a0a23] rounded-lg border border-gold/40">
                     <h3 className="text-gold font-semibold mb-3">Payment OTP Verification</h3>
                     <p className="text-white/70 text-sm mb-3">
-                      Choose where to receive OTP: email, SMS, or WhatsApp.
+                      OTP verification is delivered via email.
                     </p>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
-                      {([
-                        { key: 'email', label: 'Email OTP' },
-                        { key: 'sms', label: 'SMS OTP' },
-                        { key: 'whatsapp', label: 'WhatsApp OTP' },
-                      ] as const).map((channel) => (
-                        <button
-                          key={channel.key}
-                          type="button"
-                          onClick={() => setOtpChannel(channel.key)}
-                          disabled={!availableOtpChannels[channel.key]}
-                          className={`px-3 py-2 rounded-lg text-sm border transition ${otpChannel === channel.key ? 'bg-gold text-[#0a0a23] border-gold' : 'text-white/80 border-gold/30 hover:border-gold/70'} ${!availableOtpChannels[channel.key] ? 'opacity-40 cursor-not-allowed' : ''}`}
-                        >
-                          {channel.label}{!availableOtpChannels[channel.key] ? ' (Not Configured)' : ''}
-                        </button>
-                      ))}
+                      <button
+                        type="button"
+                        disabled={!availableOtpChannels.email}
+                        className={`px-3 py-2 rounded-lg text-sm border transition ${availableOtpChannels.email ? 'bg-gold text-[#0a0a23] border-gold' : 'text-white/80 border-gold/30 opacity-40 cursor-not-allowed'}`}
+                      >
+                        Email OTP{!availableOtpChannels.email ? ' (Not Configured)' : ''}
+                      </button>
                     </div>
 
                     <div className="flex flex-col md:flex-row gap-3">

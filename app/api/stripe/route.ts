@@ -1,10 +1,21 @@
 import Stripe from 'stripe';
 import { NextRequest, NextResponse } from 'next/server';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
+function getStripeClient(): Stripe | null {
+  const secret = process.env.STRIPE_SECRET_KEY;
+  if (!secret) {
+    return null;
+  }
+  return new Stripe(secret);
+}
 
 export async function POST(req: NextRequest) {
   try {
+    const stripe = getStripeClient();
+    if (!stripe) {
+      return NextResponse.json({ error: 'Stripe is not configured on server' }, { status: 500 });
+    }
+
     const { amount, currency = 'usd', email, items, orderFingerprint } = await req.json();
 
     if (!Number.isFinite(amount) || amount <= 0) {
@@ -62,6 +73,11 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    const stripe = getStripeClient();
+    if (!stripe) {
+      return NextResponse.json({ error: 'Stripe is not configured on server' }, { status: 500 });
+    }
+
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
     return NextResponse.json({
       status: paymentIntent.status,

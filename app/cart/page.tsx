@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useCart } from '../../components/cart/CartContext';
+import { FALLBACK_PRODUCT_IMAGE } from '../../lib/media';
 
 export default function CartPage() {
   const { items, removeFromCart, updateQuantity, totalPrice, totalItems, clearCart } = useCart();
@@ -48,17 +49,20 @@ export default function CartPage() {
           <div className="lg:col-span-2 space-y-4">
             {items.map((item) => (
               <div key={item.id} className="bg-[#1a1a40] border border-gold/20 rounded-xl p-4 flex gap-4">
-                <Link href={`/product/${item.id}`}>
+                <Link href={`/product/${item.slug || item.id}`}>
                   <img 
-                    src={item.image} 
+                    src={item.image || FALLBACK_PRODUCT_IMAGE} 
                     alt={item.name}
                     className="w-24 h-24 object-cover rounded-lg"
+                    onError={(event) => {
+                      event.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+                    }}
                   />
                 </Link>
                 <div className="flex-1">
                   <div className="flex justify-between items-start">
                     <div>
-                      <Link href={`/product/${item.id}`} className="text-gold font-bold text-lg hover:text-yellow-400 transition">
+                      <Link href={`/product/${item.slug || item.id}`} className="text-gold font-bold text-lg hover:text-yellow-400 transition">
                         {item.name}
                       </Link>
                       {item.variant && (

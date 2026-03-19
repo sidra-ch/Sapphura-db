@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '../../../lib/db';
 import { getPrimaryMedia, parseMediaList } from '../../../lib/media';
+import { requireClerkRole } from '../../../lib/clerk-rbac';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,8 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       products: products.map((p: any) => ({
-        id: p.id,
+        id: p.publicId || String(p.id),
+        legacyId: p.id,
         name: p.name,
         slug: p.slug,
         description: p.description,
@@ -50,6 +52,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const guard = await requireClerkRole('admin');
+    if (guard) {
+      return guard;
+    }
+
     const body = await req.json();
     const name = String(body.name || '').trim();
     const description = String(body.description || '').trim();
@@ -102,7 +109,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       product: {
-        id: created.id,
+        id: created.publicId || String(created.id),
+        legacyId: created.id,
         name: created.name,
         slug: created.slug,
         image: getPrimaryMedia(created.images),

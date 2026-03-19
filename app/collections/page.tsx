@@ -14,15 +14,6 @@ import { FALLBACK_PRODUCT_IMAGE } from '../../lib/media';
 
 const products = PRODUCT_CATALOG;
 const FALLBACK_IMAGE = FALLBACK_PRODUCT_IMAGE;
-const LIVE_IMAGE_POOL = [
-  'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635074/newcollection-1_w3fvox.jpg',
-  'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635077/newcollection-3_tacjvs.jpg',
-  'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635070/neckles-2_ifgegk.jpg',
-  'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635113/suit-20_rquv3r.jpg',
-  'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635056/earing-2_rst8xu.jpg',
-  'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635036/bangals-2_wjknoh.jpg',
-  'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635512/summer-4_ga77ea.jpg',
-];
 
 const categories = ['All', 'Jewelry', 'Abaya', 'Accessories', 'Clothing', 'Makeup'];
 const priceRanges = ['All', 'Under $100', '$100 - $200', '$200 - $300', 'Over $300'];
@@ -108,24 +99,23 @@ function CollectionsContent() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [galleryProduct]);
 
-  const normalizeCatalogImage = (imageUrl: string | undefined, seed = 0) => {
-    const fallback = LIVE_IMAGE_POOL[seed % LIVE_IMAGE_POOL.length] || FALLBACK_IMAGE;
-    if (!imageUrl) return fallback;
+  const normalizeCatalogImage = (imageUrl: string | undefined) => {
+    if (!imageUrl) return FALLBACK_IMAGE;
 
     const normalized = imageUrl.trim();
-    if (!normalized.startsWith('http')) return fallback;
+    if (!normalized.startsWith('http')) return FALLBACK_IMAGE;
 
     // Older generated pools contain versioned URLs that now 404.
     if (normalized.includes('/v177356') || normalized.includes('/v177300')) {
-      return fallback;
+      return FALLBACK_IMAGE;
     }
 
     return normalized;
   };
 
-  const getProductImage = (images: string[], seed = 0) => {
-    if (!images || !images.length) return normalizeCatalogImage(undefined, seed);
-    return normalizeCatalogImage(images[0], seed);
+  const getProductImage = (images: string[]) => {
+    if (!images || !images.length) return normalizeCatalogImage(undefined);
+    return normalizeCatalogImage(images[0]);
   };
 
   const getCategoryName = (categoryId: number) => {
@@ -385,11 +375,9 @@ function CollectionsContent() {
               ))
             ) : (
               sortedProducts.map((product, index) => {
-                const inWishlist = isInWishlist(product.id);
-                const productImage = getProductImage(product.images, index);
-                const productGalleryImages = (product.images.length ? product.images : [FALLBACK_IMAGE]).map((img, imgIdx) =>
-                  normalizeCatalogImage(img, index + imgIdx)
-                );
+                const productKey = product.slug || product.id;
+                const inWishlist = isInWishlist(productKey);
+                const productImage = getProductImage(product.images);
                 const categoryName = getCategoryName(product.categoryId);
                 return (
               <motion.div
@@ -421,9 +409,9 @@ function CollectionsContent() {
                           onClick={(e) => {
                             e.preventDefault();
                             if (inWishlist) {
-                              removeFromWishlist(product.id);
+                              removeFromWishlist(productKey);
                             } else {
-                              addToWishlist({ id: product.id, name: product.name, image: productImage, price: product.price });
+                              addToWishlist({ id: productKey, slug: product.slug, name: product.name, image: productImage, price: product.price });
                             }
                           }}
                           className={`p-2 rounded-full transition ${inWishlist ? 'bg-red-500 text-white' : 'bg-white/20 text-white hover:bg-gold'}`}
@@ -433,7 +421,7 @@ function CollectionsContent() {
                         <button
                           onClick={(e) => {
                             e.preventDefault();
-                            addToCart({ id: product.id, name: product.name, image: productImage, price: product.price, quantity: 1 });
+                            addToCart({ id: productKey, slug: product.slug, name: product.name, image: productImage, price: product.price, quantity: 1 });
                           }}
                           className="p-2 rounded-full bg-gold text-[#0a0a23] hover:bg-yellow-400 transition"
                         >
@@ -441,55 +429,11 @@ function CollectionsContent() {
                         </button>
                       </div>
                     </div>
-                    <div className="px-3 py-2 border-t border-gold/10 bg-[#121237]">
-                      <div className="flex gap-2 overflow-x-auto pb-1">
-                        {productGalleryImages.slice(0, 6).map((img, imgIdx) => (
-                          <button
-                            key={`${product.slug}-${imgIdx}`}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              openGallery({ ...product, images: productGalleryImages }, imgIdx);
-                            }}
-                            className="flex-shrink-0"
-                          >
-                            <img
-                              src={img}
-                              alt={`${product.name} ${imgIdx + 1}`}
-                              className="w-12 h-12 rounded-md border border-gold/30 object-cover"
-                              loading="lazy"
-                              onError={(event) => {
-                                event.currentTarget.src = FALLBACK_IMAGE;
-                              }}
-                            />
-                          </button>
-                        ))}
-                        {productGalleryImages.length > 6 && (
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              openGallery({ ...product, images: productGalleryImages }, 0);
-                            }}
-                            className="w-12 h-12 rounded-md border border-gold/30 text-gold text-xs flex-shrink-0 bg-[#0a0a23]"
-                          >
-                            +{productGalleryImages.length - 6}
-                          </button>
-                        )}
-                      </div>
-                    </div>
                     <Link href={`/product/${product.slug}`} prefetch>
                     <div className="p-3 flex-1 flex flex-col">
-                      <p className="text-white/60 text-xs mb-2">{productGalleryImages.length} images</p>
                       <div className="flex items-center justify-between gap-2 mt-auto">
                         <span className="text-white font-bold text-lg">${product.price}</span>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            openGallery({ ...product, images: productGalleryImages }, 0);
-                          }}
-                          className="text-[11px] px-2.5 py-1.5 rounded-md border border-gold text-gold hover:bg-gold hover:text-[#0a0a23] transition"
-                        >
-                          Show More
-                        </button>
+                        <span className="text-[11px] px-2.5 py-1.5 rounded-md border border-gold text-gold">View Details</span>
                       </div>
                     </div>
                     </Link>

@@ -12,6 +12,8 @@ datasource db {
 
 model User {
   id          Int       @id @default(autoincrement())
+  publicId    String?   @unique @default(cuid())
+  clerkId     String?   @unique
   email       String    @unique
   password    String
   name        String?
@@ -30,6 +32,7 @@ model User {
 
 model Product {
   id          Int         @id @default(autoincrement())
+  publicId    String?     @unique @default(cuid())
   name        String
   slug        String      @unique
   description String
@@ -85,6 +88,7 @@ model Category {
 
 model Order {
   id            Int         @id @default(autoincrement())
+  publicId      String?     @unique @default(cuid())
   userId        Int
   total         Float
   discount      Float       @default(0)

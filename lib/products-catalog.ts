@@ -331,3 +331,8 @@ export const PRODUCT_BY_SLUG: Record<string, CatalogProduct> = PRODUCT_CATALOG.r
   acc[product.slug] = product;
   return acc;
 }, {} as Record<string, CatalogProduct>);
+
+export const PRODUCT_BY_ID: Record<string, CatalogProduct> = PRODUCT_CATALOG.reduce((acc, product) => {
+  acc[String(product.id)] = product;
+  return acc;
+}, {} as Record<string, CatalogProduct>);

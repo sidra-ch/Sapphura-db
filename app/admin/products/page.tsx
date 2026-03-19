@@ -18,6 +18,7 @@ import {
   Upload,
   RefreshCcw,
 } from 'lucide-react';
+import { useAuth } from '../../../components/auth/AuthContext';
 
 type ProductRow = {
   id: number;
@@ -64,6 +65,7 @@ const initialFormState: ProductFormState = {
 };
 
 export default function ProductsPage() {
+  const { token } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [statusFilter] = useState('All');
@@ -265,9 +267,16 @@ export default function ProductsPage() {
 
     setIsSaving(true);
     try {
+      if (!token) {
+        throw new Error('You must be logged in as admin to create products.');
+      }
+
       const res = await fetch('/api/products', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           name: form.name,
           description: form.description,
@@ -293,6 +302,105 @@ export default function ProductsPage() {
       setFormError(error instanceof Error ? error.message : 'Failed to create product');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const deleteProduct = async (productId: number, productName: string) => {
+    if (!token) {
+      setFormError('You must be logged in as admin to delete products.');
+      return;
+    }
+
+    const confirmed = window.confirm(`Delete "${productName}"? This cannot be undone.`);
+    if (!confirmed) {
+      return;
+    }
+
+    setFormError('');
+    setFormMessage('');
+
+    try {
+      const res = await fetch(`/api/products/${productId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to delete product');
+      }
+      setFormMessage('Product deleted successfully.');
+      await loadData();
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'Failed to delete product');
+    }
+  };
+
+  const quickEditProduct = async (product: ProductRow) => {
+    if (!token) {
+      setFormError('You must be logged in as admin to edit products.');
+      return;
+    }
+
+    const nextName = window.prompt('Product name', product.name);
+    if (nextName === null) {
+      return;
+    }
+
+    const nextPriceRaw = window.prompt('Price', String(product.price));
+    if (nextPriceRaw === null) {
+      return;
+    }
+
+    const nextStockRaw = window.prompt('Stock', String(product.stock));
+    if (nextStockRaw === null) {
+      return;
+    }
+
+    const nextPrice = Number(nextPriceRaw);
+    const nextStock = Number(nextStockRaw);
+
+    if (!nextName.trim()) {
+      setFormError('Product name cannot be empty.');
+      return;
+    }
+
+    if (!Number.isFinite(nextPrice) || nextPrice <= 0) {
+      setFormError('Price must be a number greater than zero.');
+      return;
+    }
+
+    if (!Number.isInteger(nextStock) || nextStock < 0) {
+      setFormError('Stock must be a non-negative integer.');
+      return;
+    }
+
+    setFormError('');
+    setFormMessage('');
+
+    try {
+      const res = await fetch(`/api/products/${product.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: nextName.trim(),
+          price: nextPrice,
+          stock: nextStock,
+          status: nextStock > 0 ? 'active' : 'inactive',
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update product');
+      }
+      setFormMessage('Product updated successfully.');
+      await loadData();
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'Failed to update product');
     }
   };
 
@@ -402,10 +510,16 @@ export default function ProductsPage() {
                     <button className="p-2 bg-gold text-[#0a0a23] rounded-full hover:scale-110 transition">
                       <Eye className="w-4 h-4" />
                     </button>
-                    <button className="p-2 bg-white text-[#0a0a23] rounded-full hover:scale-110 transition">
+                    <button
+                      onClick={() => void quickEditProduct(product)}
+                      className="p-2 bg-white text-[#0a0a23] rounded-full hover:scale-110 transition"
+                    >
                       <Edit className="w-4 h-4" />
                     </button>
-                    <button className="p-2 bg-red-500 text-white rounded-full hover:scale-110 transition">
+                    <button
+                      onClick={() => void deleteProduct(product.id, product.name)}
+                      className="p-2 bg-red-500 text-white rounded-full hover:scale-110 transition"
+                    >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>

@@ -10,7 +10,7 @@ export default function SettingsPage() {
   const [otpDebug, setOtpDebug] = useState({
     email: '',
     phone: '',
-    channel: 'email' as 'email' | 'whatsapp' | 'sms' | 'all',
+    channel: 'email' as const,
     otp: '',
   });
   const [otpDebugLoading, setOtpDebugLoading] = useState(false);

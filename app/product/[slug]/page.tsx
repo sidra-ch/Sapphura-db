@@ -9,15 +9,15 @@ import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import { useCart } from '../../../components/cart/CartContext';
 import { useWishlist } from '../../../components/wishlist/WishlistContext';
-import { PRODUCT_BY_SLUG } from '../../../lib/products-catalog';
+import { PRODUCT_BY_ID, PRODUCT_BY_SLUG } from '../../../lib/products-catalog';
 import { FALLBACK_PRODUCT_IMAGE } from '../../../lib/media';
 
 const FALLBACK_IMAGE = FALLBACK_PRODUCT_IMAGE;
 
 export default function ProductDetailPage() {
   const params = useParams();
-  const slug = params?.slug as string;
-  const product = PRODUCT_BY_SLUG[slug];
+  const routeValue = params?.slug as string;
+  const product = PRODUCT_BY_SLUG[routeValue] || PRODUCT_BY_ID[routeValue];
   
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -25,13 +25,15 @@ export default function ProductDetailPage() {
 
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const wishlistKey = product?.slug || product?.id || '';
 
   const productImages = product?.images?.length ? product.images : [FALLBACK_IMAGE];
 
   const handleAddToCart = () => {
     if (product) {
       addToCart({
-        id: product.id,
+        id: product.slug,
+        slug: product.slug,
         name: product.name,
         image: productImages[0],
         price: product.price,
@@ -42,11 +44,12 @@ export default function ProductDetailPage() {
 
   const handleWishlist = () => {
     if (product) {
-      if (isInWishlist(product.id)) {
-        removeFromWishlist(product.id);
+      if (isInWishlist(wishlistKey)) {
+        removeFromWishlist(wishlistKey);
       } else {
         addToWishlist({
-          id: product.id,
+          id: wishlistKey,
+          slug: product.slug,
           name: product.name,
           image: productImages[0],
           price: product.price
@@ -224,7 +227,7 @@ export default function ProductDetailPage() {
                     : 'border-gold text-gold hover:bg-gold hover:text-[#0a0a23]'
                 }`}
               >
-                <Heart className={`w-5 h-5 ${isInWishlist(product.id) ? 'fill-current' : ''}`} />
+                <Heart className={`w-5 h-5 ${isInWishlist(wishlistKey) ? 'fill-current' : ''}`} />
               </button>
             </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -8,85 +8,156 @@ import {
   Package, Truck, CheckCircle, Clock, AlertCircle, XCircle,
   MapPin, Calendar, ChevronDown, ChevronUp
 } from 'lucide-react';
+import { useAuth } from '../../../components/auth/AuthContext';
+import { FALLBACK_PRODUCT_IMAGE, parseMediaList } from '../../../lib/media';
 
-const orders = [
-  { 
-    id: 'ORD-001', 
-    customer: 'John Doe', 
-    phone: '+92 300 1234567',
-    address: '123 Main St, Lahore',
-    total: 599, 
-    status: 'Delivered', 
-    date: '2024-01-15', 
-    items: [
-      { name: 'Gold Crescent Necklace', price: 299, quantity: 1, image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=100&h=100&fit=crop' },
-      { name: 'Diamond Earrings', price: 150, quantity: 2, image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=100&h=100&fit=crop' }
-    ]
-  },
-  { 
-    id: 'ORD-002', 
-    customer: 'Jane Smith', 
-    phone: '+92 300 2345678',
-    address: '456 Oak Ave, Karachi',
-    total: 299, 
-    status: 'Shipped', 
-    date: '2024-01-14', 
-    items: [
-      { name: 'Diamond Bracelet', price: 299, quantity: 1, image: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=100&h=100&fit=crop' }
-    ]
-  },
-  { 
-    id: 'ORD-003', 
-    customer: 'Mike Johnson', 
-    phone: '+92 300 3456789',
-    address: '789 Pine Rd, Islamabad',
-    total: 449, 
-    status: 'Processing', 
-    date: '2024-01-13', 
-    items: [
-      { name: 'Bridal Necklace Set', price: 349, quantity: 1, image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=100&h=100&fit=crop' },
-      { name: 'Earrings', price: 100, quantity: 1, image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=100&h=100&fit=crop' }
-    ]
-  },
-  { 
-    id: 'ORD-004', 
-    customer: 'Sarah Wilson', 
-    phone: '+92 300 4567890',
-    address: '321 Elm St, Rawalpindi',
-    total: 799, 
-    status: 'Pending', 
-    date: '2024-01-12', 
-    items: [
-      { name: 'Royal Embroidered Abaya', price: 249, quantity: 1, image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=100&h=100&fit=crop' },
-      { name: 'Kashmiri Bangals', price: 249, quantity: 2, image: 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=100&h=100&fit=crop' },
-      { name: 'Gold Ring Set', price: 52, quantity: 1, image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=100&h=100&fit=crop' }
-    ]
-  },
-  { 
-    id: 'ORD-005', 
-    customer: 'Ahmed Khan', 
-    phone: '+92 300 5678901',
-    address: '654 Maple Dr, Lahore',
-    total: 199, 
-    status: 'Delivered', 
-    date: '2024-01-11', 
-    items: [
-      { name: 'Luxury Perfume Set', price: 199, quantity: 1, image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=100&h=100&fit=crop' }
-    ]
-  },
-];
+type UiOrderItem = {
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+};
 
-const statusOptions = ['All', 'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+type UiOrder = {
+  id: number;
+  customer: string;
+  phone: string;
+  address: string;
+  total: number;
+  status: string;
+  date: string;
+  items: UiOrderItem[];
+};
+
+const statusOptions = ['All', 'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'Paid'];
+const nextStatusOptions = ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'paid'];
+
+function toLabel(status: string): string {
+  const normalized = String(status || '').trim().toLowerCase();
+  if (!normalized) return 'Pending';
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+}
 
 export default function OrdersPage() {
-  
+  const { token } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [expandedOrder, setExpandedOrder] = useState<number | null>(null);
+  const [orders, setOrders] = useState<UiOrder[]>([]);
+  const [pendingStatusById, setPendingStatusById] = useState<Record<number, string>>({});
+  const [loadingById, setLoadingById] = useState<Record<number, boolean>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [flashMessage, setFlashMessage] = useState('');
+
+  const loadOrders = useCallback(async () => {
+    if (!token) return;
+
+    setIsLoading(true);
+    setErrorMessage('');
+
+    try {
+      const res = await fetch('/api/orders', {
+        cache: 'no-store',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to load orders');
+      }
+
+      const rows: UiOrder[] = Array.isArray(data.orders)
+        ? data.orders.map((o: any) => ({
+            id: o.id,
+            customer: o.shippingName || o.user?.name || 'Customer',
+            phone: o.shippingPhone || o.user?.phone || 'N/A',
+            address: o.shippingAddress || 'Address not available',
+            total: Number(o.total) || 0,
+            status: toLabel(o.status),
+            date: new Date(o.createdAt).toISOString().slice(0, 10),
+            items: Array.isArray(o.items)
+              ? o.items.map((item: any) => {
+                  const media = parseMediaList(item?.product?.images || '[]');
+                  return {
+                    name: item?.product?.name || 'Product',
+                    price: Number(item?.price) || 0,
+                    quantity: Number(item?.quantity) || 0,
+                    image: media[0] || FALLBACK_PRODUCT_IMAGE,
+                  };
+                })
+              : [],
+          }))
+        : [];
+
+      setOrders(rows);
+      setPendingStatusById(
+        rows.reduce((acc, row) => {
+          acc[row.id] = row.status.toLowerCase();
+          return acc;
+        }, {} as Record<number, string>)
+      );
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to load orders');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    void loadOrders();
+  }, [loadOrders]);
+
+  const updateOrderStatus = async (orderId: number) => {
+    const nextStatus = pendingStatusById[orderId];
+    if (!nextStatus || !token) {
+      return;
+    }
+
+    setLoadingById((prev) => ({ ...prev, [orderId]: true }));
+    setErrorMessage('');
+    setFlashMessage('');
+
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update order status');
+      }
+
+      setFlashMessage(`Order #${orderId} updated to ${toLabel(nextStatus)}.`);
+      setOrders((prev) => prev.map((order) => (order.id === orderId ? { ...order, status: toLabel(nextStatus) } : order)));
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to update order status');
+    } finally {
+      setLoadingById((prev) => ({ ...prev, [orderId]: false }));
+    }
+  };
+
+  const exportCsv = () => {
+    const header = 'Order ID,Customer,Status,Total,Date';
+    const lines = orders.map((order) => `"ORD-${String(order.id).padStart(3, '0')}","${order.customer}","${order.status}","${order.total}","${order.date}"`);
+    const blob = new Blob([[header, ...lines].join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'orders.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Delivered': return 'bg-green-500/20 text-green-400 border-green-500/30';
+      case 'Paid': return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
       case 'Shipped': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
       case 'Processing': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
       case 'Pending': return 'bg-red-500/20 text-red-400 border-red-500/30';
@@ -98,6 +169,7 @@ export default function OrdersPage() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'Delivered': return CheckCircle;
+      case 'Paid': return CheckCircle;
       case 'Shipped': return Truck;
       case 'Processing': return Clock;
       case 'Pending': return AlertCircle;
@@ -107,7 +179,8 @@ export default function OrdersPage() {
   };
 
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const orderRef = `ord-${String(order.id).padStart(3, '0')}`;
+    const matchesSearch = orderRef.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          order.customer.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'All' || order.status === statusFilter;
     return matchesSearch && matchesStatus;
@@ -126,11 +199,17 @@ export default function OrdersPage() {
               <p className="text-white/50">Manage all customer orders</p>
             </div>
           </div>
-          <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-gold text-[#0a0a23] rounded-lg font-semibold hover:bg-yellow-400 transition">
+          <button
+            onClick={exportCsv}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-gold text-[#0a0a23] rounded-lg font-semibold hover:bg-yellow-400 transition"
+          >
             <Download className="w-5 h-5" />
             Export
           </button>
         </div>
+
+        {errorMessage ? <p className="mb-4 text-sm text-red-400">{errorMessage}</p> : null}
+        {flashMessage ? <p className="mb-4 text-sm text-green-400">{flashMessage}</p> : null}
 
         <div className="flex flex-col lg:flex-row gap-4 mb-6">
           <div className="relative flex-1">
@@ -160,6 +239,11 @@ export default function OrdersPage() {
           </div>
         </div>
 
+        {isLoading ? (
+          <div className="bg-[#1a1a40] border border-gold/20 rounded-xl p-6 text-white/70">Loading orders...</div>
+        ) : filteredOrders.length === 0 ? (
+          <div className="bg-[#1a1a40] border border-gold/20 rounded-xl p-6 text-white/70">No orders found.</div>
+        ) : (
         <div className="space-y-4">
           <AnimatePresence>
             {filteredOrders.map((order, index) => {
@@ -186,7 +270,7 @@ export default function OrdersPage() {
                         </div>
                         <div>
                           <div className="flex flex-wrap items-center gap-3">
-                            <h3 className="text-gold font-bold text-lg">{order.id}</h3>
+                            <h3 className="text-gold font-bold text-lg">ORD-{String(order.id).padStart(3, '0')}</h3>
                             <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                               {order.status}
                             </span>
@@ -270,16 +354,23 @@ export default function OrdersPage() {
                                 <Calendar className="w-5 h-5" /> Order Actions
                               </h4>
                               <div className="space-y-2">
-                                <select className="w-full p-3 bg-[#1a1a40] border border-gold/20 rounded-lg text-white">
-                                  <option>Change Status</option>
-                                  <option>Mark as Pending</option>
-                                  <option>Mark as Processing</option>
-                                  <option>Mark as Shipped</option>
-                                  <option>Mark as Delivered</option>
-                                  <option>Cancel Order</option>
+                                <select
+                                  value={pendingStatusById[order.id] || order.status.toLowerCase()}
+                                  onChange={(e) => setPendingStatusById((prev) => ({ ...prev, [order.id]: e.target.value }))}
+                                  className="w-full p-3 bg-[#1a1a40] border border-gold/20 rounded-lg text-white"
+                                >
+                                  {nextStatusOptions.map((status) => (
+                                    <option key={status} value={status}>
+                                      Mark as {toLabel(status)}
+                                    </option>
+                                  ))}
                                 </select>
-                                <button className="w-full py-3 bg-gold text-[#0a0a23] rounded-lg font-semibold hover:bg-yellow-400 transition">
-                                  Update Status
+                                <button
+                                  onClick={() => void updateOrderStatus(order.id)}
+                                  disabled={Boolean(loadingById[order.id])}
+                                  className="w-full py-3 bg-gold text-[#0a0a23] rounded-lg font-semibold hover:bg-yellow-400 transition disabled:opacity-60"
+                                >
+                                  {loadingById[order.id] ? 'Updating...' : 'Update Status'}
                                 </button>
                               </div>
                             </div>
@@ -293,6 +384,7 @@ export default function OrdersPage() {
             })}
           </AnimatePresence>
         </div>
+        )}
       </div>
     </div>
   );

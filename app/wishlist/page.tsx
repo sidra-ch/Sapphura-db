@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Heart, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useWishlist } from '../../components/wishlist/WishlistContext';
 import { useCart } from '../../components/cart/CartContext';
+import { FALLBACK_PRODUCT_IMAGE } from '../../lib/media';
 
 export default function WishlistPage() {
   const { items, removeFromWishlist } = useWishlist();
@@ -41,9 +42,10 @@ export default function WishlistPage() {
     );
   }
 
-  const handleAddToCart = (item: { id: string; name: string; image: string; price: number }) => {
+  const handleAddToCart = (item: { id: string; slug?: string; name: string; image: string; price: number }) => {
     addToCart({
       id: item.id,
+      slug: item.slug,
       name: item.name,
       image: item.image,
       price: item.price,
@@ -60,15 +62,18 @@ export default function WishlistPage() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {items.map((item) => (
             <div key={item.id} className="bg-[#1a1a40] border border-gold/20 rounded-xl overflow-hidden">
-              <Link href={`/product/${item.id}`}>
+              <Link href={`/product/${item.slug || item.id}`}>
                 <img 
-                  src={item.image} 
+                  src={item.image || FALLBACK_PRODUCT_IMAGE} 
                   alt={item.name}
                   className="w-full h-48 object-cover"
+                  onError={(event) => {
+                    event.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+                  }}
                 />
               </Link>
               <div className="p-4">
-                <Link href={`/product/${item.id}`} className="text-gold font-bold hover:text-yellow-400 transition">
+                <Link href={`/product/${item.slug || item.id}`} className="text-gold font-bold hover:text-yellow-400 transition">
                   {item.name}
                 </Link>
                 <div className="flex justify-between items-center mt-3">
