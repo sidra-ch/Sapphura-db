@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '../../../../lib/db';
 import { initiateProviderPayment } from '../../../../lib/payments';
+import { isPaymentTransactionTableMissing, PAYMENT_TRANSACTION_SETUP_MESSAGE } from '../../../../lib/payment-transaction-utils';
 import { checkRateLimit } from '../../../../lib/rate-limit';
 import { getClientIp, normalizeEmail } from '../../../../lib/request';
 
@@ -54,15 +55,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    const existing = await prisma.paymentTransaction.findFirst({
-      where: {
-        orderId,
-        provider,
-        status: { in: ['initiated', 'pending'] },
-        createdAt: { gte: new Date(Date.now() - 20 * 60_000) },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    let existing = null;
+
+    try {
+      existing = await prisma.paymentTransaction.findFirst({
+        where: {
+          orderId,
+          provider,
+          status: { in: ['initiated', 'pending'] },
+          createdAt: { gte: new Date(Date.now() - 20 * 60_000) },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    } catch (error) {
+      if (isPaymentTransactionTableMissing(error)) {
+        return NextResponse.json({ error: PAYMENT_TRANSACTION_SETUP_MESSAGE }, { status: 503 });
+      }
+
+      throw error;
+    }
 
     if (existing) {
       return NextResponse.json({
@@ -86,22 +97,32 @@ export async function POST(req: NextRequest) {
     const merchantReference = generateMerchantReference(provider, orderId);
     const callbackUrl = `${appUrl}/api/payments/webhook/${provider}`;
 
-    const tx = await prisma.paymentTransaction.create({
-      data: {
-        orderId,
-        provider,
-        merchantReference,
-        amount,
-        status: 'initiated',
-        requestPayload: {
+    let tx;
+
+    try {
+      tx = await prisma.paymentTransaction.create({
+        data: {
+          orderId,
           provider,
+          merchantReference,
           amount,
-          email,
-          phone,
-          callbackUrl,
+          status: 'initiated',
+          requestPayload: {
+            provider,
+            amount,
+            email,
+            phone,
+            callbackUrl,
+          },
         },
-      },
-    });
+      });
+    } catch (error) {
+      if (isPaymentTransactionTableMissing(error)) {
+        return NextResponse.json({ error: PAYMENT_TRANSACTION_SETUP_MESSAGE }, { status: 503 });
+      }
+
+      throw error;
+    }
 
     const providerResult = await initiateProviderPayment(provider, {
       amount,
@@ -111,14 +132,22 @@ export async function POST(req: NextRequest) {
       callbackUrl,
     });
 
-    await prisma.paymentTransaction.update({
-      where: { id: tx.id },
-      data: {
-        providerTransactionId: providerResult.providerTransactionId || null,
-        status: providerResult.status,
-        responsePayload: providerResult.raw as object,
-      },
-    });
+    try {
+      await prisma.paymentTransaction.update({
+        where: { id: tx.id },
+        data: {
+          providerTransactionId: providerResult.providerTransactionId || null,
+          status: providerResult.status,
+          responsePayload: providerResult.raw as object,
+        },
+      });
+    } catch (error) {
+      if (isPaymentTransactionTableMissing(error)) {
+        return NextResponse.json({ error: PAYMENT_TRANSACTION_SETUP_MESSAGE }, { status: 503 });
+      }
+
+      throw error;
+    }
 
     return NextResponse.json({
       success: providerResult.status !== 'failed',

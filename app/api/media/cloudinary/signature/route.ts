@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createCloudinaryUploadSignature } from '../../../../../lib/cloudinary-server';
+import { requireClerkRole } from '../../../../../lib/clerk-rbac';
 
 export async function POST(req: NextRequest) {
   try {
+    const guard = await requireClerkRole('admin');
+    if (guard) {
+      return guard;
+    }
+
     const body = await req.json().catch(() => ({}));
     const folder = typeof body.folder === 'string' && body.folder.trim() ? body.folder.trim() : 'products';
 

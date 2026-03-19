@@ -11,6 +11,7 @@ import { getClientIp } from '../../../lib/request';
 import { normalizeEmail } from '../../../lib/request';
 import { requireClerkRole } from '../../../lib/clerk-rbac';
 import { getOrCreatePrismaUser } from '../../../lib/prismaUser';
+import { calculateOrderTotal, calculateShippingCost, resolveCheckoutOffer } from '../../../lib/checkout-offers';
 
 interface OrderPayloadItem {
   id: string;
@@ -34,6 +35,7 @@ interface OrderPayload {
   items: OrderPayloadItem[];
   subtotal: number;
   shippingCost: number;
+  couponCode?: string;
   discount: number;
   total: number;
   paymentVerification?: {
@@ -155,7 +157,9 @@ export async function POST(req: NextRequest) {
       shippingMethod,
       paymentMethod,
       items,
+      subtotal,
       shippingCost,
+      couponCode,
       discount,
       total,
       paymentVerification,
@@ -290,6 +294,27 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    const computedSubtotal = productsForOrder.reduce((sum, entry) => sum + (entry.price * entry.quantity), 0)
+    const computedShippingCost = calculateShippingCost(shippingMethod)
+    const offer = resolveCheckoutOffer(couponCode, computedSubtotal)
+    const computedTotal = calculateOrderTotal(computedSubtotal, computedShippingCost, offer.discount)
+
+    if (Math.abs(Number(subtotal) - computedSubtotal) > 0.01) {
+      return NextResponse.json({ error: 'Order subtotal no longer matches current product prices. Please review your cart again.' }, { status: 400 })
+    }
+
+    if (Math.abs(Number(shippingCost) - computedShippingCost) > 0.01) {
+      return NextResponse.json({ error: 'Shipping cost no longer matches the selected shipping method. Please review checkout again.' }, { status: 400 })
+    }
+
+    if (Math.abs(Number(discount) - offer.discount) > 0.01) {
+      return NextResponse.json({ error: offer.error || 'Discount no longer matches the selected offer. Please reapply your coupon.' }, { status: 400 })
+    }
+
+    if (Math.abs(Number(total) - computedTotal) > 0.01) {
+      return NextResponse.json({ error: 'Order total mismatch. Please review checkout again before paying.' }, { status: 400 })
+    }
+
     const authState = await auth();
     let user: { id: number; email: string; name?: string | null; phone?: string | null };
 
@@ -335,9 +360,9 @@ export async function POST(req: NextRequest) {
       const order = await tx.order.create({
         data: {
           userId: user.id,
-          total,
-          discount,
-          shippingCost,
+          total: computedTotal,
+          discount: offer.discount,
+          shippingCost: computedShippingCost,
           status: paymentMethod === 'card' ? 'paid' : 'pending',
           paymentStatus: paymentMethod === 'card' ? 'paid' : 'pending',
           paymentMethod:
@@ -353,6 +378,7 @@ export async function POST(req: NextRequest) {
           shippingAddress: normalizedAddress.fullAddress,
           notes: [
             shippingMethod || null,
+            offer.couponCode ? `coupon:${offer.couponCode}` : null,
             `risk:${riskResult.level}:${riskResult.score}`,
             riskResult.flags.length ? `risk_flags:${riskResult.flags.join('|')}` : null,
           ]
@@ -396,7 +422,7 @@ export async function POST(req: NextRequest) {
             provider: 'stripe',
             merchantReference: `STRIPE-${created.id}-${Date.now()}`,
             providerTransactionId: paymentVerification?.stripePaymentIntentId || null,
-            amount: Number(total),
+            amount: computedTotal,
             currency: 'USD',
             status: 'paid',
             requestPayload: {

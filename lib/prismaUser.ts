@@ -1,5 +1,6 @@
 import { auth, currentUser } from '@clerk/nextjs/server'
 import prisma from './prisma'
+import { isAdminEmail } from './admin-users'
 
 export type AppRole = 'admin' | 'customer'
 
@@ -10,6 +11,14 @@ function getRoleFromClerkMetadata(metadata: unknown): AppRole {
 
   const role = (metadata as Record<string, unknown>).role
   return role === 'admin' ? 'admin' : 'customer'
+}
+
+function resolveAppRole(primaryEmail: string, metadata: unknown): AppRole {
+  if (isAdminEmail(primaryEmail)) {
+    return 'admin'
+  }
+
+  return getRoleFromClerkMetadata(metadata)
 }
 
 export async function getOrCreatePrismaUser() {
@@ -30,7 +39,7 @@ export async function getOrCreatePrismaUser() {
     throw new Error('Clerk user does not have an email address.')
   }
 
-  const role = getRoleFromClerkMetadata(clerkUser.publicMetadata)
+  const role = resolveAppRole(primaryEmail, clerkUser.publicMetadata)
 
   const userModel = prisma.user as any
 

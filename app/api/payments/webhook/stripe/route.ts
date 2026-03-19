@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '../../../../../lib/db';
+import { isPaymentTransactionTableMissing } from '../../../../../lib/payment-transaction-utils';
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
@@ -52,13 +53,23 @@ export async function POST(req: NextRequest) {
     const intent = event.data.object as Stripe.PaymentIntent;
     const providerStatus = mapStripeIntentStatus(intent.status);
 
-    const transaction = await prisma.paymentTransaction.findFirst({
-      where: {
-        provider: 'stripe',
-        providerTransactionId: intent.id,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    let transaction;
+
+    try {
+      transaction = await prisma.paymentTransaction.findFirst({
+        where: {
+          provider: 'stripe',
+          providerTransactionId: intent.id,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    } catch (error) {
+      if (isPaymentTransactionTableMissing(error)) {
+        return NextResponse.json({ success: true, ignored: true, reason: 'payment_transactions_unavailable' });
+      }
+
+      throw error;
+    }
 
     if (!transaction) {
       return NextResponse.json({ success: true, ignored: true, reason: 'transaction_not_found' });
@@ -70,27 +81,35 @@ export async function POST(req: NextRequest) {
 
     const orderState = mapOrderState(providerStatus);
 
-    await prisma.$transaction([
-      prisma.paymentTransaction.update({
-        where: { id: transaction.id },
-        data: {
-          status: providerStatus,
-          callbackPayload: {
-            eventId: event.id,
-            eventType: event.type,
-            paymentIntentId: intent.id,
-            paymentIntentStatus: intent.status,
+    try {
+      await prisma.$transaction([
+        prisma.paymentTransaction.update({
+          where: { id: transaction.id },
+          data: {
+            status: providerStatus,
+            callbackPayload: {
+              eventId: event.id,
+              eventType: event.type,
+              paymentIntentId: intent.id,
+              paymentIntentStatus: intent.status,
+            },
+            responsePayload: intent as unknown as object,
+            signatureValid: true,
+            reconciledAt: new Date(),
           },
-          responsePayload: intent as unknown as object,
-          signatureValid: true,
-          reconciledAt: new Date(),
-        },
-      }),
-      prisma.order.update({
-        where: { id: transaction.orderId },
-        data: orderState,
-      }),
-    ]);
+        }),
+        prisma.order.update({
+          where: { id: transaction.orderId },
+          data: orderState,
+        }),
+      ]);
+    } catch (error) {
+      if (isPaymentTransactionTableMissing(error)) {
+        return NextResponse.json({ success: true, ignored: true, reason: 'payment_transactions_unavailable' });
+      }
+
+      throw error;
+    }
 
     return NextResponse.json({ success: true, status: providerStatus });
   } catch (error) {

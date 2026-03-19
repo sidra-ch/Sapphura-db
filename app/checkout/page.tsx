@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { ShoppingCart, CreditCard, Truck, CheckCircle, ChevronLeft, ChevronRight, AlertCircle, Smartphone, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { calculateOrderTotal, calculateShippingCost, resolveCheckoutOffer } from '../../lib/checkout-offers';
 
 const StripePayment = dynamic(() => import('../../components/payment/StripeCheckout'), { ssr: false });
 
@@ -51,6 +52,7 @@ export default function CheckoutPage() {
   const [coupon, setCoupon] = useState('');
   const [discount, setDiscount] = useState(0);
   const [appliedCoupon, setAppliedCoupon] = useState('');
+  const [couponError, setCouponError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [otpMessage, setOtpMessage] = useState('');
@@ -324,13 +326,10 @@ export default function CheckoutPage() {
   };
 
   const applyCoupon = () => {
-    if (coupon.toUpperCase() === 'SARPHURA10') {
-      setDiscount(totalPrice * 0.1);
-      setAppliedCoupon(coupon);
-    } else if (coupon.toUpperCase() === 'EID20') {
-      setDiscount(totalPrice * 0.2);
-      setAppliedCoupon(coupon);
-    }
+    const offer = resolveCheckoutOffer(coupon, totalPrice);
+    setCouponError(offer.error);
+    setDiscount(offer.discount);
+    setAppliedCoupon(offer.couponCode);
   };
 
   const nextStep = () => {
@@ -390,6 +389,7 @@ export default function CheckoutPage() {
           items,
           subtotal: totalPrice,
           shippingCost,
+          couponCode: appliedCoupon,
           discount,
           total: finalTotal,
           paymentVerification: {
@@ -481,8 +481,8 @@ export default function CheckoutPage() {
     }
   };
 
-  const shippingCost = formData.shippingMethod === 'express' ? 25 : 0;
-  const finalTotal = totalPrice + shippingCost - discount;
+  const shippingCost = calculateShippingCost(formData.shippingMethod);
+  const finalTotal = calculateOrderTotal(totalPrice, shippingCost, discount);
 
   if (orderPlaced) {
     return (
@@ -1072,6 +1072,7 @@ export default function CheckoutPage() {
                   </button>
                 </div>
                 <p className="text-white/50 text-xs mt-2">Try: SARPHURA10 or EID20</p>
+                {couponError ? <p className="text-red-400 text-xs mt-2">{couponError}</p> : null}
               </div>
             </div>
           </div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '../../../../../lib/db';
 import { extractStatus, isWebhookTimestampFresh, verifyCallbackSignature } from '../../../../../lib/payments';
+import { isPaymentTransactionTableMissing } from '../../../../../lib/payment-transaction-utils';
 
 type CallbackPayload = Record<string, unknown>;
 
@@ -34,7 +35,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'merchantReference is missing' }, { status: 400 });
     }
 
-    const transaction = await prisma.paymentTransaction.findUnique({ where: { merchantReference } });
+    let transaction;
+
+    try {
+      transaction = await prisma.paymentTransaction.findUnique({ where: { merchantReference } });
+    } catch (error) {
+      if (isPaymentTransactionTableMissing(error)) {
+        return NextResponse.json({ success: true, ignored: true, reason: 'payment_transactions_unavailable' });
+      }
+
+      throw error;
+    }
     if (!transaction) {
       return NextResponse.json({ error: 'Payment transaction not found' }, { status: 404 });
     }
@@ -51,22 +62,30 @@ export async function POST(req: NextRequest) {
 
     const orderState = mapOrderState(status);
 
-    await prisma.$transaction([
-      prisma.paymentTransaction.update({
-        where: { id: transaction.id },
-        data: {
-          status,
-          callbackPayload: payload as any,
-          signatureValid,
-          reconciledAt: new Date(),
-          providerTransactionId: String(payload.transactionId || transaction.providerTransactionId || '' ) || null,
-        },
-      }),
-      prisma.order.update({
-        where: { id: transaction.orderId },
-        data: orderState,
-      }),
-    ]);
+    try {
+      await prisma.$transaction([
+        prisma.paymentTransaction.update({
+          where: { id: transaction.id },
+          data: {
+            status,
+            callbackPayload: payload as any,
+            signatureValid,
+            reconciledAt: new Date(),
+            providerTransactionId: String(payload.transactionId || transaction.providerTransactionId || '' ) || null,
+          },
+        }),
+        prisma.order.update({
+          where: { id: transaction.orderId },
+          data: orderState,
+        }),
+      ]);
+    } catch (error) {
+      if (isPaymentTransactionTableMissing(error)) {
+        return NextResponse.json({ success: true, ignored: true, reason: 'payment_transactions_unavailable' });
+      }
+
+      throw error;
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

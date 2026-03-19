@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { listCloudinaryAssets } from '../../../../../lib/cloudinary-server';
+import { requireClerkRole } from '../../../../../lib/clerk-rbac';
 
 export async function GET(req: NextRequest) {
   try {
+    const guard = await requireClerkRole('admin');
+    if (guard) {
+      return guard;
+    }
+
     const { searchParams } = new URL(req.url);
     const prefix = searchParams.get('prefix') || 'products';
     const assets = await listCloudinaryAssets(prefix);

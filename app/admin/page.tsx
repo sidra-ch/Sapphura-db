@@ -1,16 +1,8 @@
 import Link from 'next/link'
-import { auth, currentUser } from '@clerk/nextjs/server'
+import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { getOrCreatePrismaUser } from '../../lib/prismaUser'
-
-function resolveRole(metadata: unknown): string {
-  if (!metadata || typeof metadata !== 'object') {
-    return 'user'
-  }
-
-  const role = (metadata as Record<string, unknown>).role
-  return typeof role === 'string' && role.length > 0 ? role : 'user'
-}
+import { getCurrentClerkRole } from '../../lib/clerk-rbac'
 
 export default async function AdminPage() {
   const authState = await auth()
@@ -18,16 +10,9 @@ export default async function AdminPage() {
     redirect('/sign-in')
   }
 
-  const [clerkUser, prismaUser] = await Promise.all([
-    currentUser(),
-    getOrCreatePrismaUser(),
-  ])
+  const prismaUser = await getOrCreatePrismaUser()
 
-  const role = resolveRole(clerkUser?.publicMetadata)
-
-  if (role !== 'admin') {
-    redirect('/protected')
-  }
+  const role = await getCurrentClerkRole()
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">

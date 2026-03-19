@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '../../../../lib/db';
+import { isPaymentTransactionTableMissing, PAYMENT_TRANSACTION_SETUP_MESSAGE } from '../../../../lib/payment-transaction-utils';
 
 function isAuthorized(req: NextRequest): boolean {
   const key = req.headers.get('x-payment-debug-key');
@@ -34,25 +35,35 @@ export async function GET(req: NextRequest) {
       where.orderId = orderId;
     }
 
-    const transactions = await prisma.paymentTransaction.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-      select: {
-        id: true,
-        orderId: true,
-        provider: true,
-        merchantReference: true,
-        providerTransactionId: true,
-        amount: true,
-        currency: true,
-        status: true,
-        signatureValid: true,
-        reconciledAt: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    let transactions = [];
+
+    try {
+      transactions = await prisma.paymentTransaction.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+        select: {
+          id: true,
+          orderId: true,
+          provider: true,
+          merchantReference: true,
+          providerTransactionId: true,
+          amount: true,
+          currency: true,
+          status: true,
+          signatureValid: true,
+          reconciledAt: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+    } catch (error) {
+      if (isPaymentTransactionTableMissing(error)) {
+        return NextResponse.json({ success: true, count: 0, transactions: [], warning: PAYMENT_TRANSACTION_SETUP_MESSAGE });
+      }
+
+      throw error;
+    }
 
     return NextResponse.json({ success: true, count: transactions.length, transactions });
   } catch (error) {

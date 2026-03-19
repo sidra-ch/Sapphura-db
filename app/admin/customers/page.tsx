@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Search, Plus, Eye, Mail, Phone } from 'lucide-react';
-import { useAuth } from '../../../components/auth/AuthContext';
 
 type CustomerRow = {
   id: number;
@@ -18,7 +17,6 @@ type CustomerRow = {
 };
 
 export default function CustomersPage() {
-  const { token } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
 
@@ -26,16 +24,9 @@ export default function CustomersPage() {
     let mounted = true;
 
     async function loadCustomers() {
-      if (!token) {
-        return;
-      }
-
       try {
         const res = await fetch('/api/users', {
           cache: 'no-store',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         });
         const data = await res.json();
         if (!res.ok || !Array.isArray(data.users) || !mounted) return;
@@ -63,7 +54,7 @@ export default function CustomersPage() {
     return () => {
       mounted = false;
     };
-  }, [token]);
+  }, []);
 
   const filteredCustomers = customers.filter(c => 
     c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

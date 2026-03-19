@@ -1,4 +1,5 @@
 import prisma from './db';
+import { isPaymentTransactionTableMissing } from './payment-transaction-utils';
 
 export type PaymentMethod = 'cod' | 'card' | 'jazzcash' | 'easypaisa';
 
@@ -104,12 +105,20 @@ export async function evaluateCheckoutRisk(input: CheckoutRiskInput): Promise<Ch
     flags.push('high_order_velocity_email');
   }
 
-  const recentFailedPayments = await prisma.paymentTransaction.count({
-    where: {
-      status: 'failed',
-      createdAt: { gte: oneHourAgo },
-    },
-  });
+  let recentFailedPayments = 0;
+
+  try {
+    recentFailedPayments = await prisma.paymentTransaction.count({
+      where: {
+        status: 'failed',
+        createdAt: { gte: oneHourAgo },
+      },
+    });
+  } catch (error) {
+    if (!isPaymentTransactionTableMissing(error)) {
+      throw error;
+    }
+  }
 
   if (recentFailedPayments >= 5) {
     score += 10;

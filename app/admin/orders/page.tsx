@@ -8,7 +8,6 @@ import {
   Package, Truck, CheckCircle, Clock, AlertCircle, XCircle,
   MapPin, Calendar, ChevronDown, ChevronUp
 } from 'lucide-react';
-import { useAuth } from '../../../components/auth/AuthContext';
 import { FALLBACK_PRODUCT_IMAGE, parseMediaList } from '../../../lib/media';
 
 type UiOrderItem = {
@@ -39,7 +38,6 @@ function toLabel(status: string): string {
 }
 
 export default function OrdersPage() {
-  const { token } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [expandedOrder, setExpandedOrder] = useState<number | null>(null);
@@ -51,15 +49,12 @@ export default function OrdersPage() {
   const [flashMessage, setFlashMessage] = useState('');
 
   const loadOrders = useCallback(async () => {
-    if (!token) return;
-
     setIsLoading(true);
     setErrorMessage('');
 
     try {
       const res = await fetch('/api/orders', {
         cache: 'no-store',
-        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
 
@@ -102,7 +97,7 @@ export default function OrdersPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     void loadOrders();
@@ -110,7 +105,7 @@ export default function OrdersPage() {
 
   const updateOrderStatus = async (orderId: number) => {
     const nextStatus = pendingStatusById[orderId];
-    if (!nextStatus || !token) {
+    if (!nextStatus) {
       return;
     }
 
@@ -123,7 +118,6 @@ export default function OrdersPage() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ status: nextStatus }),
       });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '../../../../lib/db';
 import { reconcileProviderPayment } from '../../../../lib/payments';
+import { isPaymentTransactionTableMissing, PAYMENT_TRANSACTION_SETUP_MESSAGE } from '../../../../lib/payment-transaction-utils';
 
 type Provider = 'jazzcash' | 'easypaisa';
 
@@ -21,13 +22,23 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const pending = await prisma.paymentTransaction.findMany({
-      where: {
-        status: { in: ['initiated', 'pending'] },
-      },
-      orderBy: { createdAt: 'asc' },
-      take: 100,
-    });
+    let pending = [];
+
+    try {
+      pending = await prisma.paymentTransaction.findMany({
+        where: {
+          status: { in: ['initiated', 'pending'] },
+        },
+        orderBy: { createdAt: 'asc' },
+        take: 100,
+      });
+    } catch (error) {
+      if (isPaymentTransactionTableMissing(error)) {
+        return NextResponse.json({ success: true, processed: 0, updated: [], warning: PAYMENT_TRANSACTION_SETUP_MESSAGE });
+      }
+
+      throw error;
+    }
 
     const updated: Array<{ id: number; merchantReference: string; status: string }> = [];
 

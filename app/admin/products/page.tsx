@@ -18,7 +18,6 @@ import {
   Upload,
   RefreshCcw,
 } from 'lucide-react';
-import { useAuth } from '../../../components/auth/AuthContext';
 
 type ProductRow = {
   id: number;
@@ -65,7 +64,6 @@ const initialFormState: ProductFormState = {
 };
 
 export default function ProductsPage() {
-  const { token } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [statusFilter] = useState('All');
@@ -267,15 +265,10 @@ export default function ProductsPage() {
 
     setIsSaving(true);
     try {
-      if (!token) {
-        throw new Error('You must be logged in as admin to create products.');
-      }
-
       const res = await fetch('/api/products', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           name: form.name,
@@ -306,11 +299,6 @@ export default function ProductsPage() {
   };
 
   const deleteProduct = async (productId: number, productName: string) => {
-    if (!token) {
-      setFormError('You must be logged in as admin to delete products.');
-      return;
-    }
-
     const confirmed = window.confirm(`Delete "${productName}"? This cannot be undone.`);
     if (!confirmed) {
       return;
@@ -322,9 +310,6 @@ export default function ProductsPage() {
     try {
       const res = await fetch(`/api/products/${productId}`, {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
       const data = await res.json();
       if (!res.ok) {
@@ -338,11 +323,6 @@ export default function ProductsPage() {
   };
 
   const quickEditProduct = async (product: ProductRow) => {
-    if (!token) {
-      setFormError('You must be logged in as admin to edit products.');
-      return;
-    }
-
     const nextName = window.prompt('Product name', product.name);
     if (nextName === null) {
       return;
@@ -384,7 +364,6 @@ export default function ProductsPage() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           name: nextName.trim(),

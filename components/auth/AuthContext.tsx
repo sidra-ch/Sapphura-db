@@ -1,9 +1,20 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useUser } from '@clerk/nextjs';
+
+const ADMIN_EMAILS = ['ms.sidrachaudhary@gmail.com'];
+
+function resolveClientRole(email: string, role: unknown): string {
+  if (ADMIN_EMAILS.includes(email.trim().toLowerCase())) {
+    return 'admin';
+  }
+
+  return typeof role === 'string' && role.trim() ? role : 'customer';
+}
 
 interface User {
-  id: number;
+  id: string;
   email: string;
   name?: string;
   phone?: string;
@@ -16,42 +27,43 @@ interface AuthContextType {
   login: (token: string, user: User) => void;
   logout: () => void;
   isLoading: boolean;
+  isSignedIn: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, isLoaded, isSignedIn } = useUser();
+  const [appUser, setAppUser] = useState<User | null>(null);
+
+  const login = (_token: string, _user: User) => {};
+  const logout = () => {};
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+    if (isLoaded && user) {
+      const email = user.emailAddresses[0]?.emailAddress || '';
+
+      setAppUser({
+        id: user.id,
+        email,
+        name: user.fullName || user.firstName || undefined,
+        phone: user.phoneNumbers[0]?.phoneNumber || undefined,
+        role: resolveClientRole(email, user.publicMetadata?.role),
+      });
+    } else if (isLoaded && !user) {
+      setAppUser(null);
     }
-    setIsLoading(false);
-  }, []);
-
-  const login = (newToken: string, newUser: User) => {
-    localStorage.setItem('token', newToken);
-    localStorage.setItem('user', JSON.stringify(newUser));
-    setToken(newToken);
-    setUser(newUser);
-  };
-
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setToken(null);
-    setUser(null);
-  };
+  }, [isLoaded, user]);
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ 
+      user: appUser, 
+      token: appUser?.id || null,
+      login,
+      logout,
+      isLoading: !isLoaded, 
+      isSignedIn: isSignedIn || false 
+    }}>
       {children}
     </AuthContext.Provider>
   );
@@ -60,7 +72,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
+    return {
+      user: null,
+      token: null,
+      login: () => {},
+      logout: () => {},
+      isLoading: true,
+    };
   }
-  return context;
+  return {
+    user: context.user,
+    token: context.token,
+    login: context.login,
+    logout: context.logout,
+    isLoading: context.isLoading,
+  };
 }
