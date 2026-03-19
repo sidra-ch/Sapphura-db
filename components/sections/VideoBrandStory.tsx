@@ -2,6 +2,15 @@
 import React from "react";
 
 export default function VideoBrandStory() {
+  const safePlay = (video: HTMLVideoElement) => {
+    const playPromise = video.play();
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(() => {
+        // Ignore interruption/autoplay errors; controls stay available.
+      });
+    }
+  };
+
   return (
     <section className="relative w-full h-[400px] md:h-[600px] overflow-hidden bg-[#0a0a23]">
       <video
@@ -16,9 +25,7 @@ export default function VideoBrandStory() {
         className="w-full h-full object-cover"
         style={{ maxHeight: "100%", maxWidth: "100%" }}
         onCanPlay={(e) => {
-          e.currentTarget.play().catch(() => {
-            // manual controls remain available
-          });
+          safePlay(e.currentTarget);
         }}
       />
       <div className="absolute top-3 left-3 md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2">

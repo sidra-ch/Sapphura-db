@@ -9,13 +9,22 @@ export default function SimpleVideoSlider() {
   const [current, setCurrent] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  const safePlay = (video: HTMLVideoElement) => {
+    const playPromise = video.play();
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(() => {
+        // Ignore interruption/autoplay errors; user can still play from controls.
+      });
+    }
+  };
+
   useEffect(() => {
     const currentSrc = media[current];
     if (currentSrc.endsWith('.mp4')) {
       const vid = videoRef.current;
       if (vid) {
         vid.currentTime = 0;
-        vid.play();
+        safePlay(vid);
         vid.onended = () => {
           setCurrent((prev) => (prev + 1) % media.length);
         };
@@ -48,9 +57,7 @@ export default function SimpleVideoSlider() {
           className="w-full h-full object-cover rounded-xl border-4 border-gold shadow-xl"
           style={{ maxHeight: "100%", maxWidth: "100%" }}
           onCanPlay={(e) => {
-            e.currentTarget.play().catch(() => {
-              // allow manual play from controls
-            });
+            safePlay(e.currentTarget);
           }}
         />
       ) : (

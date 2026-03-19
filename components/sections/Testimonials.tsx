@@ -77,7 +77,6 @@ export default function Testimonials() {
             key={testimonials[currentIndex].id}
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -100 }}
             className="bg-[#1a1a40] border-2 border-gold rounded-2xl p-8 md:p-12 relative"
           >
             <Quote className="absolute top-6 left-6 w-16 h-16 text-gold/20" />

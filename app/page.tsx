@@ -13,9 +13,6 @@ import Footer from '../components/layout/Footer';
 import Testimonials from '../components/sections/Testimonials';
 import BrandStory from '../components/sections/BrandStory';
 import WhatsAppFloating from '../components/sections/WhatsAppFloating';
-import { generateMetadata } from './seo-metadata';
-
-export const metadata = generateMetadata;
 
 export default function HomePage() {
   return (

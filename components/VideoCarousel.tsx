@@ -11,6 +11,15 @@ const videos = [
 ];
 
 export default function VideoCarousel() {
+  const safePlay = (video: HTMLVideoElement) => {
+    const playPromise = video.play();
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(() => {
+        // Ignore interruption/autoplay errors.
+      });
+    }
+  };
+
   return (
     <section className="w-full h-[320px] md:h-[480px] relative bg-[#0a0a23] mt-12 mb-12">
       <Swiper
@@ -32,7 +41,7 @@ export default function VideoCarousel() {
               preload="auto"
               className="w-full h-full object-cover rounded-xl border-4 border-gold shadow-xl"
               style={{ maxHeight: '100%', maxWidth: '100%' }}
-              onCanPlay={e => e.currentTarget.play()}
+              onCanPlay={(e) => safePlay(e.currentTarget)}
             />
           </SwiperSlide>
         ))}

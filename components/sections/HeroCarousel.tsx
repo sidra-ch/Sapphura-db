@@ -35,6 +35,51 @@ const slides = [
 ];
 
 function HeroCarousel() {
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const safePlay = (video: HTMLVideoElement) => {
+    const playPromise = video.play();
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(() => {
+        // Ignore interruption/autoplay errors; controls stay available.
+      });
+    }
+  };
+
+  if (!isMounted) {
+    const first = slides[0];
+    return (
+      <section className="w-full h-[420px] md:h-[600px] relative bg-[#0a0a23]">
+        <div className="relative w-full h-full">
+          {first.src.endsWith('.mp4') ? (
+            <video
+              src={first.src}
+              muted
+              playsInline
+              preload="metadata"
+              poster="https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635074/newcollection-1_w3fvox.jpg"
+              className="w-full h-full object-cover rounded-xl border-4 border-gold shadow-xl"
+            />
+          ) : (
+            <img
+              src={first.src}
+              alt={first.title}
+              className="w-full h-full object-cover rounded-xl border-4 border-gold shadow-xl"
+            />
+          )}
+          <div className="absolute z-10 top-3 left-3 md:top-1/2 md:right-16 md:left-auto md:-translate-y-1/2 bg-black/60 rounded-lg md:rounded-xl p-2.5 sm:p-3 md:p-8 shadow-lg max-w-[78%] sm:max-w-[70%] md:max-w-md text-left md:text-right">
+            <h2 className="text-xs sm:text-sm md:text-4xl font-bold text-gold mb-1 md:mb-2 drop-shadow-lg line-clamp-2 md:line-clamp-none">{first.title}</h2>
+            <p className="hidden sm:block text-sm md:text-lg text-white/90">{first.description}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="w-full h-[420px] md:h-[600px] relative bg-[#0a0a23]">
       <Swiper
@@ -61,9 +106,7 @@ function HeroCarousel() {
                   className="w-full h-full object-cover rounded-xl border-4 border-gold shadow-xl"
                   style={{ maxHeight: "100%", maxWidth: "100%" }}
                   onCanPlay={(e) => {
-                    e.currentTarget.play().catch(() => {
-                      // ignore autoplay rejections; controls are visible for manual play
-                    });
+                    safePlay(e.currentTarget);
                   }}
                   onError={(e) => {
                     e.currentTarget.poster = 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635074/newcollection-1_w3fvox.jpg';
