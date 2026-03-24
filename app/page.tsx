@@ -3,7 +3,7 @@ import InstagramGallery from '../components/sections/InstagramGallery';
 import HeroCarousel from '../components/sections/HeroCarousel';
 import FeaturedCollections from '../components/sections/FeaturedCollections';
 import BestSellers from '../components/sections/BestSellers';
-import RamadanOffers from '../components/sections/RamadanOffers';
+
 import VideoBrandStory from '../components/sections/VideoBrandStory';
 import ShopTheLook from '../components/sections/ShopTheLook';
 import SimpleVideoSlider from '../components/sections/SimpleVideoSlider';
@@ -21,7 +21,7 @@ export default function HomePage() {
       <CategoryTicker />
       <FeaturedCollections />
       <BestSellers />
-      <RamadanOffers />
+      
       <BrandStory />
       <VideoBrandStory />
       <ShopTheLook />
