@@ -1,5 +1,3 @@
-import cloudinaryPoolsData from './cloudinary-pools.json';
-
 type ProductCategory = 'Jewelry' | 'Abaya' | 'Accessories' | 'Clothing' | 'Makeup';
 
 export interface CatalogProduct {
@@ -16,10 +14,6 @@ export interface CatalogProduct {
   images: string[];
 }
 
-type Pools = typeof cloudinaryPoolsData.pools;
-
-const pools = cloudinaryPoolsData.pools as Pools;
-
 const dedupe = (items: string[]) => [...new Set(items.filter(Boolean))];
 
 const circularSlice = (items: string[], start: number, count: number): string[] => {
@@ -32,95 +26,125 @@ const circularSlice = (items: string[], start: number, count: number): string[] 
 };
 
 const imageSets = {
-  suit: dedupe(pools.suit),
-  bangals: dedupe(pools.bangals),
-  neckles: dedupe(pools.neckles),
-  earing: dedupe(pools.earing),
-  summer: dedupe(pools.summer),
-  wintercollection: dedupe(pools.wintercollection),
-  wintercollection1: dedupe(pools.wintercollection1),
-  clothes: dedupe([...pools.clothescollection, ...pools.clothesCollectionAlt]),
-  accessories: dedupe(pools.accessories),
-  makeup: dedupe(pools.makeup),
-  bracelet: dedupe(pools.bracelet),
-  newcollection: dedupe([...pools.newcollection, ...pools.newCollectionSingle]),
+  neckles: dedupe([
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635069/neckles-1_rbhzgd.jpg',
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635070/neckles-2_ifgegk.jpg',
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635074/newcollection-1_w3fvox.jpg',
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635075/newcollection-2_y84q01.jpg',
+  ]),
+  earing: dedupe([
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635055/earing-1_iobl42.jpg',
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635059/earing-4_umxjjo.jpg',
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635077/newcollection-3_tacjvs.jpg',
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635078/newcollection-4_ijlsmi.jpg',
+  ]),
+  bangals: dedupe([
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635036/bangals-1_d4pzeq.jpg',
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635038/bangals-5_fd7gek.jpg',
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635078/newcollection-4_ijlsmi.jpg',
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635080/newcollection-5_u8sk9n.jpg',
+  ]),
+  bracelet: dedupe([
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635043/bracelet-1_eb7gcf.jpg',
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635077/newcollection-3_tacjvs.jpg',
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635080/newcollection-5_u8sk9n.jpg',
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635075/newcollection-2_y84q01.jpg',
+  ]),
+  suit: dedupe([
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635113/suit-20_rquv3r.jpg',
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635129/suit-30_gdgbdt.jpg',
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635130/suit-31_nnxefy.jpg',
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635132/suit-32_gmhzyl.jpg',
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635133/suit-33_oy1nkf.jpg',
+  ]),
+  summer: dedupe([
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635140/summer-2_bykcf3.jpg',
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635512/summer-3_pfcsvr.jpg',
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635512/summer-4_ga77ea.jpg',
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635513/summer-5_r3pptq.jpg',
+  ]),
+  newcollection: dedupe([
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635074/newcollection-1_w3fvox.jpg',
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635075/newcollection-2_y84q01.jpg',
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635077/newcollection-3_tacjvs.jpg',
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635078/newcollection-4_ijlsmi.jpg',
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635080/newcollection-5_u8sk9n.jpg',
+    'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635081/newcollection-6_ogng4l.jpg',
+  ]),
 };
 
 const buildProductImages = (slug: string): string[] => {
   switch (slug) {
     case 'gold-crescent-necklace':
       return dedupe([
-        ...circularSlice(imageSets.neckles, 0, 9),
-        ...circularSlice(imageSets.newcollection, 0, 6),
+        ...circularSlice(imageSets.neckles, 0, 4),
+        ...circularSlice(imageSets.newcollection, 0, 2),
       ]);
     case 'bridal-necklace-set':
       return dedupe([
-        ...circularSlice(imageSets.neckles, 3, 9),
-        ...circularSlice(imageSets.newcollection, 4, 6),
+        ...circularSlice(imageSets.neckles, 1, 4),
+        ...circularSlice(imageSets.newcollection, 2, 3),
       ]);
     case 'navy-velvet-abaya':
       return dedupe([
-        ...circularSlice(imageSets.suit, 0, 18),
-        ...circularSlice(imageSets.summer, 0, 4),
+        ...circularSlice(imageSets.suit, 0, 4),
+        ...circularSlice(imageSets.summer, 0, 2),
       ]);
     case 'silk-abaya-set':
       return dedupe([
-        ...circularSlice(imageSets.suit, 18, 18),
-        ...circularSlice(imageSets.summer, 4, 4),
+        ...circularSlice(imageSets.suit, 1, 4),
+        ...circularSlice(imageSets.newcollection, 3, 2),
       ]);
     case 'royal-abaya':
       return dedupe([
-        ...circularSlice(imageSets.suit, 36, 18),
-        ...circularSlice(imageSets.summer, 8, 4),
+        ...circularSlice(imageSets.suit, 2, 4),
+        ...circularSlice(imageSets.summer, 1, 2),
       ]);
     case 'party-wear-saree':
       return dedupe([
-        ...circularSlice(imageSets.suit, 54, 18),
-        ...circularSlice(imageSets.newcollection, 2, 4),
+        ...circularSlice(imageSets.suit, 3, 4),
+        ...circularSlice(imageSets.newcollection, 1, 2),
       ]);
     case 'summer-suit':
       return dedupe([
-        ...circularSlice(imageSets.summer, 0, 20),
-        ...circularSlice(imageSets.suit, 72, 8),
+        ...circularSlice(imageSets.summer, 0, 4),
+        ...circularSlice(imageSets.suit, 0, 2),
       ]);
     case 'winter-collection':
       return dedupe([
-        ...circularSlice(imageSets.wintercollection, 0, 8),
-        ...circularSlice(imageSets.wintercollection1, 0, 2),
-        ...circularSlice(imageSets.clothes, 0, 6),
+        ...circularSlice(imageSets.suit, 1, 4),
+        ...circularSlice(imageSets.summer, 2, 2),
       ]);
     case 'kashmiri-shawl':
       return dedupe([
-        ...circularSlice(imageSets.clothes, 0, 12),
-        ...circularSlice(imageSets.wintercollection, 2, 6),
+        ...circularSlice(imageSets.suit, 0, 3),
+        ...circularSlice(imageSets.summer, 1, 2),
       ]);
     case 'kashmiri-bangals':
-      return dedupe([...circularSlice(imageSets.bangals, 0, 15)]);
+      return dedupe([...circularSlice(imageSets.bangals, 0, 4)]);
     case 'pearl-earrings':
-      return dedupe([...circularSlice(imageSets.earing, 0, 12)]);
+      return dedupe([...circularSlice(imageSets.earing, 0, 4)]);
     case 'diamond-stud-earrings':
-      return dedupe([...circularSlice(imageSets.earing, 4, 12)]);
+      return dedupe([...circularSlice(imageSets.earing, 1, 4)]);
     case 'gold-ring-set':
       return dedupe([
-        ...circularSlice(imageSets.earing, 2, 8),
-        ...circularSlice(imageSets.bangals, 2, 7),
+        ...circularSlice(imageSets.earing, 2, 3),
+        ...circularSlice(imageSets.bangals, 1, 3),
       ]);
     case 'diamond-bracelet':
       return dedupe([
-        ...circularSlice(imageSets.bracelet, 0, 3),
-        ...circularSlice(imageSets.accessories, 0, 3),
-        ...circularSlice(imageSets.newcollection, 0, 4),
+        ...circularSlice(imageSets.bracelet, 0, 4),
+        ...circularSlice(imageSets.newcollection, 2, 2),
       ]);
     case 'crystal-hair-band':
       return dedupe([
-        ...circularSlice(imageSets.accessories, 0, 3),
-        ...circularSlice(imageSets.newcollection, 0, 8),
+        ...circularSlice(imageSets.newcollection, 0, 4),
+        ...circularSlice(imageSets.bracelet, 1, 2),
       ]);
     case 'luxury-perfume':
       return dedupe([
-        ...circularSlice(imageSets.makeup, 0, 3),
-        ...circularSlice(imageSets.accessories, 0, 3),
-        ...circularSlice(imageSets.newcollection, 0, 4),
+        ...circularSlice(imageSets.newcollection, 2, 4),
+        ...circularSlice(imageSets.summer, 0, 2),
       ]);
     default:
       return dedupe(circularSlice(imageSets.newcollection, 0, 6));

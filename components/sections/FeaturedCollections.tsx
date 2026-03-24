@@ -1,82 +1,96 @@
 "use client";
-import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 
 import { ShoppingCart, Heart } from 'lucide-react';
 import CompactCommerceCard from '../ui/CompactCommerceCard';
-import { FALLBACK_PRODUCT_IMAGE } from '../../lib/media';
 
 type FeaturedItem = {
-	id: number;
+	id: string;
 	title: string;
 	image: string;
 	description: string;
-	discount: string;
-	category: string;
+	badge: string;
+	href: string;
 };
 
+const featuredCollections: FeaturedItem[] = [
+	{
+		id: 'necklaces',
+		title: 'Necklace Sets',
+		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635070/neckles-2_ifgegk.jpg',
+		description: 'Layered statement sets with bridal shine and festive polish.',
+		badge: 'Jewelry',
+		href: '/collections?collection=necklaces',
+	},
+	{
+		id: 'earrings',
+		title: 'Earrings',
+		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635059/earing-4_umxjjo.jpg',
+		description: 'Classic studs and ornate drops for day-to-evening styling.',
+		badge: 'Jewelry',
+		href: '/collections?collection=earrings',
+	},
+	{
+		id: 'bangles',
+		title: 'Bangles',
+		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635038/bangals-5_fd7gek.jpg',
+		description: 'Bold stacks and heritage-inspired details with a richer finish.',
+		badge: 'Jewelry',
+		href: '/collections?collection=bangles',
+	},
+	{
+		id: 'bracelets',
+		title: 'Bracelets',
+		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635043/bracelet-1_eb7gcf.jpg',
+		description: 'Clean statement pieces that sharpen formal and casual looks.',
+		badge: 'Accessories',
+		href: '/collections?collection=bracelets',
+	},
+	{
+		id: 'abaya',
+		title: 'Abaya Edit',
+		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635132/suit-32_gmhzyl.jpg',
+		description: 'Refined modestwear with richer textures and occasion-ready cuts.',
+		badge: 'Abaya',
+		href: '/collections?category=abaya',
+	},
+	{
+		id: 'summer',
+		title: 'Summer Suits',
+		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635512/summer-4_ga77ea.jpg',
+		description: 'Lightweight silhouettes and brighter palettes for warm days.',
+		badge: 'Clothing',
+		href: '/collections?collection=summer',
+	},
+	{
+		id: 'winter',
+		title: 'Winter Edit',
+		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635130/suit-31_nnxefy.jpg',
+		description: 'Heavier drape, layered looks, and polished seasonal styling.',
+		badge: 'Clothing',
+		href: '/collections?collection=winter',
+	},
+	{
+		id: 'makeup',
+		title: 'Beauty Picks',
+		image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635081/newcollection-6_ogng4l.jpg',
+		description: 'Curated beauty and finishing pieces styled for the full look.',
+		badge: 'Makeup',
+		href: '/collections?collection=makeup',
+	},
+];
+
 export default function FeaturedCollections() {
-	const [collections, setCollections] = useState<FeaturedItem[]>([]);
-
-	useEffect(() => {
-		let isMounted = true;
-
-		async function loadFeatured() {
-			try {
-				const res = await fetch('/api/products?featured=1&limit=8', { cache: 'no-store' });
-				const data = await res.json();
-				if (!res.ok || !Array.isArray(data.products)) {
-					return;
-				}
-
-				let products = data.products;
-				if (products.length === 0) {
-					const fallbackRes = await fetch('/api/products?limit=8', { cache: 'no-store' });
-					const fallbackData = await fallbackRes.json();
-					products = Array.isArray(fallbackData.products) ? fallbackData.products : [];
-				}
-
-				if (!isMounted) return;
-
-				setCollections(
-					products.map((p: { id: number; name: string; image: string; description: string; category: string; slug: string; price: number; salePrice?: number | null }) => ({
-						id: p.id,
-						title: p.name,
-						image: p.image || FALLBACK_PRODUCT_IMAGE,
-						description: p.description || 'Featured product from our latest collection.',
-						discount: p.salePrice && p.price > p.salePrice
-							? `${Math.round(((p.price - p.salePrice) / p.price) * 100)}% OFF`
-							: 'Featured',
-						category: (p.category || 'all').toLowerCase(),
-					}))
-				);
-			} catch {
-				// fail silently and keep section stable
-			}
-		}
-
-		loadFeatured();
-		return () => {
-			isMounted = false;
-		};
-	}, []);
-
-	const visibleCollections = useMemo(() => collections.slice(0, 8), [collections]);
-
-	if (visibleCollections.length === 0) {
-		return null;
-	}
-
 	return (
 		<section className="py-10 px-4 md:px-12 bg-[#1a1a40]">
 			<h2 className="text-3xl md:text-4xl font-bold text-gold mb-6 text-center">Featured Collections</h2>
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-				{visibleCollections.map((collection, index) => (
+				{featuredCollections.map((collection, index) => (
 					<Link
 						key={collection.id}
-						href={`/collections?category=${collection.category}`}
-						prefetch
+						href={collection.href}
+						prefetch={false}
 						className="block h-full"
 					>
 					<motion.div
@@ -90,7 +104,7 @@ export default function FeaturedCollections() {
 							title={collection.title}
 							description={collection.description}
 							image={collection.image}
-							badge={collection.discount}
+								badge={collection.badge}
 							ctaLabel="Explore Collection"
 							contentPlacement="overlay"
 							mediaOverlay={

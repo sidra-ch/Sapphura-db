@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { FALLBACK_PRODUCT_IMAGE } from '../../lib/media';
 
 interface CompactCommerceCardProps {
@@ -16,6 +16,9 @@ interface CompactCommerceCardProps {
   contentPlacement?: 'body' | 'overlay';
   imageLoading?: 'lazy' | 'eager';
   imageFetchPriority?: 'auto' | 'high' | 'low';
+  mediaAspectClassName?: string;
+  imageClassName?: string;
+  imageStyle?: CSSProperties;
 }
 
 export default function CompactCommerceCard({
@@ -33,14 +36,17 @@ export default function CompactCommerceCard({
   contentPlacement = 'body',
   imageLoading = 'lazy',
   imageFetchPriority = 'auto',
+  mediaAspectClassName = 'aspect-[4/5]',
+  imageClassName = '',
+  imageStyle,
 }: CompactCommerceCardProps) {
   const isOverlay = contentPlacement === 'overlay';
   const hasPricing = Boolean(price || originalPrice);
   const hasCta = Boolean(ctaLabel || footer);
 
   return (
-    <article className={`group h-full min-h-[260px] rounded-2xl overflow-hidden border border-gold/30 bg-[linear-gradient(180deg,#111736_0%,#0b1028_100%)] shadow-[0_10px_28px_rgba(6,8,20,0.45)] flex flex-col motion-safe:transition-all motion-safe:duration-300 motion-safe:hover:-translate-y-1.5 motion-safe:hover:border-gold/75 motion-safe:hover:shadow-[0_22px_42px_rgba(212,175,55,0.22)] ${className}`}>
-      <div className="relative overflow-hidden">
+    <article className={`group flex h-full flex-col overflow-hidden rounded-2xl border border-gold/30 bg-[linear-gradient(180deg,#111736_0%,#0b1028_100%)] shadow-[0_10px_28px_rgba(6,8,20,0.45)] motion-safe:transition-all motion-safe:duration-300 motion-safe:hover:-translate-y-1.5 motion-safe:hover:border-gold/75 motion-safe:hover:shadow-[0_22px_42px_rgba(212,175,55,0.22)] ${className}`}>
+      <div className={`relative overflow-hidden ${mediaAspectClassName}`}>
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/30 z-10" />
         {badge && (
           <span className="absolute top-3 left-3 bg-gold text-[#0a0a23] font-extrabold tracking-wide px-2.5 py-1 rounded-full text-[10px] uppercase shadow z-30">
@@ -50,11 +56,12 @@ export default function CompactCommerceCard({
         <img
           src={image || FALLBACK_PRODUCT_IMAGE}
           alt={title}
-          className="w-full h-[180px] sm:h-[190px] lg:h-[204px] object-cover motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-110"
+          className={`absolute inset-0 h-full w-full object-cover motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-110 ${imageClassName}`}
           loading={imageLoading}
           decoding="async"
           fetchPriority={imageFetchPriority}
           draggable={false}
+          style={imageStyle}
           onError={(e) => {
             const target = e.currentTarget as HTMLImageElement;
             if (target && target.src !== FALLBACK_PRODUCT_IMAGE) {
@@ -71,7 +78,7 @@ export default function CompactCommerceCard({
         {mediaOverlay}
       </div>
 
-      <div className={`p-3.5 ${isOverlay && !hasPricing && !hasCta ? '' : 'flex-1 flex flex-col'} bg-[radial-gradient(circle_at_top_left,rgba(212,175,55,0.12),transparent_45%)]`}>
+      <div className={`flex-1 bg-[radial-gradient(circle_at_top_left,rgba(212,175,55,0.12),transparent_45%)] p-3.5 ${isOverlay && !hasPricing && !hasCta ? '' : 'flex flex-col'}`}>
         {!isOverlay && (
           <>
             <h3 className={`text-base leading-5 font-semibold text-gold mb-1.5 line-clamp-2 ${titleClassName}`}>{title}</h3>

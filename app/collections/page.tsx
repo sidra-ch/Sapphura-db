@@ -105,11 +105,6 @@ function CollectionsContent() {
     const normalized = imageUrl.trim();
     if (!normalized.startsWith('http')) return FALLBACK_IMAGE;
 
-    // Older generated pools contain versioned URLs that now 404.
-    if (normalized.includes('/v177356') || normalized.includes('/v177300')) {
-      return FALLBACK_IMAGE;
-    }
-
     return normalized;
   };
 
@@ -386,12 +381,18 @@ function CollectionsContent() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
               >
-                <div className="bg-[#1a1a40] border border-gold/20 rounded-xl overflow-hidden hover:border-gold transition group h-full flex flex-col">
-                    <div className="relative">
+                <div className="relative bg-[#1a1a40] border border-gold/20 rounded-xl overflow-hidden hover:border-gold transition group h-full flex flex-col">
+                    <Link
+                      href={`/product/${product.slug}`}
+                      prefetch={false}
+                      className="absolute inset-0 z-10"
+                      aria-label={`Open ${product.name}`}
+                    />
+                    <div className="relative aspect-[4/5] overflow-hidden">
                       <img
                         src={productImage}
                         alt={product.name}
-                        className="w-full h-44 object-cover group-hover:scale-110 transition duration-300"
+                        className="absolute inset-0 h-full w-full object-cover group-hover:scale-110 transition duration-300"
                         loading="lazy"
                         onError={(event) => {
                           event.currentTarget.src = FALLBACK_IMAGE;
@@ -404,10 +405,11 @@ function CollectionsContent() {
                       <span className="absolute top-3 left-3 bg-gold text-[#0a0a23] text-xs font-bold px-2 py-1 rounded">
                         {categoryName}
                       </span>
-                      <div className="absolute top-3 right-3 flex flex-col gap-2">
+                      <div className="absolute top-3 right-3 z-20 flex flex-col gap-2">
                         <button
                           onClick={(e) => {
                             e.preventDefault();
+                            e.stopPropagation();
                             if (inWishlist) {
                               removeFromWishlist(productKey);
                             } else {
@@ -421,6 +423,7 @@ function CollectionsContent() {
                         <button
                           onClick={(e) => {
                             e.preventDefault();
+                            e.stopPropagation();
                             addToCart({ id: productKey, slug: product.slug, name: product.name, image: productImage, price: product.price, quantity: 1 });
                           }}
                           className="p-2 rounded-full bg-gold text-[#0a0a23] hover:bg-yellow-400 transition"
@@ -429,14 +432,12 @@ function CollectionsContent() {
                         </button>
                       </div>
                     </div>
-                    <Link href={`/product/${product.slug}`} prefetch>
-                    <div className="p-3 flex-1 flex flex-col">
+                    <div className="relative z-20 p-3 flex-1 flex flex-col pointer-events-none">
                       <div className="flex items-center justify-between gap-2 mt-auto">
                         <span className="text-white font-bold text-lg">${product.price}</span>
                         <span className="text-[11px] px-2.5 py-1.5 rounded-md border border-gold text-gold">View Details</span>
                       </div>
                     </div>
-                    </Link>
                   </div>
               </motion.div>
             )})

@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import Link from 'next/link';
-import { auth } from '@clerk/nextjs/server';
 import "./globals.css";
 import ClerkProvider from '../components/ClerkProvider';
 import { Providers } from "../components/Providers";
@@ -17,8 +15,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const authState = await auth();
-
   return (
     <html lang="en">
       <head>
@@ -26,16 +22,6 @@ export default async function RootLayout({
       </head>
       <body className="antialiased">
         <ClerkProvider>
-          <header className="flex items-center justify-end gap-2 bg-[#0a0a23] px-4 py-2 text-sm text-white">
-            {authState.userId ? (
-              <Link href="/account" className="rounded border border-gold px-3 py-1 text-gold">My account</Link>
-            ) : (
-              <>
-                <Link href="/sign-in" className="rounded border border-gold px-3 py-1 text-gold">Sign in</Link>
-                <Link href="/sign-up" className="rounded bg-gold px-3 py-1 text-[#0a0a23]">Sign up</Link>
-              </>
-            )}
-          </header>
           <Providers>
             <GlobalHeader />
             {children}
