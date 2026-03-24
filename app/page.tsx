@@ -21,7 +21,7 @@ export default function HomePage() {
       <CategoryTicker />
       <FeaturedCollections />
       <BestSellers />
-      
+
       <BrandStory />
       <VideoBrandStory />
       <ShopTheLook />
@@ -30,7 +30,7 @@ export default function HomePage() {
       <InstagramGallery />
       <FAQ />
       <Newsletter />
-      
+
       <Footer />
       <WhatsAppFloating />
     </div>
