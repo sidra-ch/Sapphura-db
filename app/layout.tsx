@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import ClerkProvider from '../components/ClerkProvider';
 import { Providers } from "../components/Providers";
 import CartDrawer from "../components/cart/CartDrawer";
 import GlobalHeader from "../components/layout/GlobalHeader";
@@ -21,13 +20,11 @@ export default async function RootLayout({
         <link rel="icon" href="https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635065/logo-1_nsterf.png" type="image/png" />
       </head>
       <body className="antialiased">
-        <ClerkProvider>
-          <Providers>
-            <GlobalHeader />
-            {children}
-            <CartDrawer />
-          </Providers>
-        </ClerkProvider>
+        <Providers>
+          <GlobalHeader />
+          {children}
+          <CartDrawer />
+        </Providers>
       </body>
     </html>
   );
