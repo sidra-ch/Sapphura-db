@@ -10,37 +10,70 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const featuredOnly = searchParams.get('featured') === '1';
     const limit = Number(searchParams.get('limit') || '0');
+    const slug = String(searchParams.get('slug') || '').trim();
+    const id = String(searchParams.get('id') || '').trim();
+    const numericId = Number(id);
 
     const products = await prisma.product.findMany({
       where: {
         status: 'active',
         ...(featuredOnly ? { isFeatured: true } : {}),
+        ...(slug
+          ? { slug }
+          : id
+            ? {
+                OR: [
+                  { publicId: id },
+                  ...(Number.isInteger(numericId) && numericId > 0 ? [{ id: numericId }] : []),
+                ],
+              }
+            : {}),
       },
       include: {
         category: true,
+        reviews: {
+          select: {
+            rating: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
       ...(Number.isFinite(limit) && limit > 0 ? { take: limit } : {}),
     });
 
     return NextResponse.json({
-      products: products.map((p: any) => ({
-        id: p.publicId || String(p.id),
-        legacyId: p.id,
-        name: p.name,
-        slug: p.slug,
-        description: p.description,
-        price: p.price,
-        salePrice: p.salePrice,
-        stock: p.stock,
-        status: p.status,
-        isFeatured: p.isFeatured,
-        category: p.category?.name || '',
-        categoryId: p.categoryId,
-        images: parseMediaList(p.images),
-        image: getPrimaryMedia(p.images),
-        createdAt: p.createdAt,
-      })),
+      products: products.map((p: any) => {
+        const ratings = Array.isArray(p.reviews)
+          ? p.reviews
+              .map((review: { rating: number }) => Number(review.rating))
+              .filter((rating: number) => Number.isFinite(rating) && rating > 0)
+          : [];
+        const reviews = ratings.length;
+        const rating = reviews
+          ? Number((ratings.reduce((sum: number, value: number) => sum + value, 0) / reviews).toFixed(1))
+          : 0;
+
+        return {
+          id: p.publicId || String(p.id),
+          legacyId: p.id,
+          name: p.name,
+          slug: p.slug,
+          description: p.description,
+          price: p.price,
+          salePrice: p.salePrice,
+          stock: p.stock,
+          status: p.status,
+          isFeatured: p.isFeatured,
+          category: p.category?.name || '',
+          categoryId: p.categoryId,
+          inStock: p.stock > 0,
+          rating,
+          reviews,
+          images: parseMediaList(p.images),
+          image: getPrimaryMedia(p.images),
+          createdAt: p.createdAt,
+        };
+      }),
     });
   } catch (error) {
     return NextResponse.json(

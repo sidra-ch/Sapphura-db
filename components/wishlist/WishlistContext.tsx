@@ -2,6 +2,9 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
+const WISHLIST_STORAGE_KEY = 'wishlist-v2';
+const LEGACY_WISHLIST_STORAGE_KEY = 'wishlist';
+
 interface WishlistItem {
   id: string;
   slug?: string;
@@ -27,28 +30,34 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('wishlist');
+      const stored = localStorage.getItem(WISHLIST_STORAGE_KEY);
       if (stored) {
         try {
           setItems(JSON.parse(stored));
         } catch {
-          localStorage.removeItem('wishlist');
+          localStorage.removeItem(WISHLIST_STORAGE_KEY);
         }
       }
+      localStorage.removeItem(LEGACY_WISHLIST_STORAGE_KEY);
     }
     setIsHydrated(true);
   }, []);
 
   useEffect(() => {
     if (isHydrated && typeof window !== 'undefined') {
-      localStorage.setItem('wishlist', JSON.stringify(items));
+      localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(items));
     }
   }, [items, isHydrated]);
 
   const addToWishlist = (item: WishlistItem) => {
-    if (!items.find(i => i.id === item.id)) {
-      setItems(prev => [...prev, item]);
-    }
+    setItems(prev => {
+      const existing = prev.find(i => i.id === item.id);
+      if (existing) {
+        return prev.map(i => (i.id === item.id ? { ...i, ...item } : i));
+      }
+
+      return [...prev, item];
+    });
   };
 
   const removeFromWishlist = (id: string) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -9,25 +9,88 @@ import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import { useCart } from '../../../components/cart/CartContext';
 import { useWishlist } from '../../../components/wishlist/WishlistContext';
-import { PRODUCT_BY_ID, PRODUCT_BY_SLUG } from '../../../lib/products-catalog';
-import { FALLBACK_PRODUCT_IMAGE } from '../../../lib/media';
+import { FALLBACK_PRODUCT_IMAGE, getPrimaryImageFromList, isVideoUrl } from '../../../lib/media';
 
 const FALLBACK_IMAGE = FALLBACK_PRODUCT_IMAGE;
+
+type Product = {
+  id: string;
+  legacyId?: number;
+  name: string;
+  slug: string;
+  description: string;
+  price: number;
+  salePrice?: number | null;
+  stock: number;
+  inStock: boolean;
+  rating: number;
+  reviews: number;
+  category: string;
+  images: string[];
+  image?: string;
+};
 
 export default function ProductDetailPage() {
   const params = useParams();
   const routeValue = params?.slug as string;
-  const product = PRODUCT_BY_SLUG[routeValue] || PRODUCT_BY_ID[routeValue];
   
+  const [product, setProduct] = useState<Product | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const wishlistKey = product?.slug || product?.id || '';
 
-  const productImages = product?.images?.length ? product.images : [FALLBACK_IMAGE];
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadProduct() {
+      if (!routeValue) {
+        if (isMounted) {
+          setProduct(null);
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/products?slug=${encodeURIComponent(routeValue)}`, { cache: 'no-store' });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to load product');
+        }
+
+        const nextProduct = Array.isArray(data.products) ? data.products[0] ?? null : null;
+        if (!isMounted) return;
+
+        setProduct(nextProduct);
+        setSelectedImage(0);
+      } catch {
+        if (isMounted) {
+          setProduct(null);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadProduct();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [routeValue]);
+
+  const productMedia = product?.images?.length ? product.images : [FALLBACK_IMAGE];
+  const selectedMedia = productMedia[selectedImage] || FALLBACK_IMAGE;
+  const selectedMediaIsVideo = isVideoUrl(selectedMedia);
+  const productPreviewImage = product?.image || getPrimaryImageFromList(productMedia);
 
   const handleAddToCart = () => {
     if (product) {
@@ -35,7 +98,7 @@ export default function ProductDetailPage() {
         id: product.slug,
         slug: product.slug,
         name: product.name,
-        image: productImages[0],
+        image: productPreviewImage,
         price: product.price,
         quantity
       });
@@ -51,7 +114,7 @@ export default function ProductDetailPage() {
           id: wishlistKey,
           slug: product.slug,
           name: product.name,
-          image: productImages[0],
+          image: productPreviewImage,
           price: product.price
         });
       }
@@ -98,8 +161,8 @@ export default function ProductDetailPage() {
     );
   }
 
-  const nextImage = () => setSelectedImage((prev) => (prev + 1) % productImages.length);
-  const prevImage = () => setSelectedImage((prev) => (prev - 1 + productImages.length) % productImages.length);
+  const nextImage = () => setSelectedImage((prev) => (prev + 1) % productMedia.length);
+  const prevImage = () => setSelectedImage((prev) => (prev - 1 + productMedia.length) % productMedia.length);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0a0a23] to-[#1a1a40] py-8 px-4">
@@ -116,14 +179,25 @@ export default function ProductDetailPage() {
             className="relative"
           >
             <div className="relative rounded-2xl overflow-hidden border-2 border-gold shadow-xl">
-              <img 
-                src={productImages[selectedImage] || FALLBACK_IMAGE}
-                alt={product.name}
-                className="w-full h-[500px] object-cover"
-                onError={(event) => {
-                  event.currentTarget.src = FALLBACK_IMAGE;
-                }}
-              />
+              {selectedMediaIsVideo ? (
+                <video
+                  key={selectedMedia}
+                  src={selectedMedia}
+                  className="w-full h-[500px] object-cover bg-black"
+                  controls
+                  playsInline
+                  preload="metadata"
+                />
+              ) : (
+                <img 
+                  src={selectedMedia}
+                  alt={product.name}
+                  className="w-full h-[500px] object-cover"
+                  onError={(event) => {
+                    event.currentTarget.src = FALLBACK_IMAGE;
+                  }}
+                />
+              )}
               <button 
                 onClick={prevImage}
                 className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-gold text-white p-2 rounded-full transition"
@@ -138,24 +212,39 @@ export default function ProductDetailPage() {
               </button>
             </div>
             <div className="flex gap-3 mt-4">
-              {productImages.map((img, idx) => (
+              {productMedia.map((mediaUrl, idx) => {
+                const mediaIsVideo = isVideoUrl(mediaUrl);
+                return (
                 <button
-                  key={idx}
+                  key={`${mediaUrl}-${idx}`}
                   onClick={() => setSelectedImage(idx)}
                   className={`w-20 h-20 rounded-lg overflow-hidden border-2 transition ${
                     selectedImage === idx ? 'border-gold' : 'border-transparent opacity-60'
                   }`}
                 >
-                  <img
-                    src={img}
-                    alt={`View ${idx + 1}`}
-                    className="w-full h-full object-cover"
-                    onError={(event) => {
-                      event.currentTarget.src = FALLBACK_IMAGE;
-                    }}
-                  />
+                  {mediaIsVideo ? (
+                    <div className="relative w-full h-full bg-black">
+                      <video
+                        src={mediaUrl}
+                        className="w-full h-full object-cover"
+                        muted
+                        playsInline
+                        preload="metadata"
+                      />
+                      <span className="absolute bottom-1 right-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] text-white">Video</span>
+                    </div>
+                  ) : (
+                    <img
+                      src={mediaUrl}
+                      alt={`View ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                      onError={(event) => {
+                        event.currentTarget.src = FALLBACK_IMAGE;
+                      }}
+                    />
+                  )}
                 </button>
-              ))}
+              );})}
             </div>
           </motion.div>
 
@@ -222,7 +311,7 @@ export default function ProductDetailPage() {
               <button 
                 onClick={handleWishlist}
                 className={`p-3 border rounded-lg transition ${
-                  isInWishlist(product.id) 
+                  isInWishlist(wishlistKey) 
                     ? 'border-red-500 bg-red-500 text-white' 
                     : 'border-gold text-gold hover:bg-gold hover:text-[#0a0a23]'
                 }`}

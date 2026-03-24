@@ -2,6 +2,9 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
+const CART_STORAGE_KEY = 'cart-v2';
+const LEGACY_CART_STORAGE_KEY = 'cart';
+
 export interface CartItem {
   id: string;
   slug?: string;
@@ -33,21 +36,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('cart');
+      const stored = localStorage.getItem(CART_STORAGE_KEY);
       if (stored) {
         try {
           setItems(JSON.parse(stored));
         } catch {
-          localStorage.removeItem('cart');
+          localStorage.removeItem(CART_STORAGE_KEY);
         }
       }
+      localStorage.removeItem(LEGACY_CART_STORAGE_KEY);
     }
     setIsHydrated(true);
   }, []);
 
   useEffect(() => {
     if (isHydrated && typeof window !== 'undefined') {
-      localStorage.setItem('cart', JSON.stringify(items));
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
     }
   }, [items, isHydrated]);
 
@@ -57,7 +61,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (existing) {
         return prev.map(i => 
           i.id === item.id && i.variant === item.variant
-            ? { ...i, quantity: i.quantity + item.quantity }
+            ? { ...i, image: item.image, slug: item.slug, quantity: i.quantity + item.quantity }
             : i
         );
       }

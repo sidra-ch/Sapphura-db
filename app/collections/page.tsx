@@ -9,10 +9,8 @@ import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import { useCart } from '../../components/cart/CartContext';
 import { useWishlist } from '../../components/wishlist/WishlistContext';
-import { PRODUCT_CATALOG } from '../../lib/products-catalog';
 import { FALLBACK_PRODUCT_IMAGE } from '../../lib/media';
 
-const products = PRODUCT_CATALOG;
 const FALLBACK_IMAGE = FALLBACK_PRODUCT_IMAGE;
 
 const categories = ['All', 'Jewelry', 'Abaya', 'Accessories', 'Clothing', 'Makeup'];
@@ -25,7 +23,10 @@ interface Product {
   slug: string;
   price: number;
   images: string[];
+  image?: string;
   categoryId: number;
+  category?: string;
+  stock?: number;
 }
 
 function CollectionsContent() {
@@ -73,12 +74,61 @@ function CollectionsContent() {
   const [sortBy, setSortBy] = useState('Newest');
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [isLoading] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [galleryProduct, setGalleryProduct] = useState<Product | null>(null);
   const [galleryImageIndex, setGalleryImageIndex] = useState(0);
 
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadProducts() {
+      setIsLoading(true);
+      try {
+        const response = await fetch('/api/products', { cache: 'no-store' });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to load products');
+        }
+
+        if (!isMounted) return;
+
+        setProducts(
+          Array.isArray(data.products)
+            ? data.products.map((product: Product) => ({
+                id: String(product.id),
+                name: product.name,
+                slug: product.slug,
+                price: Number(product.price),
+                images: Array.isArray(product.images) ? product.images : [],
+                image: product.image,
+                categoryId: Number(product.categoryId),
+                category: product.category,
+                stock: product.stock,
+              }))
+            : []
+        );
+      } catch {
+        if (isMounted) {
+          setProducts([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadProducts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -108,9 +158,10 @@ function CollectionsContent() {
     return normalized;
   };
 
-  const getProductImage = (images: string[]) => {
-    if (!images || !images.length) return normalizeCatalogImage(undefined);
-    return normalizeCatalogImage(images[0]);
+  const getProductImage = (product: Product) => {
+    if (product.image) return normalizeCatalogImage(product.image);
+    if (!product.images || !product.images.length) return normalizeCatalogImage(undefined);
+    return normalizeCatalogImage(product.images[0]);
   };
 
   const getCategoryName = (categoryId: number) => {
@@ -192,7 +243,7 @@ function CollectionsContent() {
   }, [categoryParam, collectionParam]);
 
   const filteredProducts = products.filter(product => {
-    const categoryName = getCategoryName(product.categoryId);
+    const categoryName = product.category || getCategoryName(product.categoryId);
     // When a collection is selected from Featured Collections, prioritize collection matching.
     // This avoids category/collection conflicts that can hide all products.
     if (selectedCollection === 'all' && selectedCategory !== 'All' && categoryName !== selectedCategory) return false;
@@ -372,8 +423,8 @@ function CollectionsContent() {
               sortedProducts.map((product, index) => {
                 const productKey = product.slug || product.id;
                 const inWishlist = isInWishlist(productKey);
-                const productImage = getProductImage(product.images);
-                const categoryName = getCategoryName(product.categoryId);
+                const productImage = getProductImage(product);
+                const categoryName = product.category || getCategoryName(product.categoryId);
                 return (
               <motion.div
                 key={product.id}
