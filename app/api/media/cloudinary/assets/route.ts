@@ -10,8 +10,9 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
-    const prefix = searchParams.get('prefix') || 'products';
-    const assets = await listCloudinaryAssets(prefix);
+  const rawPrefix = (searchParams.get('prefix') || '').trim();
+  const prefix = !rawPrefix || rawPrefix.toLowerCase() === 'all' ? undefined : rawPrefix;
+  const assets = await listCloudinaryAssets(prefix);
 
     return NextResponse.json({
       success: true,

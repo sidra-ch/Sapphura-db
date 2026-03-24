@@ -17,6 +17,7 @@ import {
   Loader2,
   Upload,
   RefreshCcw,
+  Database,
 } from 'lucide-react';
 
 type ProductRow = {
@@ -51,6 +52,21 @@ type ProductFormState = {
   videoUrls: string[];
 };
 
+type ImportSummary = {
+  mode: 'dry-run' | 'import';
+  totalAssets?: number;
+  groupedAssets?: number;
+  existingMatchedAssets?: number;
+  matchedExistingProducts?: number;
+  relinkableProducts?: number;
+  alreadyLinkedProducts?: number;
+  importableGroups?: number;
+  importableAssetCount?: number;
+  relinked?: number;
+  created?: number;
+  sample?: Array<{ name: string; slug: string; category: string; mediaCount: number }>;
+};
+
 const initialFormState: ProductFormState = {
   name: '',
   description: '',
@@ -81,6 +97,8 @@ export default function ProductsPage() {
   const [isLoadingAssets, setIsLoadingAssets] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [assets, setAssets] = useState<CloudAsset[]>([]);
+  const [isImportingAssets, setIsImportingAssets] = useState(false);
+  const [importSummary, setImportSummary] = useState<ImportSummary | null>(null);
 
   const categoryNames = useMemo(() => ['All', ...categories.map((c) => c.name)], [categories]);
 
@@ -125,7 +143,7 @@ export default function ProductsPage() {
     setIsLoadingAssets(true);
     setFormError('');
     try {
-      const res = await fetch('/api/media/cloudinary/assets?prefix=products', { cache: 'no-store' });
+      const res = await fetch('/api/media/cloudinary/assets?prefix=all', { cache: 'no-store' });
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || 'Failed to fetch cloud assets');
@@ -149,6 +167,73 @@ export default function ProductsPage() {
       setFormError(error instanceof Error ? error.message : 'Failed to load Cloudinary assets');
     } finally {
       setIsLoadingAssets(false);
+    }
+  };
+
+  const previewCloudinaryImport = async () => {
+    setIsImportingAssets(true);
+    setFormError('');
+    setFormMessage('');
+    try {
+      const res = await fetch('/api/products/import-cloudinary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dryRun: true }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to preview import');
+      }
+      setImportSummary(data);
+      setFormMessage(`Preview ready: ${data.importableGroups || 0} product groups can be imported from Cloudinary.`);
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'Failed to preview import');
+    } finally {
+      setIsImportingAssets(false);
+    }
+  };
+
+  const importCloudinaryAssets = async () => {
+    const defaultPriceRaw = window.prompt('Default price for imported products', '99');
+    if (defaultPriceRaw === null) return;
+
+    const defaultStockRaw = window.prompt('Default stock for imported products', '1');
+    if (defaultStockRaw === null) return;
+
+    const defaultPrice = Number(defaultPriceRaw);
+    const defaultStock = Number(defaultStockRaw);
+
+    if (!Number.isFinite(defaultPrice) || defaultPrice <= 0 || !Number.isInteger(defaultStock) || defaultStock < 0) {
+      setFormError('Import cancelled: default price or stock was invalid.');
+      return;
+    }
+
+    setIsImportingAssets(true);
+    setFormError('');
+    setFormMessage('');
+    try {
+      const res = await fetch('/api/products/import-cloudinary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dryRun: false,
+          defaultPrice,
+          defaultStock,
+          status: 'active',
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to import products');
+      }
+      setImportSummary(data);
+      setFormMessage(`Imported ${data.created || 0} products from Cloudinary media.`);
+      await loadData();
+      await loadCloudinaryAssets();
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'Failed to import products');
+    } finally {
+      setIsImportingAssets(false);
     }
   };
 
@@ -644,14 +729,52 @@ export default function ProductsPage() {
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-2">
                       <label className="block text-white/70 text-sm">Cloudinary Media Library</label>
-                      <button
-                        type="button"
-                        onClick={() => void loadCloudinaryAssets()}
-                        className="inline-flex items-center gap-1 text-xs text-gold border border-gold/40 rounded px-2 py-1 hover:bg-gold/10"
-                      >
-                        <RefreshCcw className="w-3.5 h-3.5" /> Refresh
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => void previewCloudinaryImport()}
+                          className="inline-flex items-center gap-1 text-xs text-gold border border-gold/40 rounded px-2 py-1 hover:bg-gold/10 disabled:opacity-60"
+                          disabled={isImportingAssets}
+                        >
+                          <Database className="w-3.5 h-3.5" /> Preview Import
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void importCloudinaryAssets()}
+                          className="inline-flex items-center gap-1 text-xs text-gold border border-gold/40 rounded px-2 py-1 hover:bg-gold/10 disabled:opacity-60"
+                          disabled={isImportingAssets}
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Import Missing
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void loadCloudinaryAssets()}
+                          className="inline-flex items-center gap-1 text-xs text-gold border border-gold/40 rounded px-2 py-1 hover:bg-gold/10"
+                        >
+                          <RefreshCcw className="w-3.5 h-3.5" /> Refresh
+                        </button>
+                      </div>
                     </div>
+
+                    {importSummary && (
+                      <div className="mb-3 rounded-lg border border-gold/20 bg-[#111736] p-3 text-xs text-white/75">
+                        {importSummary.mode === 'dry-run' ? (
+                          <>
+                            <p>Cloudinary assets: {importSummary.totalAssets ?? 0}</p>
+                            <p>Grouped media sets: {importSummary.groupedAssets ?? 0}</p>
+                            <p>Already linked assets: {importSummary.existingMatchedAssets ?? 0}</p>
+                            <p>Matched existing products: {importSummary.matchedExistingProducts ?? 0}</p>
+                            <p>Products needing relink: {importSummary.relinkableProducts ?? 0}</p>
+                            <p>Importable product groups: {importSummary.importableGroups ?? 0}</p>
+                          </>
+                        ) : (
+                          <>
+                            <p>Relinked products: {importSummary.relinked ?? 0}</p>
+                            <p>Imported products: {importSummary.created ?? 0}</p>
+                          </>
+                        )}
+                      </div>
+                    )}
 
                     <div className="border border-gold/20 rounded-lg p-3 max-h-56 overflow-y-auto bg-[#0a0a23]">
                       {isLoadingAssets ? (
@@ -659,7 +782,7 @@ export default function ProductsPage() {
                           <Loader2 className="w-4 h-4 animate-spin" /> Loading assets...
                         </div>
                       ) : assets.length === 0 ? (
-                        <p className="text-white/50 text-sm">No Cloudinary assets found in products folder.</p>
+                        <p className="text-white/50 text-sm">No Cloudinary assets found in the connected library.</p>
                       ) : (
                         <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                           {assets.map((asset) => (

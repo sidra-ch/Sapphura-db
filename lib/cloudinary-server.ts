@@ -17,19 +17,39 @@ export function cloudinaryConfigured(): boolean {
   return Boolean(apiKey && apiSecret);
 }
 
+async function listAllResources(resourceType: 'image' | 'video', prefix?: string) {
+  const resources: any[] = [];
+  let nextCursor: string | undefined;
+
+  do {
+    const response = await cloudinary.api.resources({
+      type: 'upload',
+      resource_type: resourceType,
+      ...(prefix ? { prefix } : {}),
+      max_results: 100,
+      ...(nextCursor ? { next_cursor: nextCursor } : {}),
+    });
+
+    resources.push(...(response.resources || []));
+    nextCursor = response.next_cursor;
+  } while (nextCursor);
+
+  return resources;
+}
+
 export async function listCloudinaryAssets(prefix?: string) {
   if (!cloudinaryConfigured()) {
     throw new Error('Cloudinary credentials are not configured');
   }
 
   const [images, videos] = await Promise.all([
-    cloudinary.api.resources({ type: 'upload', resource_type: 'image', prefix: prefix || '', max_results: 100 }),
-    cloudinary.api.resources({ type: 'upload', resource_type: 'video', prefix: prefix || '', max_results: 100 }),
+    listAllResources('image', prefix),
+    listAllResources('video', prefix),
   ]);
 
   return {
-    images: images.resources || [],
-    videos: videos.resources || [],
+    images,
+    videos,
   };
 }
 
