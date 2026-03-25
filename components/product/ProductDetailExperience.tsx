@@ -8,6 +8,7 @@ import { useMemo, useState } from 'react';
 import { useCart } from '../cart/CartContext';
 import { useWishlist } from '../wishlist/WishlistContext';
 import { FALLBACK_PRODUCT_IMAGE, getPrimaryImageFromList, isVideoUrl } from '../../lib/media';
+import { buildMetaCartPayload, trackMetaEvent } from '../../lib/meta-pixel';
 
 type Variant = {
   id: number;
@@ -106,14 +107,29 @@ export default function ProductDetailExperience({ product }: { product: ProductD
   const visualReviewMedia = useMemo(() => mediaItems.slice(0, 4), [mediaItems]);
 
   function handleAddToCart() {
+    if (displayStock <= 0) {
+      return;
+    }
+
     addToCart({
       id: selectedVariant ? `${product.slug}-${selectedVariant.id}` : product.slug,
+      productId: product.id,
       slug: product.slug,
       name: selectedVariant ? `${product.name} (${activeVariantLabel})` : product.name,
       image: previewImage,
       price: displayPrice,
-      quantity,
+      quantity: Math.min(quantity, displayStock),
+      variant: selectedVariant ? activeVariantLabel : undefined,
+      variantId: selectedVariant?.id,
     });
+
+    trackMetaEvent(
+      'AddToCart',
+      buildMetaCartPayload(
+        [{ id: selectedVariant ? `${product.id}:${selectedVariant.id}` : product.id, quantity: Math.min(quantity, displayStock) }],
+        displayPrice * Math.min(quantity, displayStock)
+      )
+    );
   }
 
   function handleWishlist() {
@@ -228,7 +244,7 @@ export default function ProductDetailExperience({ product }: { product: ProductD
                   <div className="flex items-center rounded-full border border-white/12 bg-white/5 px-2 py-1">
                     <button type="button" onClick={() => setQuantity((prev) => Math.max(1, prev - 1))} className="h-10 w-10 rounded-full text-lg text-[#fff7ef]/78 hover:bg-white/8">-</button>
                     <span className="min-w-10 text-center text-sm font-medium">{quantity}</span>
-                    <button type="button" onClick={() => setQuantity((prev) => prev + 1)} className="h-10 w-10 rounded-full text-lg text-[#fff7ef]/78 hover:bg-white/8">+</button>
+                    <button type="button" onClick={() => setQuantity((prev) => Math.min(displayStock || 1, prev + 1))} className="h-10 w-10 rounded-full text-lg text-[#fff7ef]/78 hover:bg-white/8" disabled={displayStock <= 0}>+</button>
                   </div>
                   <button type="button" onClick={handleWishlist} className={`rounded-full p-3 ${isInWishlist(wishlistKey) ? 'bg-[#d97d68] text-white' : 'border border-white/12 bg-white/5 text-[#fff7ef]'}`}>
                     <Heart className={`h-5 w-5 ${isInWishlist(wishlistKey) ? 'fill-current' : ''}`} />
@@ -368,9 +384,9 @@ export default function ProductDetailExperience({ product }: { product: ProductD
               <p className="text-2xl font-semibold text-[#f7efe5]">{formatMoney(displayPrice)}</p>
               <p className="text-xs uppercase tracking-[0.24em] text-[#fff7ef]/52">Qty {quantity} • {activeVariantLabel}</p>
             </div>
-            <button type="button" onClick={handleAddToCart} className="glow-pulse inline-flex items-center justify-center gap-2 rounded-full bg-[#f7efe5] px-6 py-3 text-sm font-semibold uppercase tracking-[0.24em] text-[#111827]">
+            <button type="button" onClick={handleAddToCart} disabled={displayStock <= 0} className="glow-pulse inline-flex items-center justify-center gap-2 rounded-full bg-[#f7efe5] px-6 py-3 text-sm font-semibold uppercase tracking-[0.24em] text-[#111827] disabled:cursor-not-allowed disabled:opacity-50">
               <ShoppingCart className="h-4 w-4" />
-              Add to cart
+              {displayStock > 0 ? 'Add to cart' : 'Out of stock'}
             </button>
           </div>
         </div>

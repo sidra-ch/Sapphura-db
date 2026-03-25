@@ -7,12 +7,14 @@ const LEGACY_CART_STORAGE_KEY = 'cart';
 
 export interface CartItem {
   id: string;
+  productId?: string;
   slug?: string;
   name: string;
   image: string;
   price: number;
   quantity: number;
   variant?: string;
+  variantId?: number;
 }
 
 interface CartContextType {

@@ -15,6 +15,8 @@ import { calculateOrderTotal, calculateShippingCost, resolveCheckoutOffer } from
 
 interface OrderPayloadItem {
   id: string;
+  productId?: string;
+  variantId?: number;
   name: string;
   price: number;
   quantity: number;
@@ -70,14 +72,24 @@ function isPaymentTransactionTableMissing(error: unknown): boolean {
 async function findProductByItemId(itemId: string) {
   const numericId = Number(itemId)
   if (Number.isInteger(numericId) && numericId > 0) {
-    const byNumeric = await prisma.product.findUnique({ where: { id: numericId } })
+    const byNumeric = await prisma.product.findUnique({ where: { id: numericId }, include: { variants: true } })
     if (byNumeric) return byNumeric
   }
 
-  const byPublicId = await prisma.product.findUnique({ where: { publicId: itemId } })
+  const byPublicId = await prisma.product.findUnique({ where: { publicId: itemId }, include: { variants: true } })
   if (byPublicId) return byPublicId
 
-  return prisma.product.findUnique({ where: { slug: itemId } })
+  return prisma.product.findUnique({ where: { slug: itemId }, include: { variants: true } })
+}
+
+type StockPlanEntry = {
+  productId: number;
+  variantId: number | null;
+  quantity: number;
+};
+
+function serializeStockPlan(entries: StockPlanEntry[]): string {
+  return `stock_plan:${entries.map((entry) => [entry.productId, entry.variantId ?? '', entry.quantity].join(':')).join(',')}`;
 }
 
 export async function GET(req: NextRequest) {
@@ -266,30 +278,44 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const productsForOrder = [] as Array<{ productId: number; quantity: number; price: number; name: string }>;
+    const shouldReserveStockImmediately = paymentMethod === 'card' || paymentMethod === 'cod';
+    const shouldSendConfirmationEmail = paymentMethod === 'card' || paymentMethod === 'cod';
+    const productsForOrder = [] as Array<{ productId: number; variantId: number | null; quantity: number; price: number; name: string }>;
 
     for (const item of items) {
       if (!item?.id || !item?.quantity || item.quantity < 1) {
         return NextResponse.json({ error: 'Invalid order items' }, { status: 400 });
       }
 
-      const product = await findProductByItemId(item.id);
+      const productIdentity = String(item.productId || item.id);
+      const product = await findProductByItemId(productIdentity);
 
       if (!product) {
         return NextResponse.json({ error: `Product not found: ${item.name || item.id}` }, { status: 404 });
       }
 
-      if (product.stock < item.quantity) {
+      const requestedVariantId = Number(item.variantId);
+      const matchedVariant = Number.isInteger(requestedVariantId) && requestedVariantId > 0
+        ? product.variants.find((variant) => variant.id === requestedVariantId) || null
+        : null;
+
+      if (item.variantId && !matchedVariant) {
+        return NextResponse.json({ error: `Selected variant is no longer available for ${product.name}` }, { status: 400 });
+      }
+
+      const availableStock = matchedVariant ? matchedVariant.stock : product.stock;
+      if (availableStock < item.quantity) {
         return NextResponse.json(
-          { error: `Insufficient stock for ${product.name}. Available: ${product.stock}` },
+          { error: `Insufficient stock for ${product.name}. Available: ${availableStock}` },
           { status: 400 }
         );
       }
 
       productsForOrder.push({
         productId: product.id,
+        variantId: matchedVariant?.id ?? null,
         quantity: item.quantity,
-        price: product.salePrice ?? product.price,
+        price: matchedVariant?.price ?? product.salePrice ?? product.price,
         name: product.name,
       });
     }
@@ -381,6 +407,7 @@ export async function POST(req: NextRequest) {
             offer.couponCode ? `coupon:${offer.couponCode}` : null,
             `risk:${riskResult.level}:${riskResult.score}`,
             riskResult.flags.length ? `risk_flags:${riskResult.flags.join('|')}` : null,
+            serializeStockPlan(productsForOrder),
           ]
             .filter(Boolean)
             .join(' | '),
@@ -396,11 +423,20 @@ export async function POST(req: NextRequest) {
         })),
       });
 
-      for (const entry of productsForOrder) {
-        await tx.product.update({
-          where: { id: entry.productId },
-          data: { stock: { decrement: entry.quantity } },
-        });
+      if (shouldReserveStockImmediately) {
+        for (const entry of productsForOrder) {
+          if (entry.variantId) {
+            await tx.productVariant.update({
+              where: { id: entry.variantId },
+              data: { stock: { decrement: entry.quantity } },
+            });
+          }
+
+          await tx.product.update({
+            where: { id: entry.productId },
+            data: { stock: { decrement: entry.quantity } },
+          });
+        }
       }
 
       const orderWithItems = await tx.order.findUnique({
@@ -450,26 +486,28 @@ export async function POST(req: NextRequest) {
     let confirmationEmailSent = false;
     let confirmationEmailError: string | null = null;
 
-    try {
-      await sendEmail({
-        to: normalizedEmail,
-        subject: `Sapphura Order Confirmation #${created.id}`,
-        html: getOrderConfirmationEmail({
-          orderId: String(created.id),
-          customerName: created.shippingName || `${firstName} ${lastName}`,
-          total,
-          items: created.items.map((i: any) => ({
-            name: i.product.name,
-            quantity: i.quantity,
-            price: i.price,
-          })),
-          shippingAddress: created.shippingAddress || normalizedAddress.fullAddress,
-        }),
-      });
-      confirmationEmailSent = true;
-    } catch (error) {
-      confirmationEmailError = error instanceof Error ? error.message : 'Failed to send order confirmation email';
-      console.error('Order confirmation email error:', confirmationEmailError);
+    if (shouldSendConfirmationEmail) {
+      try {
+        await sendEmail({
+          to: normalizedEmail,
+          subject: `Sapphura Order Confirmation #${created.id}`,
+          html: getOrderConfirmationEmail({
+            orderId: String(created.id),
+            customerName: created.shippingName || `${firstName} ${lastName}`,
+            total,
+            items: created.items.map((i: any) => ({
+              name: i.product.name,
+              quantity: i.quantity,
+              price: i.price,
+            })),
+            shippingAddress: created.shippingAddress || normalizedAddress.fullAddress,
+          }),
+        });
+        confirmationEmailSent = true;
+      } catch (error) {
+        confirmationEmailError = error instanceof Error ? error.message : 'Failed to send order confirmation email';
+        console.error('Order confirmation email error:', confirmationEmailError);
+      }
     }
 
     return NextResponse.json({

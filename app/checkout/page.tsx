@@ -78,6 +78,31 @@ export default function CheckoutPage() {
     transactionReference: '',
   });
 
+  const persistLastOrder = (persistedOrder: any, state: 'confirmed' | 'pending_payment') => {
+    const persistedOrderId = persistedOrder.legacyId || persistedOrder.id;
+    const publicOrderId = `SAP${String(persistedOrderId).padStart(6, '0')}`;
+
+    const orderDetails = {
+      orderId: publicOrderId,
+      orderLookupId: persistedOrder.id,
+      legacyOrderId: persistedOrderId,
+      items: persistedOrder.items,
+      total: persistedOrder.total,
+      state,
+      paymentMethod: formData.paymentMethod,
+      paymentStatus: persistedOrder.paymentStatus,
+      shippingAddress: {
+        name: persistedOrder.shippingName || `${formData.firstName} ${formData.lastName}`,
+        phone: persistedOrder.shippingPhone || formData.phone,
+        address: persistedOrder.shippingAddress || formData.address,
+        city: formData.city,
+      },
+    };
+
+    localStorage.setItem('lastOrder', JSON.stringify(orderDetails));
+    return publicOrderId;
+  };
+
   const steps = [
     { id: 'info', label: 'Information', icon: ShoppingCart },
     { id: 'shipping', label: 'Shipping', icon: Truck },
@@ -129,14 +154,11 @@ export default function CheckoutPage() {
 
   const validateInfoStep = (): boolean => {
     const newErrors: FormErrors = {};
-    
-    if (formData.email && !validateEmail(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
 
-    if (!formData.email.trim() && !formData.phone.trim()) {
-      newErrors.email = 'Email or phone is required';
-      newErrors.phone = 'Email or phone is required';
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!validateEmail(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
     }
     
     if (!formData.firstName.trim()) {
@@ -421,14 +443,18 @@ export default function CheckoutPage() {
       }
 
       const persistedOrder = data.order;
+      const persistedOrderId = persistedOrder.legacyId || persistedOrder.id;
 
       if (formData.paymentMethod === 'jazzcash' || formData.paymentMethod === 'easypaisa') {
+        const publicOrderId = persistLastOrder(persistedOrder, 'pending_payment');
+        setOrderId(publicOrderId);
+
         const initResponse = await fetch('/api/payments/initiate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             provider: formData.paymentMethod,
-            orderId: persistedOrder.id,
+            orderId: persistedOrderId,
             amount: persistedOrder.total,
             email: formData.email,
             phone: formData.phone,
@@ -447,25 +473,12 @@ export default function CheckoutPage() {
           return;
         }
 
-        alert('Payment request initiated. Please complete payment in your wallet app.');
+        setOrderPlaced(true);
+        return;
       }
 
-      const publicOrderId = `SAP${String(persistedOrder.id).padStart(6, '0')}`;
+      const publicOrderId = persistLastOrder(persistedOrder, 'confirmed');
       setOrderId(publicOrderId);
-
-      const orderDetails = {
-        orderId: publicOrderId,
-        items: persistedOrder.items,
-        total: persistedOrder.total,
-        shippingAddress: {
-          name: persistedOrder.shippingName || `${formData.firstName} ${formData.lastName}`,
-          phone: persistedOrder.shippingPhone || formData.phone,
-          address: persistedOrder.shippingAddress || formData.address,
-          city: formData.city,
-        },
-      };
-
-      localStorage.setItem('lastOrder', JSON.stringify(orderDetails));
 
       setOrderPlaced(true);
       clearCart();
@@ -557,7 +570,7 @@ export default function CheckoutPage() {
                         </p>
                       )}
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
                       <div>
                         <input
                           type="text"
@@ -627,7 +640,7 @@ export default function CheckoutPage() {
                         </p>
                       )}
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
                       <div>
                         <input
                           type="text"

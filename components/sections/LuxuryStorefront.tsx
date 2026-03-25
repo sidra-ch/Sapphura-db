@@ -240,7 +240,7 @@ export default function LuxuryStorefront() {
           <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, margin: '-80px' }} className="group luxury-card sheen-hover hover-lift relative rounded-[28px]">
             <div className="aspect-[16/11] overflow-hidden">
               <img src="https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635132/suit-32_gmhzyl.jpg" alt="Sapphura editorial frame" className="h-full w-full object-cover transition duration-500 group-hover:scale-105 group-hover:opacity-0" />
-              <video src="https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773642074/eid_collection_video_azi53n.mp4" muted playsInline loop autoPlay className="absolute inset-0 h-full w-full object-cover opacity-0 transition duration-500 group-hover:opacity-100" />
+              <video src="https://res.cloudinary.com/dwmxdyvd2/video/upload/v1773642074/eid_collection_video_azi53n.mp4" muted playsInline loop autoPlay preload="metadata" className="absolute inset-0 h-full w-full object-cover opacity-0 transition duration-500 group-hover:opacity-100" />
             </div>
             <div className="absolute left-5 top-5 rounded-full border border-[#d4af37]/20 bg-[#0a1630]/75 px-4 py-2 text-[11px] uppercase tracking-[0.22em] text-[#fff7ef] backdrop-blur-md">Sapphura Edit</div>
           </motion.div>

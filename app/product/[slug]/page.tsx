@@ -110,7 +110,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   if (!product) {
     return {
-      title: 'Product Not Found | Sapphura',
+      title: 'Product Not Found',
       description: 'The requested product could not be found at Sapphura.',
       robots: {
         index: false,
@@ -120,7 +120,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 
   const image = product.image || 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635140/summer-2_bykcf3.jpg';
-  const title = `${product.name} – Premium ${product.category || 'Fashion'} | Sapphura`;
+  const title = `${product.name} – Premium ${product.category || 'Fashion'}`;
   const description = product.description.length > 150 ? `${product.description.slice(0, 147)}...` : product.description;
   const url = `${SITE_URL}/product/${product.slug}`;
 

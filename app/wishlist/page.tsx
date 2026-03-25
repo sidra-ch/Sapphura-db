@@ -6,6 +6,7 @@ import { Heart, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useWishlist } from '../../components/wishlist/WishlistContext';
 import { useCart } from '../../components/cart/CartContext';
 import { FALLBACK_PRODUCT_IMAGE } from '../../lib/media';
+import { buildMetaCartPayload, trackMetaEvent } from '../../lib/meta-pixel';
 
 export default function WishlistPage() {
   const { items, removeFromWishlist } = useWishlist();
@@ -45,12 +46,14 @@ export default function WishlistPage() {
   const handleAddToCart = (item: { id: string; slug?: string; name: string; image: string; price: number }) => {
     addToCart({
       id: item.id,
+      productId: item.id,
       slug: item.slug,
       name: item.name,
       image: item.image,
       price: item.price,
       quantity: 1
     });
+    trackMetaEvent('AddToCart', buildMetaCartPayload([{ id: item.id, quantity: 1 }], item.price));
     removeFromWishlist(item.id);
   };
 

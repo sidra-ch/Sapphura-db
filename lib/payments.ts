@@ -8,6 +8,7 @@ type InitiatePayload = {
   phone: string;
   merchantReference: string;
   callbackUrl: string;
+  returnUrl?: string;
 };
 
 type InitiateResult = {
@@ -61,6 +62,8 @@ export async function initiateProviderPayment(
     email: payload.email,
     phone: payload.phone,
     callbackUrl: payload.callbackUrl,
+    returnUrl: payload.returnUrl,
+    redirectUrl: payload.returnUrl,
     timestamp: new Date().toISOString(),
     provider,
   };

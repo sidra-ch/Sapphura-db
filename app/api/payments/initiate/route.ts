@@ -19,6 +19,30 @@ function getPaymentUrl(raw: unknown): string | null {
   return typeof candidate === 'string' && candidate ? candidate : null;
 }
 
+function buildReturnUrl(appUrl: string, order: { id: number; publicId: string | null }, provider: 'jazzcash' | 'easypaisa') {
+  const params = new URLSearchParams({
+    order: order.publicId || String(order.id),
+    lookup: String(order.id),
+    provider,
+    state: 'pending_payment',
+  });
+
+  return `${appUrl}/order-confirmation?${params.toString()}`;
+}
+
+async function findOrderByIdentifier(orderIdentifier: string) {
+  const numericId = Number(orderIdentifier);
+
+  if (Number.isInteger(numericId) && numericId > 0) {
+    const byNumeric = await prisma.order.findUnique({ where: { id: numericId } });
+    if (byNumeric) {
+      return byNumeric;
+    }
+  }
+
+  return prisma.order.findUnique({ where: { publicId: orderIdentifier } });
+}
+
 export async function POST(req: NextRequest) {
   try {
     const ip = getClientIp(req);
@@ -32,7 +56,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const provider = body.provider as 'jazzcash' | 'easypaisa';
-    const orderId = Number(body.orderId);
+    const orderIdentifier = String(body.orderId || '').trim();
     const amount = Number(body.amount);
     const email = normalizeEmail(String(body.email || ''));
     const phone = String(body.phone || '').trim();
@@ -40,7 +64,7 @@ export async function POST(req: NextRequest) {
     if (!provider || !['jazzcash', 'easypaisa'].includes(provider)) {
       return NextResponse.json({ error: 'Unsupported payment provider' }, { status: 400 });
     }
-    if (!orderId || !Number.isFinite(orderId)) {
+    if (!orderIdentifier) {
       return NextResponse.json({ error: 'Valid orderId is required' }, { status: 400 });
     }
     if (!amount || amount <= 0) {
@@ -50,9 +74,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Email and phone are required' }, { status: 400 });
     }
 
-    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    const order = await findOrderByIdentifier(orderIdentifier);
     if (!order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
+
+    if (Math.abs(Number(order.total) - amount) > 0.01) {
+      return NextResponse.json({ error: 'Payment amount no longer matches the order total' }, { status: 400 });
     }
 
     let existing = null;
@@ -60,7 +88,7 @@ export async function POST(req: NextRequest) {
     try {
       existing = await prisma.paymentTransaction.findFirst({
         where: {
-          orderId,
+          orderId: order.id,
           provider,
           status: { in: ['initiated', 'pending'] },
           createdAt: { gte: new Date(Date.now() - 20 * 60_000) },
@@ -94,15 +122,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'APP_URL is not configured' }, { status: 500 });
     }
 
-    const merchantReference = generateMerchantReference(provider, orderId);
+    const merchantReference = generateMerchantReference(provider, order.id);
     const callbackUrl = `${appUrl}/api/payments/webhook/${provider}`;
+    const returnUrl = buildReturnUrl(appUrl, order, provider);
 
     let tx;
 
     try {
       tx = await prisma.paymentTransaction.create({
         data: {
-          orderId,
+          orderId: order.id,
           provider,
           merchantReference,
           amount,
@@ -113,6 +142,7 @@ export async function POST(req: NextRequest) {
             email,
             phone,
             callbackUrl,
+            returnUrl,
           },
         },
       });
@@ -130,6 +160,7 @@ export async function POST(req: NextRequest) {
       phone,
       merchantReference,
       callbackUrl,
+      returnUrl,
     });
 
     try {
@@ -157,6 +188,7 @@ export async function POST(req: NextRequest) {
         provider,
         status: providerResult.status,
         paymentUrl: providerResult.paymentUrl || null,
+        returnUrl,
       },
     });
   } catch (error) {

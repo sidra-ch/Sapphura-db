@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import ClerkProvider from "../components/ClerkProvider";
+import MetaPixel from "../components/MetaPixel";
 import { Providers } from "../components/Providers";
 import CartDrawer from "../components/cart/CartDrawer";
 import GlobalHeader from "../components/layout/GlobalHeader";
 import GlobalFooter from "../components/layout/GlobalFooter";
 import GlobalWhatsApp from "../components/layout/GlobalWhatsApp";
+
+const metaPixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://sapphura-db.vercel.app"),
@@ -46,6 +49,7 @@ export default async function RootLayout({
     <html lang="en">
       <head>
         <link rel="icon" href="https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635065/logo-1_nsterf.png" type="image/png" />
+        {metaPixelId ? <MetaPixel pixelId={metaPixelId} /> : null}
       </head>
       <body className="antialiased">
         <ClerkProvider>

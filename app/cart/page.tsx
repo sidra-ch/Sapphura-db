@@ -110,15 +110,11 @@ export default function CartPage() {
               </div>
               <div className="flex justify-between text-white/80">
                 <span>Shipping</span>
-                <span className="text-green-400">Free</span>
-              </div>
-              <div className="flex justify-between text-white/80">
-                <span>Tax</span>
-                <span>${(totalPrice * 0.15).toFixed(2)}</span>
+                <span className="text-white/60">Calculated at checkout</span>
               </div>
               <div className="border-t border-gold/20 pt-3 flex justify-between text-white font-bold text-xl">
-                <span>Total</span>
-                <span className="text-gold">${(totalPrice * 1.15).toFixed(2)}</span>
+                <span>Estimated Total</span>
+                <span className="text-gold">${totalPrice.toFixed(2)}</span>
               </div>
             </div>
             <Link 
