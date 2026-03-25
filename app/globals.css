@@ -2,10 +2,18 @@
 
 @theme {
   --color-gold: #d4af37;
+  --color-sapphura-ivory: #f6f0e7;
+  --color-sapphura-sand: #dbc6a4;
+  --color-sapphura-coral: #d97d68;
+  --color-sapphura-ink: #0d1320;
 }
 
 * {
   box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 html,
@@ -17,8 +25,31 @@ body {
 
 body {
   min-height: 100vh;
-  background: linear-gradient(to bottom, #0a0a23, #1a1a40);
-  color: #fff;
+  background:
+    radial-gradient(circle at top left, rgba(217, 125, 104, 0.16), transparent 28%),
+    radial-gradient(circle at top right, rgba(212, 175, 55, 0.18), transparent 26%),
+    linear-gradient(180deg, #faf5ee 0%, #f5efe5 24%, #141b28 24%, #0d1320 100%);
+  color: #fffaf5;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(circle at center, black, transparent 80%);
+  opacity: 0.25;
+  z-index: -1;
+}
+
+::selection {
+  background: rgba(212, 175, 55, 0.3);
+  color: #ffffff;
 }
 
 @media (max-width: 767px) {
@@ -35,12 +66,66 @@ svg {
   height: auto;
 }
 
+a,
+button,
+input,
+textarea,
+select {
+  transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
+}
+
 @keyframes marquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
 
+@keyframes float {
+  0%,
+  100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes pulseGlow {
+  0%,
+  100% { box-shadow: 0 0 0 rgba(212, 175, 55, 0.18); }
+  50% { box-shadow: 0 18px 40px rgba(212, 175, 55, 0.26); }
+}
+
 .animate-marquee {
   animation: marquee 24s linear infinite;
   width: max-content;
+}
+
+.luxury-shell {
+  background:
+    radial-gradient(circle at top left, rgba(212,175,55,0.12), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(217,125,104,0.12), transparent 22%),
+    linear-gradient(180deg, #f8f1e8 0%, #f5eee4 22%, #121928 22%, #0c1220 100%);
+}
+
+.section-shell {
+  width: min(1240px, calc(100% - 2rem));
+  margin-inline: auto;
+}
+
+.glass-panel {
+  backdrop-filter: blur(18px);
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+  border: 1px solid rgba(255,255,255,0.14);
+}
+
+.soft-shadow {
+  box-shadow: 0 24px 80px rgba(8, 12, 20, 0.24);
+}
+
+.gold-ring {
+  box-shadow: inset 0 0 0 1px rgba(212, 175, 55, 0.45), 0 12px 28px rgba(212, 175, 55, 0.14);
+}
+
+.floating-orb {
+  animation: float 7s ease-in-out infinite;
+}
+
+.glow-pulse {
+  animation: pulseGlow 3.4s ease-in-out infinite;
 }

@@ -1,157 +1,144 @@
 "use client";
 
-import { ShoppingBag, User, Search, Heart, Menu, X } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ShoppingBag, User, Search, Heart } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useCart } from '../cart/CartContext';
 import { useWishlist } from '../wishlist/WishlistContext';
 
+const primaryNav = [
+  { href: '/', label: 'Home' },
+  { href: '/collections', label: 'Shop' },
+  { href: '/about', label: 'Story' },
+  { href: '/contact', label: 'Contact' },
+];
+
+const categoryNav = [
+  { href: '/collections?category=jewelry', label: 'Jewelry' },
+  { href: '/collections?category=clothing', label: 'Clothing' },
+  { href: '/collections?category=abaya', label: 'Abaya' },
+  { href: '/collections?category=makeup', label: 'Beauty' },
+];
+
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [collectionsOpen, setCollectionsOpen] = useState(false);
-  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
-  const accountMenuRef = useRef<HTMLDivElement>(null);
+  const [scrolled, setScrolled] = useState(false);
   const { totalItems } = useCart();
   const { totalItems: wishlistCount } = useWishlist();
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (accountMenuRef.current && !accountMenuRef.current.contains(event.target as Node)) {
-        setAccountMenuOpen(false);
-      }
+    function onScroll() {
+      setScrolled(window.scrollY > 32);
     }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
-  
+
   return (
-    <header className="sticky top-0 z-50 w-full flex items-center justify-between px-4 md:px-6 py-3 md:py-4 bg-[#0B1A2F] border-b border-gold shadow-xl transition-all duration-200">
-      <Link 
-        href="/"
-        className="flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-gold rounded-lg"
-      >
-        <img src="https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635065/logo-1_nsterf.png" alt="Sapphura Logo" className="w-10 md:w-14 h-10 md:h-14 rounded-full shadow-lg border-2 border-gold" />
-        <span className="text-xl md:text-4xl font-extrabold text-gold tracking-widest drop-shadow-lg ml-1 md:ml-2">Sapphura</span>
-      </Link>
-      
-      <nav className="hidden lg:flex gap-4 xl:gap-6 text-white font-semibold relative">
-        <Link 
-          href="/" 
-          className="relative py-4 px-2 group text-white hover:text-gold"
-        >
-          <span className="relative z-10">Home</span>
-          <span className="absolute bottom-2 left-2 right-2 h-0.5 bg-gold scale-x-0 group-hover:scale-x-100 transition-transform duration-200 ease-out origin-left"></span>
-        </Link>
-        
-        <div 
-          className="relative"
-          onMouseEnter={() => setCollectionsOpen(true)}
-          onMouseLeave={() => setCollectionsOpen(false)}
-        >
-          <button 
-            className="flex items-center gap-1 py-4 px-2 group text-white hover:text-gold"
-          >
-            <span className="relative z-10">Collections</span>
-            <span className="absolute bottom-2 left-2 right-2 h-0.5 bg-gold scale-x-0 group-hover:scale-x-100 transition-transform duration-200 ease-out origin-left"></span>
-          </button>
-          
-          <div 
-            className={`absolute top-full left-0 mt-0 bg-[#081220] border border-gold rounded-xl shadow-xl p-4 min-w-[320px] z-50 transition-all duration-200 ${collectionsOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 invisible'}`}
-          >
-            <div className="grid grid-cols-2 gap-2">
-              <Link href="/collections?category=necklaces" className="text-gold hover:bg-gold/10 rounded px-3 py-2 transition-all duration-150 hover:translate-x-1">Necklace Sets</Link>
-              <Link href="/collections?category=earrings" className="text-gold hover:bg-gold/10 rounded px-3 py-2 transition-all duration-150 hover:translate-x-1">Earrings</Link>
-              <Link href="/collections?category=rings" className="text-gold hover:bg-gold/10 rounded px-3 py-2 transition-all duration-150 hover:translate-x-1">Rings</Link>
-              <Link href="/collections?category=bracelets" className="text-gold hover:bg-gold/10 rounded px-3 py-2 transition-all duration-150 hover:translate-x-1">Bracelets</Link>
-              <Link href="/collections?category=bangles" className="text-gold hover:bg-gold/10 rounded px-3 py-2 transition-all duration-150 hover:translate-x-1">Bangles</Link>
-              <Link href="/collections?category=bridal" className="text-gold hover:bg-gold/10 rounded px-3 py-2 transition-all duration-150 hover:translate-x-1">Bridal Sets</Link>
-              <Link href="/collections?category=makeup" className="text-gold hover:bg-gold/10 rounded px-3 py-2 transition-all duration-150 hover:translate-x-1">Makeup</Link>
-              <Link href="/collections?category=clothing" className="text-gold hover:bg-gold/10 rounded px-3 py-2 transition-all duration-150 hover:translate-x-1">Clothing</Link>
-            </div>
+    <motion.header
+      initial={false}
+      animate={{
+        backgroundColor: scrolled || mobileMenuOpen ? 'rgba(10, 16, 27, 0.88)' : 'rgba(10, 16, 27, 0)',
+        borderColor: scrolled || mobileMenuOpen ? 'rgba(219, 198, 164, 0.18)' : 'rgba(255, 255, 255, 0)',
+        boxShadow: scrolled || mobileMenuOpen ? '0 18px 50px rgba(5, 8, 16, 0.28)' : '0 0 0 rgba(0,0,0,0)',
+      }}
+      className="sticky top-0 z-50 border-b backdrop-blur-xl"
+    >
+      <div className="section-shell flex h-20 items-center justify-between gap-4">
+        <Link href="/" className="flex items-center gap-3 rounded-full px-2 py-1 text-[#fff7ef] focus:outline-none focus:ring-2 focus:ring-[#d4af37]">
+          <img src="https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635065/logo-1_nsterf.png" alt="Sapphura Logo" className="h-11 w-11 rounded-full border border-[#d4af37]/50 object-cover shadow-[0_12px_28px_rgba(212,175,55,0.18)]" />
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.45em] text-[#dbc6a4]">Luxury House</p>
+            <span className="text-2xl font-semibold tracking-[0.28em] text-[#fff7ef]">SAPPHURA</span>
           </div>
-        </div>
-        
-        <Link href="/collections" className="relative py-4 px-2 group text-white hover:text-gold">
-          <span className="relative z-10">Shop</span>
-          <span className="absolute bottom-2 left-2 right-2 h-0.5 bg-gold scale-x-0 group-hover:scale-x-100 transition-transform duration-200 ease-out origin-left"></span>
         </Link>
-        <Link href="/about" className="relative py-4 px-2 group text-white hover:text-gold">
-          <span className="relative z-10">About</span>
-          <span className="absolute bottom-2 left-2 right-2 h-0.5 bg-gold scale-x-0 group-hover:scale-x-100 transition-transform duration-200 ease-out origin-left"></span>
-        </Link>
-        <Link href="/contact" className="relative py-4 px-2 group text-white hover:text-gold">
-          <span className="relative z-10">Contact</span>
-          <span className="absolute bottom-2 left-2 right-2 h-0.5 bg-gold scale-x-0 group-hover:scale-x-100 transition-transform duration-200 ease-out origin-left"></span>
-        </Link>
-      </nav>
-      
-      <div className="flex items-center gap-2 md:gap-4">
-        <Link href="/search" className="text-gold hover:text-yellow-400 hover:scale-110 transition-all duration-150 p-2">
-          <Search className="w-5 md:w-6 h-5 md:h-6" />
-        </Link>
-        <Link href="/wishlist" className="relative text-gold hover:text-yellow-400 hover:scale-110 transition-all duration-150 p-2">
-          <Heart className="w-5 md:w-6 h-5 md:h-6" />
-          {wishlistCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full px-1.5 text-xs font-bold">{wishlistCount}</span>
-          )}
-        </Link>
-        <Link href="/cart" className="relative text-gold hover:text-yellow-400 hover:scale-110 transition-all duration-150 p-2">
-          <ShoppingBag className="w-5 md:w-6 h-5 md:h-6" />
-          {totalItems > 0 && (
-            <span className="absolute -top-1 -right-1 bg-gold text-[#0a0a23] rounded-full px-1.5 text-xs font-bold">{totalItems}</span>
-          )}
-        </Link>
-        
-        {/* Account Dropdown */}
-        <div className="relative" ref={accountMenuRef}>
-          <button 
-            onClick={() => setAccountMenuOpen(!accountMenuOpen)}
-            className="text-gold hover:text-yellow-400 hover:scale-110 transition-all duration-150 p-2"
-          >
-            <User className="w-5 md:w-6 h-5 md:h-6" />
-          </button>
-          
-          <div 
-            className={`absolute right-0 top-full mt-2 bg-[#081220] border border-gold rounded-xl shadow-xl min-w-[200px] z-50 transition-all duration-200 ${accountMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 invisible'}`}
-          >
-            <div className="p-2">
-              <Link href="/account" className="block text-center bg-gold text-[#0a0a23] font-semibold rounded-lg px-4 py-2.5 hover:bg-yellow-400 transition-all duration-150 mb-2" onClick={() => setAccountMenuOpen(false)}>
-                My Account
-              </Link>
-              <Link href="/admin" className="block text-center border border-gold text-gold rounded-lg px-4 py-2.5 hover:bg-gold/10 transition-all duration-150 mb-2" onClick={() => setAccountMenuOpen(false)}>
-                Admin Login
-              </Link>
-              <p className="text-center text-white/60 text-sm mb-2">Public pages are open. Account pages require sign in.</p>
-              <Link href="/sign-in" className="block text-center border border-white/20 text-white rounded-lg px-4 py-2.5 hover:bg-white/5 transition-all duration-150" onClick={() => setAccountMenuOpen(false)}>
-                Sign In / Sign Up
-              </Link>
-            </div>
+
+        <nav className="hidden items-center gap-8 lg:flex">
+          {primaryNav.map((item) => (
+            <Link key={item.href} href={item.href} className="group relative text-sm uppercase tracking-[0.24em] text-[#f7efe5]/88">
+              <span>{item.label}</span>
+              <span className="absolute -bottom-2 left-0 h-px w-full origin-left scale-x-0 bg-[#d4af37] transition-transform duration-300 group-hover:scale-x-100" />
+            </Link>
+          ))}
+
+          <div className="relative" onMouseEnter={() => setCollectionsOpen(true)} onMouseLeave={() => setCollectionsOpen(false)}>
+            <button className="group relative text-sm uppercase tracking-[0.24em] text-[#f7efe5]/88">
+              <span>Collections</span>
+              <span className="absolute -bottom-2 left-0 h-px w-full origin-left scale-x-0 bg-[#d4af37] transition-transform duration-300 group-hover:scale-x-100" />
+            </button>
+
+            <AnimatePresence>
+              {collectionsOpen ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  className="glass-panel soft-shadow absolute left-1/2 top-full mt-5 grid min-w-[340px] -translate-x-1/2 grid-cols-2 gap-2 rounded-[28px] p-4"
+                >
+                  {categoryNav.map((item) => (
+                    <Link key={item.href} href={item.href} className="rounded-2xl border border-white/10 px-4 py-3 text-sm text-[#fff7ef]/88 hover:border-[#d4af37]/40 hover:bg-white/5">
+                      {item.label}
+                    </Link>
+                  ))}
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
           </div>
+        </nav>
+
+        <div className="flex items-center gap-1 sm:gap-2">
+          <Link href="/search" className="rounded-full border border-white/10 p-2.5 text-[#fff7ef]/85 hover:border-[#d4af37]/50 hover:text-[#d4af37]">
+            <Search className="h-4 w-4 sm:h-5 sm:w-5" />
+          </Link>
+          <Link href="/wishlist" className="relative rounded-full border border-white/10 p-2.5 text-[#fff7ef]/85 hover:border-[#d4af37]/50 hover:text-[#d4af37]">
+            <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
+            {wishlistCount > 0 ? <span className="absolute -right-1 -top-1 rounded-full bg-[#d97d68] px-1.5 text-[10px] font-bold text-white">{wishlistCount}</span> : null}
+          </Link>
+          <Link href="/cart" className="relative rounded-full border border-white/10 p-2.5 text-[#fff7ef]/85 hover:border-[#d4af37]/50 hover:text-[#d4af37]">
+            <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5" />
+            {totalItems > 0 ? <span className="absolute -right-1 -top-1 rounded-full bg-[#d4af37] px-1.5 text-[10px] font-bold text-[#111827]">{totalItems}</span> : null}
+          </Link>
+          <Link href="/account" className="hidden rounded-full border border-white/10 px-4 py-2 text-sm text-[#fff7ef]/88 hover:border-[#d4af37]/50 hover:text-[#d4af37] sm:inline-flex sm:items-center sm:gap-2">
+            <User className="h-4 w-4" />
+            Account
+          </Link>
+          <button
+            type="button"
+            aria-label="Toggle menu"
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            className="relative ml-1 flex h-11 w-11 items-center justify-center rounded-full border border-white/10 lg:hidden"
+          >
+            <span className={`absolute h-0.5 w-5 bg-[#fff7ef] transition-all duration-300 ${mobileMenuOpen ? 'rotate-45' : '-translate-y-1.5'}`} />
+            <span className={`absolute h-0.5 w-5 bg-[#fff7ef] transition-all duration-300 ${mobileMenuOpen ? 'opacity-0' : 'opacity-100'}`} />
+            <span className={`absolute h-0.5 w-5 bg-[#fff7ef] transition-all duration-300 ${mobileMenuOpen ? '-rotate-45' : 'translate-y-1.5'}`} />
+          </button>
         </div>
-        
-        <button 
-          className="lg:hidden text-gold p-2 hover:bg-gold/10 hover:scale-110 rounded-lg transition-all duration-150" 
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
       </div>
 
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="absolute top-full left-0 right-0 bg-[#0B1A2F] border-b border-gold p-4 lg:hidden animate-in slide-in-from-top duration-200">
-          <nav className="flex flex-col gap-2">
-            <Link href="/" className="text-white hover:text-gold py-2 px-3 rounded hover:bg-gold/10" onClick={() => setMobileMenuOpen(false)}>Home</Link>
-            <Link href="/collections" className="text-white hover:text-gold py-2 px-3 rounded hover:bg-gold/10" onClick={() => setMobileMenuOpen(false)}>Collections</Link>
-            <Link href="/collections" className="text-white hover:text-gold py-2 px-3 rounded hover:bg-gold/10" onClick={() => setMobileMenuOpen(false)}>Shop</Link>
-            <Link href="/about" className="text-white hover:text-gold py-2 px-3 rounded hover:bg-gold/10" onClick={() => setMobileMenuOpen(false)}>About</Link>
-            <Link href="/contact" className="text-white hover:text-gold py-2 px-3 rounded hover:bg-gold/10" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
-            <Link href="/account" className="text-gold py-2 px-3 rounded hover:bg-gold/10" onClick={() => setMobileMenuOpen(false)}>My Account</Link>
-            <Link href="/admin" className="text-gold py-2 px-3 rounded hover:bg-gold/10" onClick={() => setMobileMenuOpen(false)}>Admin Login</Link>
-            <Link href="/sign-in" className="text-gold py-2 px-3 rounded hover:bg-gold/10" onClick={() => setMobileMenuOpen(false)}>Sign In / Sign Up</Link>
-          </nav>
-        </div>
-      )}
-    </header>
+      <AnimatePresence>
+        {mobileMenuOpen ? (
+          <motion.div
+            initial={{ opacity: 0, y: -14 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -14 }}
+            className="section-shell mb-4 rounded-[28px] border border-white/10 bg-[#0d1320]/96 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.35)] lg:hidden"
+          >
+            <nav className="flex flex-col gap-2">
+              {[...primaryNav, ...categoryNav].map((item) => (
+                <Link key={`${item.href}-${item.label}`} href={item.href} onClick={() => setMobileMenuOpen(false)} className="rounded-2xl px-4 py-3 text-sm uppercase tracking-[0.22em] text-[#fff7ef]/88 hover:bg-white/5 hover:text-[#d4af37]">
+                  {item.label}
+                </Link>
+              ))}
+              <Link href="/admin" onClick={() => setMobileMenuOpen(false)} className="rounded-2xl border border-[#d4af37]/30 px-4 py-3 text-sm uppercase tracking-[0.22em] text-[#d4af37]">
+                Admin Login
+              </Link>
+            </nav>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </motion.header>
   );
 }
