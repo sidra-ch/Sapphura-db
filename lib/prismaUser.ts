@@ -4,6 +4,14 @@ import { isAdminEmail } from './admin-users'
 
 export type AppRole = 'admin' | 'customer'
 
+function preservePrivilegedRole(existingRole: string | null | undefined, nextRole: AppRole): AppRole {
+  if (existingRole === 'admin') {
+    return 'admin'
+  }
+
+  return nextRole
+}
+
 function getRoleFromClerkMetadata(metadata: unknown): AppRole {
   if (!metadata || typeof metadata !== 'object') {
     return 'customer'
@@ -39,7 +47,7 @@ export async function getOrCreatePrismaUser() {
     throw new Error('Clerk user does not have an email address.')
   }
 
-  const role = resolveAppRole(primaryEmail, clerkUser.publicMetadata)
+  const resolvedRole = resolveAppRole(primaryEmail, clerkUser.publicMetadata)
 
   const userModel = prisma.user as any
 
@@ -48,6 +56,7 @@ export async function getOrCreatePrismaUser() {
   })
 
   if (existingByClerkId) {
+    const role = preservePrivilegedRole(existingByClerkId.role, resolvedRole)
     const updated = await userModel.update({
       where: { id: existingByClerkId.id },
       data: {
@@ -74,6 +83,7 @@ export async function getOrCreatePrismaUser() {
   })
 
   if (existingByEmail) {
+    const role = preservePrivilegedRole(existingByEmail.role, resolvedRole)
     const updated = await userModel.update({
       where: { id: existingByEmail.id },
       data: {
@@ -100,7 +110,7 @@ export async function getOrCreatePrismaUser() {
       clerkId: authState.userId,
       email: primaryEmail,
       password: `clerk-managed-${authState.userId}`,
-      role,
+      role: resolvedRole,
       isActive: true,
       name: [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ').trim() || null,
     },

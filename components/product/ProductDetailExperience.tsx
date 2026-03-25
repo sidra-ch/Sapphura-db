@@ -92,7 +92,10 @@ export default function ProductDetailExperience({ product }: { product: ProductD
 
   const wishlistKey = product.slug || product.id;
   const selectedVariant = product.variants.find((variant) => variant.id === selectedVariantId) || null;
-  const mediaItems = product.images?.length ? product.images : [FALLBACK_PRODUCT_IMAGE];
+  const mediaItems = useMemo(
+    () => (product.images?.length ? product.images : [FALLBACK_PRODUCT_IMAGE]),
+    [product.images]
+  );
   const selectedMedia = mediaItems[selectedMediaIndex] || FALLBACK_PRODUCT_IMAGE;
   const selectedMediaIsVideo = isVideoUrl(selectedMedia);
   const previewImage = selectedVariant?.image || product.image || getPrimaryImageFromList(mediaItems);
@@ -129,7 +132,7 @@ export default function ProductDetailExperience({ product }: { product: ProductD
   }
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#f8f1e8_0%,#efe5d8_15%,#101725_15%,#0b111d_100%)] px-4 py-10 text-white sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[linear-gradient(180deg,#0a1630_0%,#10203f_18%,#09111f_100%)] px-4 py-10 text-white sm:px-6 lg:px-8">
       <div className="section-shell">
         <Link href="/collections" className="mb-8 inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.28em] text-[#dbc6a4] hover:border-[#d4af37]/45 hover:text-[#d4af37]">
           <ArrowLeft className="h-4 w-4" />
@@ -138,7 +141,7 @@ export default function ProductDetailExperience({ product }: { product: ProductD
 
         <div className="grid gap-8 lg:grid-cols-[1.06fr_0.94fr] lg:items-start">
           <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} className="lg:sticky lg:top-28">
-            <div className="soft-shadow overflow-hidden rounded-[34px] border border-white/10 bg-[#0e1625]">
+            <div className="luxury-card rounded-[34px]">
               <div className="relative aspect-[4/5] overflow-hidden bg-black">
                 {selectedMediaIsVideo ? (
                   <video key={selectedMedia} src={selectedMedia} controls playsInline preload="metadata" className="h-full w-full object-cover" />
@@ -156,7 +159,7 @@ export default function ProductDetailExperience({ product }: { product: ProductD
                 {mediaItems.map((media, index) => {
                   const mediaIsVideo = isVideoUrl(media);
                   return (
-                    <button key={`${media}-${index}`} type="button" onClick={() => setSelectedMediaIndex(index)} className={`relative aspect-square overflow-hidden rounded-2xl border ${selectedMediaIndex === index ? 'border-[#d4af37]' : 'border-white/10'} bg-[#111827]`}>
+                    <button key={`${media}-${index}`} type="button" onClick={() => setSelectedMediaIndex(index)} className={`relative aspect-square overflow-hidden rounded-2xl border transition-all ${selectedMediaIndex === index ? 'border-[#d4af37] scale-[1.03]' : 'border-white/10 hover:border-[#d4af37]/30'} bg-[#111827]`}>
                       {mediaIsVideo ? (
                         <>
                           <video src={media} muted playsInline preload="metadata" className="h-full w-full object-cover" />
@@ -213,7 +216,7 @@ export default function ProductDetailExperience({ product }: { product: ProductD
                       const isSelected = selectedVariantId === resolvedId;
                       const label = variant.id === 0 ? 'Signature' : buildVariantLabel(variant);
                       return (
-                        <button key={variant.id} type="button" onClick={() => setSelectedVariantId(resolvedId)} className={`rounded-full border px-4 py-2 text-sm ${isSelected ? 'border-[#d4af37] bg-[#d4af37]/12 text-[#f7efe5]' : 'border-white/12 text-[#fff7ef]/72 hover:border-white/28'}`}>
+                        <button key={variant.id} type="button" onClick={() => setSelectedVariantId(resolvedId)} className={`rounded-full border px-4 py-2 text-sm transition-all ${isSelected ? 'border-[#d4af37] bg-[#d4af37]/12 text-[#f7efe5] shadow-[0_8px_18px_rgba(212,175,55,0.12)]' : 'border-white/12 text-[#fff7ef]/72 hover:border-white/28 hover:bg-white/[0.04]'}`}>
                           {label}
                         </button>
                       );
@@ -241,7 +244,7 @@ export default function ProductDetailExperience({ product }: { product: ProductD
                 ].map((item) => {
                   const Icon = item.icon;
                   return (
-                    <div key={item.title} className="rounded-[22px] border border-white/10 bg-white/5 p-4">
+                    <div key={item.title} className="rounded-[22px] border border-white/10 bg-white/5 p-4 transition-all hover:-translate-y-1 hover:border-[#d4af37]/24 hover:bg-white/[0.07]">
                       <Icon className="h-5 w-5 text-[#dbc6a4]" />
                       <p className="mt-3 font-medium">{item.title}</p>
                       <p className="mt-1 text-sm text-[#fff7ef]/60">{item.note}</p>
@@ -283,7 +286,7 @@ export default function ProductDetailExperience({ product }: { product: ProductD
             </div>
             <div className="grid gap-4">
               {(product.reviewEntries.length ? product.reviewEntries : [{ id: 0, name: 'Verified Client', rating: 5, comment: 'Beautiful finish, elevated feel, and a shopping experience that looks genuinely premium.' }]).map((review) => (
-                <div key={review.id} className="rounded-[24px] border border-white/10 bg-white/5 p-5">
+                <div key={review.id} className="rounded-[24px] border border-white/10 bg-white/5 p-5 transition-all hover:-translate-y-1 hover:border-[#d4af37]/22 hover:bg-white/[0.07]">
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <p className="font-medium text-[#fff7ef]">{review.name}</p>
@@ -330,7 +333,7 @@ export default function ProductDetailExperience({ product }: { product: ProductD
           <div className="flex gap-5 overflow-x-auto pb-2">
             {product.relatedProducts.map((item) => (
               <Link key={item.id} href={`/product/${item.slug}`} className="min-w-[280px] flex-1">
-                <article className="soft-shadow overflow-hidden rounded-[28px] border border-white/10 bg-[#0f1724]">
+                <article className="luxury-card hover-lift rounded-[28px]">
                   <div className="aspect-[4/5] overflow-hidden">
                     <img src={item.image || FALLBACK_PRODUCT_IMAGE} alt={item.name} className="h-full w-full object-cover transition duration-500 hover:scale-105" loading="lazy" />
                   </div>

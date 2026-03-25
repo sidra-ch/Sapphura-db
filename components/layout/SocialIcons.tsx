@@ -1,6 +1,6 @@
 "use client";
 
-import { Facebook, Instagram, Twitter, Youtube, Mail } from 'lucide-react';
+import { Facebook, Instagram, Mail } from 'lucide-react';
 
 const TikTokIcon = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -13,23 +13,22 @@ export default function SocialIcons() {
     { icon: Facebook, href: 'https://facebook.com/sapphura', label: 'Facebook' },
     { icon: Instagram, href: 'https://instagram.com/sapphura', label: 'Instagram' },
     { icon: TikTokIcon, href: 'https://tiktok.com/@sapphura', label: 'TikTok' },
-    { icon: Twitter, href: 'https://twitter.com/sapphura', label: 'Twitter' },
-    { icon: Youtube, href: 'https://youtube.com/sapphura', label: 'YouTube' },
+  
     { icon: Mail, href: 'mailto:admin@sapphura.com', label: 'Email' },
   ];
 
   return (
-    <div className="flex justify-center gap-4 mt-8">
+    <div className="mt-8 flex justify-center gap-3">
       {socialLinks.map((social) => (
         <a
           key={social.label}
           href={social.href}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-10 h-10 bg-gold/20 rounded-full flex items-center justify-center text-gold hover:bg-gold hover:text-[#0a0a23] transition"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-gold/30 bg-white/5 text-gold hover:bg-gold hover:text-[#0a0a23] transition"
           aria-label={social.label}
         >
-          <social.icon className="w-5 h-5" />
+          <social.icon className="h-4 w-4" />
         </a>
       ))}
     </div>

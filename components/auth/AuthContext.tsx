@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useUser } from '@clerk/nextjs';
 
-const ADMIN_EMAILS = ['ms.sidrachaudhary@gmail.com'];
+const ADMIN_EMAILS = ['ms.sidrachaudhary@gmail.com', 'admin@sapphura.com'];
 
 function resolveClientRole(email: string, role: unknown): string {
   if (ADMIN_EMAILS.includes(email.trim().toLowerCase())) {

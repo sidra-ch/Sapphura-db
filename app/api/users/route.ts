@@ -43,7 +43,59 @@ export async function POST(req: NextRequest) {
     return guard;
   }
 
-  await req.json();
-  // Add user creation logic here
-  return NextResponse.json({ success: true });
+  const body = await req.json();
+
+  const email = String(body?.email || '').trim().toLowerCase();
+  const name = String(body?.name || '').trim();
+  const phone = String(body?.phone || '').trim();
+
+  if (!email) {
+    return NextResponse.json({ error: 'Email is required.' }, { status: 400 });
+  }
+
+  const existingUser = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true },
+  });
+
+  if (existingUser) {
+    return NextResponse.json({ error: 'A user with this email already exists.' }, { status: 409 });
+  }
+
+  const user = await prisma.user.create({
+    data: {
+      email,
+      name: name || null,
+      phone: phone || null,
+      password: `admin-created-${Date.now()}`,
+      role: 'customer',
+      isActive: true,
+    },
+    select: {
+      id: true,
+      publicId: true,
+      email: true,
+      name: true,
+      phone: true,
+      role: true,
+      isActive: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  return NextResponse.json({
+    success: true,
+    user: {
+      id: user.publicId || String(user.id),
+      legacyId: user.id,
+      email: user.email,
+      name: user.name,
+      phone: user.phone,
+      role: user.role,
+      isActive: user.isActive,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    },
+  });
 }

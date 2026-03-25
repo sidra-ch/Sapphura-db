@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import prisma from '../../lib/prisma'
 import { getOrCreatePrismaUser } from '../../lib/prismaUser'
+import AccountActions from '../../components/auth/AccountActions'
 
 function formatMoney(value: number) {
   return `$${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -48,6 +49,14 @@ export default async function AccountPage() {
         </div>
         <Link href="/collections" className="rounded border border-gold px-4 py-2 text-gold">Continue Shopping</Link>
       </div>
+
+      <section className="mb-8 rounded-xl border border-white/20 bg-white/5 p-5">
+        <h2 className="mb-4 text-xl font-semibold">Account Actions</h2>
+        <p className="mb-4 text-sm text-white/70">
+          Use your account area to switch between user actions and admin access. Your current app role is <span className="font-semibold text-gold">{prismaUser.role}</span>.
+        </p>
+        <AccountActions isAdmin={prismaUser.role === 'admin'} />
+      </section>
 
       <section className="mb-8 rounded-xl border border-white/20 bg-white/5 p-5">
         <h2 className="mb-4 text-xl font-semibold">Profile</h2>

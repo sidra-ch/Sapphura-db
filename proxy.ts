@@ -17,9 +17,7 @@ export const proxy = clerkMiddleware(async (auth, req) => {
 
 export const config = {
   matcher: [
-    '/protected(.*)',
-    '/account(.*)',
-    '/admin(.*)',
-    '/clerk-admin(.*)',
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpg|jpeg|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    '/(api|trpc)(.*)',
   ],
 }

@@ -78,7 +78,7 @@ export default function BestSellers() {
 
           return (
             <Link href={`/product/${product.slug}`} key={product.id} className="group h-full">
-              <motion.article initial={{ opacity: 0, y: 26 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: idx * 0.06 }} viewport={{ once: true, margin: '-50px' }} className="soft-shadow gold-ring flex h-full flex-col overflow-hidden rounded-[28px] bg-[linear-gradient(180deg,rgba(18,25,40,0.94),rgba(10,15,27,0.98))]">
+              <motion.article initial={{ opacity: 0, y: 26 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: idx * 0.06 }} viewport={{ once: true, margin: '-50px' }} className="luxury-card sheen-hover hover-lift flex h-full flex-col rounded-[28px]">
                 <div className="relative aspect-[4/5] overflow-hidden">
                   <img src={previewImage} alt={product.name} className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-108" loading="lazy" />
                   {previewVideo ? (
@@ -109,7 +109,7 @@ export default function BestSellers() {
                         event.preventDefault();
                         addToCart({ id: product.slug, slug: product.slug, name: product.name, image: previewImage, price: displayPrice, quantity: 1 });
                       }}
-                      className="glow-pulse flex-1 rounded-full bg-[#f7efe5] px-4 py-3 text-xs font-semibold uppercase tracking-[0.24em] text-[#111827]"
+                      className="flex-1 rounded-full bg-[#d4af37] px-4 py-3 text-xs font-semibold uppercase tracking-[0.24em] text-[#09111f] hover:bg-[#e2bf56]"
                     >
                       Add To Cart
                     </button>
