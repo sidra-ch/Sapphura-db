@@ -2,6 +2,11 @@ import crypto from 'crypto';
 
 type PaymentProvider = 'jazzcash' | 'easypaisa';
 
+type ProviderConfigStatus = {
+  available: boolean;
+  missing: string[];
+};
+
 type InitiatePayload = {
   amount: number;
   email: string;
@@ -42,6 +47,19 @@ function requireEnv(name: string): string {
     throw new Error(`${name} is not configured`);
   }
   return value;
+}
+
+export function getPaymentProviderConfig(provider: PaymentProvider): ProviderConfigStatus {
+  const requiredVars = provider === 'jazzcash'
+    ? ['JAZZCASH_INITIATE_URL', 'JAZZCASH_STATUS_URL', 'JAZZCASH_INTEGRITY_SALT']
+    : ['EASYPAISA_INITIATE_URL', 'EASYPAISA_STATUS_URL', 'EASYPAISA_SECRET'];
+
+  const missing = requiredVars.filter((name) => !process.env[name]);
+
+  return {
+    available: missing.length === 0,
+    missing,
+  };
 }
 
 export async function initiateProviderPayment(

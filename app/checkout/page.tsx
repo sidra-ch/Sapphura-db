@@ -28,6 +28,11 @@ interface OtpChannelAvailability {
   email: boolean;
 }
 
+interface PaymentProviderAvailability {
+  jazzcash: boolean;
+  easypaisa: boolean;
+}
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, totalPrice, clearCart } = useCart();
@@ -67,6 +72,10 @@ export default function CheckoutPage() {
   const [otpChannel] = useState<'email'>('email');
   const [availableOtpChannels, setAvailableOtpChannels] = useState<OtpChannelAvailability>({
     email: true,
+  });
+  const [availablePaymentProviders, setAvailablePaymentProviders] = useState<PaymentProviderAvailability>({
+    jazzcash: false,
+    easypaisa: false,
   });
   const [cardAuthorized, setCardAuthorized] = useState(false);
   const [cardPaymentIntentId, setCardPaymentIntentId] = useState('');
@@ -151,6 +160,43 @@ export default function CheckoutPage() {
       isMounted = false;
     };
   }, [otpChannel]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadPaymentProviderAvailability() {
+      try {
+        const response = await fetch('/api/payments/providers', { cache: 'no-store' });
+        if (!response.ok) return;
+
+        const data = await response.json();
+        const providers = data?.providers;
+        if (!isMounted || !providers) return;
+
+        const nextAvailability = {
+          jazzcash: Boolean(providers.jazzcash?.available),
+          easypaisa: Boolean(providers.easypaisa?.available),
+        };
+
+        setAvailablePaymentProviders(nextAvailability);
+
+        if (
+          (formData.paymentMethod === 'jazzcash' && !nextAvailability.jazzcash) ||
+          (formData.paymentMethod === 'easypaisa' && !nextAvailability.easypaisa)
+        ) {
+          setFormData((prev) => ({ ...prev, paymentMethod: 'cod' }));
+        }
+      } catch {
+        // keep wallet providers disabled if availability cannot be loaded
+      }
+    }
+
+    void loadPaymentProviderAvailability();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [formData.paymentMethod]);
 
   const validateInfoStep = (): boolean => {
     const newErrors: FormErrors = {};
@@ -386,6 +432,16 @@ export default function CheckoutPage() {
     try {
       if (items.length === 0) {
         alert('Your cart is empty.');
+        return;
+      }
+
+      if (formData.paymentMethod === 'jazzcash' && !availablePaymentProviders.jazzcash) {
+        alert('JazzCash is not configured right now. Please use Cash on Delivery or card.');
+        return;
+      }
+
+      if (formData.paymentMethod === 'easypaisa' && !availablePaymentProviders.easypaisa) {
+        alert('Easypaisa is not configured right now. Please use Cash on Delivery or card.');
         return;
       }
 
@@ -759,7 +815,7 @@ export default function CheckoutPage() {
                       </div>
                     </label>
 
-                    <label className={`flex items-center justify-between p-4 bg-[#0a0a23] rounded-lg cursor-pointer border transition ${formData.paymentMethod === 'jazzcash' ? 'border-gold' : 'border-gold/30 hover:border-gold/70'}`}>
+                    <label className={`flex items-center justify-between rounded-lg border p-4 transition ${availablePaymentProviders.jazzcash ? `bg-[#0a0a23] cursor-pointer ${formData.paymentMethod === 'jazzcash' ? 'border-gold' : 'border-gold/30 hover:border-gold/70'}` : 'cursor-not-allowed border-gold/10 bg-[#0a0a23]/50 opacity-50'}`}>
                       <div className="flex items-center gap-3">
                         <input
                           type="radio"
@@ -767,14 +823,15 @@ export default function CheckoutPage() {
                           value="jazzcash"
                           checked={formData.paymentMethod === 'jazzcash'}
                           onChange={handleInputChange}
+                          disabled={!availablePaymentProviders.jazzcash}
                           className="w-4 h-4 text-gold"
                         />
-                        <span className="text-white">JazzCash</span>
+                        <span className="text-white">JazzCash{!availablePaymentProviders.jazzcash ? ' (Unavailable)' : ''}</span>
                       </div>
                       <Smartphone className="w-4 h-4 text-gold" />
                     </label>
 
-                    <label className={`flex items-center justify-between p-4 bg-[#0a0a23] rounded-lg cursor-pointer border transition ${formData.paymentMethod === 'easypaisa' ? 'border-gold' : 'border-gold/30 hover:border-gold/70'}`}>
+                    <label className={`flex items-center justify-between rounded-lg border p-4 transition ${availablePaymentProviders.easypaisa ? `bg-[#0a0a23] cursor-pointer ${formData.paymentMethod === 'easypaisa' ? 'border-gold' : 'border-gold/30 hover:border-gold/70'}` : 'cursor-not-allowed border-gold/10 bg-[#0a0a23]/50 opacity-50'}`}>
                       <div className="flex items-center gap-3">
                         <input
                           type="radio"
@@ -782,13 +839,20 @@ export default function CheckoutPage() {
                           value="easypaisa"
                           checked={formData.paymentMethod === 'easypaisa'}
                           onChange={handleInputChange}
+                          disabled={!availablePaymentProviders.easypaisa}
                           className="w-4 h-4 text-gold"
                         />
-                        <span className="text-white">Easypaisa</span>
+                        <span className="text-white">Easypaisa{!availablePaymentProviders.easypaisa ? ' (Unavailable)' : ''}</span>
                       </div>
                       <Smartphone className="w-4 h-4 text-gold" />
                     </label>
                   </div>
+
+                  {(!availablePaymentProviders.jazzcash || !availablePaymentProviders.easypaisa) && (
+                    <p className="mb-4 text-sm text-amber-300">
+                      Some wallet payment methods are temporarily unavailable because server payment configuration is incomplete.
+                    </p>
+                  )}
 
                   {formData.paymentMethod === 'card' && (
                     <div className="mt-4 p-4 bg-[#0a0a23] rounded-lg border border-gold/30 space-y-4">

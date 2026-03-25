@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '../../../../lib/db';
-import { initiateProviderPayment } from '../../../../lib/payments';
+import { getPaymentProviderConfig, initiateProviderPayment } from '../../../../lib/payments';
 import { isPaymentTransactionTableMissing, PAYMENT_TRANSACTION_SETUP_MESSAGE } from '../../../../lib/payment-transaction-utils';
 import { checkRateLimit } from '../../../../lib/rate-limit';
 import { getClientIp, normalizeEmail } from '../../../../lib/request';
@@ -64,6 +64,18 @@ export async function POST(req: NextRequest) {
     if (!provider || !['jazzcash', 'easypaisa'].includes(provider)) {
       return NextResponse.json({ error: 'Unsupported payment provider' }, { status: 400 });
     }
+
+    const providerConfig = getPaymentProviderConfig(provider);
+    if (!providerConfig.available) {
+      return NextResponse.json(
+        {
+          error: `${provider.toUpperCase()} is not available right now`,
+          missingConfiguration: providerConfig.missing,
+        },
+        { status: 503 }
+      );
+    }
+
     if (!orderIdentifier) {
       return NextResponse.json({ error: 'Valid orderId is required' }, { status: 400 });
     }
@@ -192,6 +204,10 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
+    if (error instanceof Error && error.message.endsWith('is not configured')) {
+      return NextResponse.json({ error: error.message }, { status: 503 });
+    }
+
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to initiate payment' },
       { status: 500 }
