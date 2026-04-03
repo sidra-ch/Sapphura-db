@@ -20,7 +20,7 @@ async function main() {
     // Create admin user only
     await client.query(`
       INSERT INTO "User" (email, password, name, phone, role, "createdAt", "updatedAt") VALUES 
-      ('admin@sapphura.com', '$2a$10$rVQ2YqNxLxL5HxkVxqYxXeF5Yx5YxYxYxYxYxYxYxYxYxYxYxYx', 'Admin User', '+923001234567', 'admin', NOW(), NOW())
+      ('Sapphura@gmail.com', '$2a$10$rVQ2YqNxLxL5HxkVxqYxXeF5Yx5YxYxYxYxYxYxYxYxYxYxYxYx', 'Admin User', '+923001234567', 'admin', NOW(), NOW())
       ON CONFLICT (email) DO NOTHING
     `);
     console.log('Admin user created');
@@ -42,7 +42,7 @@ async function main() {
 
     console.log('\n✅ Seed completed!');
     console.log('Admin account:');
-    console.log('  Admin: admin@sapphura.com / 123456');
+    console.log('  Admin: Sapphura@gmail.com / 123456');
   } catch (e) {
     console.error(e);
   } finally {

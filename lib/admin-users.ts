@@ -1,4 +1,4 @@
-const DEFAULT_ADMIN_EMAILS = ['ms.sidrachaudhary@gmail.com', 'admin@sapphura.com']
+const DEFAULT_ADMIN_EMAILS = ['sapphura@gmail.com']
 
 function normalizeEmail(value: string): string {
   return value.trim().toLowerCase()

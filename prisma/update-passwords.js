@@ -13,7 +13,7 @@ async function main() {
     const hashedPassword = await bcrypt.hash('123456', 10);
     
     await client.query(`
-      UPDATE "User" SET password = $1 WHERE email = 'admin@sapphura.com'
+      UPDATE "User" SET password = $1 WHERE email = 'Sapphura@gmail.com'
     `, [hashedPassword]);
     
     console.log('✅ Passwords updated to: 123456');

@@ -143,7 +143,7 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <label className="block text-white/70 text-sm mb-2">Store Email</label>
-                    <input type="email" defaultValue="admin@sapphura.com" className="w-full px-4 py-3 bg-[#0a0a23] border border-gold/20 rounded-lg text-white focus:outline-none focus:border-gold" />
+                    <input type="email" defaultValue="Sapphura@gmail.com" className="w-full px-4 py-3 bg-[#0a0a23] border border-gold/20 rounded-lg text-white focus:outline-none focus:border-gold" />
                   </div>
                   <div>
                     <label className="block text-white/70 text-sm mb-2">Phone Number</label>

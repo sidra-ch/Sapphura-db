@@ -5,7 +5,8 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Lock, CreditCard } from 'lucide-react';
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_51RpWKNJgbJcc67pKHTgE6rkbTlHVpH9TMXdHAAUgnxOxbFgnPQtDnCEucwNto8RIDPjn6oNRCdAzLBXM6pwbB6ZF00HEslEGYi');
+const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 interface BillingDetailsInput {
   email?: string;
@@ -178,6 +179,14 @@ interface StripePaymentProps {
 }
 
 export default function StripePayment({ amount, billingDetails, onSuccess, onCancel }: StripePaymentProps) {
+  if (!stripePromise) {
+    return (
+      <div className="rounded-lg border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200">
+        Stripe is not configured. Set NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY before enabling card payments.
+      </div>
+    );
+  }
+
   return (
     <Elements stripe={stripePromise}>
       <CheckoutForm amount={amount} billingDetails={billingDetails} onSuccess={onSuccess} onCancel={onCancel} />
