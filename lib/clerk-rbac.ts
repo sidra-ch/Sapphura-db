@@ -2,7 +2,6 @@ import { auth, currentUser } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { redirect } from 'next/navigation'
 import { isAdminEmail } from './admin-users'
-import prisma from './prisma'
 
 function getRoleFromMetadata(metadata: unknown): string {
   if (!metadata || typeof metadata !== 'object') {
@@ -37,28 +36,6 @@ export async function getCurrentClerkRole(): Promise<string> {
   const metadataRole = getRoleFromMetadata(clerkUser?.publicMetadata)
   if (metadataRole === 'admin') {
     return metadataRole
-  }
-
-  if (authState.userId) {
-    const prismaUserByClerkId = await prisma.user.findFirst({
-      where: { clerkId: authState.userId },
-      select: { role: true },
-    })
-
-    if (prismaUserByClerkId?.role === 'admin') {
-      return 'admin'
-    }
-  }
-
-  if (primaryEmail) {
-    const prismaUserByEmail = await prisma.user.findUnique({
-      where: { email: primaryEmail },
-      select: { role: true },
-    })
-
-    if (prismaUserByEmail?.role === 'admin') {
-      return 'admin'
-    }
   }
 
   return metadataRole

@@ -4,14 +4,6 @@ import { isAdminEmail } from './admin-users'
 
 export type AppRole = 'admin' | 'customer'
 
-function preservePrivilegedRole(existingRole: string | null | undefined, nextRole: AppRole): AppRole {
-  if (existingRole === 'admin') {
-    return 'admin'
-  }
-
-  return nextRole
-}
-
 function getRoleFromClerkMetadata(metadata: unknown): AppRole {
   if (!metadata || typeof metadata !== 'object') {
     return 'customer'
@@ -56,13 +48,12 @@ export async function getOrCreatePrismaUser() {
   })
 
   if (existingByClerkId) {
-    const role = preservePrivilegedRole(existingByClerkId.role, resolvedRole)
     const updated = await userModel.update({
       where: { id: existingByClerkId.id },
       data: {
         email: primaryEmail,
         name: [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ').trim() || existingByClerkId.name,
-        role,
+        role: resolvedRole,
         isActive: true,
       },
       select: {
@@ -83,13 +74,12 @@ export async function getOrCreatePrismaUser() {
   })
 
   if (existingByEmail) {
-    const role = preservePrivilegedRole(existingByEmail.role, resolvedRole)
     const updated = await userModel.update({
       where: { id: existingByEmail.id },
       data: {
         clerkId: authState.userId,
         name: [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ').trim() || existingByEmail.name,
-        role,
+        role: resolvedRole,
         isActive: true,
       },
       select: {
