@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { CheckCircle, ShoppingBag, Truck, Home, Package, Clock3 } from 'lucide-react';
+import { formatCurrency } from '../../lib/currency';
 import { buildMetaCartPayload, trackMetaEvent } from '../../lib/meta-pixel';
 
 interface OrderDetails {
@@ -290,14 +291,14 @@ export default function OrderConfirmationPageClient() {
                       <p className="font-medium text-white">{item.name}</p>
                       <p className="text-sm text-white/60">Qty: {item.quantity}</p>
                     </div>
-                    <p className="font-bold text-gold">${(item.price * item.quantity).toFixed(2)}</p>
+                    <p className="font-bold text-gold">{formatCurrency(item.price * item.quantity)}</p>
                   </div>
                 ))}
               </div>
               <div className="mt-4 border-t border-gold/20 pt-4">
                 <div className="flex justify-between text-lg">
                   <span className="text-white/80">Total</span>
-                  <span className="text-xl font-bold text-gold">${order.total.toFixed(2)}</span>
+                  <span className="text-xl font-bold text-gold">{formatCurrency(order.total)}</span>
                 </div>
               </div>
             </>

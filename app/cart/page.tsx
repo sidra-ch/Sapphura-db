@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useCart } from '../../components/cart/CartContext';
+import { formatCurrency } from '../../lib/currency';
 import { FALLBACK_PRODUCT_IMAGE } from '../../lib/media';
 
 export default function CartPage() {
@@ -93,7 +94,7 @@ export default function CartPage() {
                       </button>
                     </div>
                     <div className="text-white font-bold text-xl">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      {formatCurrency(item.price * item.quantity)}
                     </div>
                   </div>
                 </div>
@@ -106,7 +107,7 @@ export default function CartPage() {
             <div className="space-y-3 mb-6">
               <div className="flex justify-between text-white/80">
                 <span>Subtotal</span>
-                <span>${totalPrice.toFixed(2)}</span>
+                <span>{formatCurrency(totalPrice)}</span>
               </div>
               <div className="flex justify-between text-white/80">
                 <span>Shipping</span>
@@ -114,7 +115,7 @@ export default function CartPage() {
               </div>
               <div className="border-t border-gold/20 pt-3 flex justify-between text-white font-bold text-xl">
                 <span>Estimated Total</span>
-                <span className="text-gold">${totalPrice.toFixed(2)}</span>
+                <span className="text-gold">{formatCurrency(totalPrice)}</span>
               </div>
             </div>
             <Link 

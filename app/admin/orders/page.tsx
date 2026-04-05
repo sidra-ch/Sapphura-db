@@ -8,6 +8,7 @@ import {
   Package, Truck, CheckCircle, Clock, AlertCircle, XCircle,
   MapPin, Calendar, ChevronDown, ChevronUp
 } from 'lucide-react';
+import { formatCurrency } from '../../../lib/currency';
 import { FALLBACK_PRODUCT_IMAGE, parseMediaList } from '../../../lib/media';
 
 type UiOrderItem = {
@@ -275,7 +276,7 @@ export default function OrdersPage() {
                       
                       <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto justify-between sm:justify-start">
                         <div className="text-right">
-                          <p className="text-white font-bold text-lg sm:text-xl">${order.total}</p>
+                          <p className="text-white font-bold text-lg sm:text-xl">{formatCurrency(order.total, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
                           <p className="text-white/50 text-sm">{order.items.length} items</p>
                         </div>
                         <div className="text-right hidden sm:block">
@@ -314,13 +315,13 @@ export default function OrdersPage() {
                                       <p className="text-white text-sm font-medium truncate">{item.name}</p>
                                       <p className="text-white/50 text-xs">Qty: {item.quantity}</p>
                                     </div>
-                                    <p className="text-gold font-bold">${item.price * item.quantity}</p>
+                                    <p className="text-gold font-bold">{formatCurrency(item.price * item.quantity, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
                                   </div>
                                 ))}
                               </div>
                               <div className="mt-4 pt-4 border-t border-gold/20 flex justify-between">
                                 <span className="text-white/70">Subtotal</span>
-                                <span className="text-white font-bold">${order.total}</span>
+                                <span className="text-white font-bold">{formatCurrency(order.total, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-white/70">Shipping</span>
@@ -328,7 +329,7 @@ export default function OrdersPage() {
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-white font-bold">Total</span>
-                                <span className="text-gold font-bold text-lg">${order.total}</span>
+                                <span className="text-gold font-bold text-lg">{formatCurrency(order.total, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                               </div>
                             </div>
 

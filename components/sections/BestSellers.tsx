@@ -5,6 +5,7 @@ import { ShoppingCart, Heart } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useCart } from '../cart/CartContext';
 import { useWishlist } from '../wishlist/WishlistContext';
+import { formatCurrency } from '../../lib/currency';
 import { FALLBACK_PRODUCT_IMAGE, getPrimaryImageFromList, isVideoUrl } from '../../lib/media';
 
 type Product = {
@@ -121,8 +122,8 @@ export default function BestSellers() {
                   <p className="mt-2 line-clamp-2 text-sm leading-6 text-[#fff7ef]/66">{product.description}</p>
                   <div className="mt-auto flex items-end justify-between pt-6">
                     <div>
-                      <p className="text-2xl font-semibold text-[#f7efe5]">${displayPrice.toFixed(0)}</p>
-                      {originalPrice ? <p className="text-sm text-[#fff7ef]/38 line-through">${originalPrice.toFixed(0)}</p> : null}
+                      <p className="text-2xl font-semibold text-[#f7efe5]">{formatCurrency(displayPrice, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
+                      {originalPrice ? <p className="text-sm text-[#fff7ef]/38 line-through">{formatCurrency(originalPrice, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p> : null}
                     </div>
                     <div className="rounded-full border border-[#d4af37]/30 px-3 py-1 text-[11px] uppercase tracking-[0.26em] text-[#d4af37]">
                       Quick View

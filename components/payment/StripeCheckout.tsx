@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Lock, CreditCard } from 'lucide-react';
+import { formatCurrency } from '../../lib/currency';
 
 const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
@@ -158,7 +159,7 @@ function CheckoutForm({
           ) : (
             <>
               <Lock className="w-4 h-4" />
-              Pay ${amount.toFixed(2)}
+              Pay {formatCurrency(amount)}
             </>
           )}
         </button>

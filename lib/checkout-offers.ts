@@ -1,3 +1,5 @@
+import { formatCurrency } from './currency'
+
 type CheckoutOfferDefinition = {
   code: string
   discountType: 'percent'
@@ -52,7 +54,7 @@ export function resolveCheckoutOffer(couponCode: string | null | undefined, subt
     return {
       couponCode: '',
       discount: 0,
-      error: `Coupon requires a minimum subtotal of $${offer.minSubtotal.toFixed(2)}`,
+      error: `Coupon requires a minimum subtotal of ${formatCurrency(offer.minSubtotal)}`,
     }
   }
 

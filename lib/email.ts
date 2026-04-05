@@ -3,6 +3,10 @@
 
 import nodemailer from 'nodemailer';
 
+function formatEmailCurrency(value: number) {
+  return `Rs. ${Number(value || 0).toFixed(2)}`;
+}
+
 interface EmailOptions {
   to: string;
   subject: string;
@@ -88,7 +92,7 @@ export function getOrderConfirmationEmail(order: {
   shippingAddress: string;
 }) {
   const itemsHtml = order.items
-    .map(item => `<tr><td>${item.name}</td><td>${item.quantity}</td><td>$${item.price}</td></tr>`)
+    .map(item => `<tr><td>${item.name}</td><td>${item.quantity}</td><td>${formatEmailCurrency(item.price)}</td></tr>`)
     .join('');
 
   return `
@@ -131,7 +135,7 @@ export function getOrderConfirmationEmail(order: {
           </tbody>
         </table>
         
-        <p class="total">Total: $${order.total.toFixed(2)}</p>
+        <p class="total">Total: ${formatEmailCurrency(order.total)}</p>
         <p><strong>Shipping to:</strong> ${order.shippingAddress}</p>
         
         <p>We'll notify you once your order is shipped. You can track your order status in your account.</p>

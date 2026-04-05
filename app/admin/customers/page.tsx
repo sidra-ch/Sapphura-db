@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Search, Plus, Eye, Mail, Phone, X } from 'lucide-react';
+import { formatCurrency } from '../../../lib/currency';
 
 type CustomerRow = {
   id: number;
@@ -177,7 +178,7 @@ export default function CustomersPage() {
                     <p className="text-white/50 text-sm">Orders</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-gold font-bold text-lg">${customer.spent.toLocaleString()}</p>
+                    <p className="text-gold font-bold text-lg">{formatCurrency(customer.spent, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
                     <p className="text-white/50 text-sm">Total Spent</p>
                   </div>
                   <div className="text-center hidden sm:block">

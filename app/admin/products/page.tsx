@@ -19,6 +19,7 @@ import {
   RefreshCcw,
   Database,
 } from 'lucide-react';
+import { formatCurrency } from '../../../lib/currency';
 
 type ProductRow = {
   id: number;
@@ -599,7 +600,7 @@ export default function ProductsPage() {
                   <p className="text-white/50 text-xs">{product.category}</p>
                   <h3 className="text-gold font-semibold text-sm truncate">{product.name}</h3>
                   <div className="flex justify-between items-center mt-2">
-                    <span className="text-white font-bold">${product.price}</span>
+                    <span className="text-white font-bold">{formatCurrency(product.price, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                     <span
                       className={`text-xs ${
                         product.stock > 10 ? 'text-green-400' : product.stock > 0 ? 'text-yellow-400' : 'text-red-400'

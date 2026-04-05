@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingBag, X, Plus, Minus, Trash2, ArrowRight } from "lucide-react";
 import { useCart } from './CartContext';
 import Link from 'next/link';
+import { formatCurrency } from '../../lib/currency';
 
 export default function CartDrawer() {
   const { items, removeFromCart, updateQuantity, totalPrice, isOpen, setIsOpen } = useCart();
@@ -75,7 +76,7 @@ export default function CartDrawer() {
                       {item.variant && (
                         <div className="text-white/50 text-xs">Variant: {item.variant}</div>
                       )}
-                      <div className="text-white font-bold mt-1">${item.price}</div>
+                      <div className="text-white font-bold mt-1">{formatCurrency(item.price)}</div>
                       
                       {/* Quantity Controls */}
                       <div className="flex items-center gap-2 mt-3">
@@ -111,7 +112,7 @@ export default function CartDrawer() {
             <div className="p-6 border-t border-gold/30 bg-[#0B1A2F]">
               <div className="flex justify-between items-center mb-4">
                 <span className="text-white/70">Subtotal</span>
-                <span className="text-2xl font-bold text-gold">${totalPrice.toFixed(2)}</span>
+                <span className="text-2xl font-bold text-gold">{formatCurrency(totalPrice)}</span>
               </div>
               <p className="text-white/50 text-sm mb-4">Shipping & taxes calculated at checkout</p>
               

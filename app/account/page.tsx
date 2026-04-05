@@ -1,12 +1,13 @@
 import Link from 'next/link'
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
+import { formatCurrency } from '../../lib/currency'
 import prisma from '../../lib/prisma'
 import { getOrCreatePrismaUser } from '../../lib/prismaUser'
 import AccountActions from '../../components/auth/AccountActions'
 
 function formatMoney(value: number) {
-  return `$${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return formatCurrency(value)
 }
 
 function toStatusBadgeClass(status: string) {

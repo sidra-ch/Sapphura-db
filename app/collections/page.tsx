@@ -9,12 +9,13 @@ import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import { useCart } from '../../components/cart/CartContext';
 import { useWishlist } from '../../components/wishlist/WishlistContext';
+import { formatCurrency } from '../../lib/currency';
 import { FALLBACK_PRODUCT_IMAGE } from '../../lib/media';
 
 const FALLBACK_IMAGE = FALLBACK_PRODUCT_IMAGE;
 
 const categories = ['All', 'Jewelry', 'Abaya', 'Accessories', 'Clothing', 'Makeup'];
-const priceRanges = ['All', 'Under $100', '$100 - $200', '$200 - $300', 'Over $300'];
+const priceRanges = ['All', 'Under Rs. 100', 'Rs. 100 - Rs. 200', 'Rs. 200 - Rs. 300', 'Over Rs. 300'];
 const sortOptions = ['Newest', 'Price: Low to High', 'Price: High to Low'];
 
 interface Product {
@@ -249,10 +250,10 @@ function CollectionsContent() {
     if (selectedCollection === 'all' && selectedCategory !== 'All' && categoryName !== selectedCategory) return false;
     if (selectedCollection !== 'all' && !matchesCollection(product, selectedCollection)) return false;
     if (selectedPriceRange !== 'All') {
-      if (selectedPriceRange === 'Under $100' && product.price >= 100) return false;
-      if (selectedPriceRange === '$100 - $200' && (product.price < 100 || product.price > 200)) return false;
-      if (selectedPriceRange === '$200 - $300' && (product.price < 200 || product.price > 300)) return false;
-      if (selectedPriceRange === 'Over $300' && product.price <= 300) return false;
+      if (selectedPriceRange === 'Under Rs. 100' && product.price >= 100) return false;
+      if (selectedPriceRange === 'Rs. 100 - Rs. 200' && (product.price < 100 || product.price > 200)) return false;
+      if (selectedPriceRange === 'Rs. 200 - Rs. 300' && (product.price < 200 || product.price > 300)) return false;
+      if (selectedPriceRange === 'Over Rs. 300' && product.price <= 300) return false;
     }
     return true;
   });
@@ -485,7 +486,7 @@ function CollectionsContent() {
                     </div>
                     <div className="relative z-20 p-3 flex-1 flex flex-col pointer-events-none">
                       <div className="flex items-center justify-between gap-2 mt-auto">
-                        <span className="text-white font-bold text-lg">${product.price}</span>
+                        <span className="text-white font-bold text-lg">{formatCurrency(product.price, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                         <span className="text-[11px] px-2.5 py-1.5 rounded-md border border-gold text-gold">View Details</span>
                       </div>
                     </div>

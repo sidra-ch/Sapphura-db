@@ -232,8 +232,8 @@ export default function SettingsPage() {
                   <div>
                     <label className="block text-white/70 text-sm mb-2">Currency</label>
                     <select className="w-full px-4 py-3 bg-[#0a0a23] border border-gold/20 rounded-lg text-white focus:outline-none focus:border-gold">
+                      <option>PKR (Rs.)</option>
                       <option>USD ($)</option>
-                      <option>PKR (Rs)</option>
                       <option>EUR (€)</option>
                     </select>
                   </div>

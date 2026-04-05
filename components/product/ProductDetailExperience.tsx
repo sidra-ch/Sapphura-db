@@ -7,6 +7,7 @@ import { useMemo, useState } from 'react';
 
 import { useCart } from '../cart/CartContext';
 import { useWishlist } from '../wishlist/WishlistContext';
+import { formatCurrency } from '../../lib/currency';
 import { FALLBACK_PRODUCT_IMAGE, getPrimaryImageFromList, isVideoUrl } from '../../lib/media';
 import { buildMetaCartPayload, trackMetaEvent } from '../../lib/meta-pixel';
 
@@ -75,7 +76,7 @@ const accordionContent = [
 ];
 
 function formatMoney(value: number) {
-  return `$${Number(value || 0).toFixed(0)}`;
+  return formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
 function buildVariantLabel(variant: Variant) {

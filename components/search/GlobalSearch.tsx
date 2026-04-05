@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Search, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { formatCurrency } from '../../lib/currency';
 
 interface SearchResult {
   id: string;
@@ -102,7 +103,7 @@ export default function SearchBar() {
                 <div className="text-gold font-medium text-sm">{product.name}</div>
                 <div className="text-white/50 text-xs">{product.category}</div>
               </div>
-              <div className="text-white font-bold">${product.price}</div>
+              <div className="text-white font-bold">{formatCurrency(product.price, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
             </div>
           ))}
           <div className="p-3 border-t border-gold/20">

@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { ShoppingCart, CreditCard, Truck, CheckCircle, ChevronLeft, ChevronRight, AlertCircle, Smartphone, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { formatCurrency } from '../../lib/currency';
 import { calculateOrderTotal, calculateShippingCost, resolveCheckoutOffer } from '../../lib/checkout-offers';
 
 const StripePayment = dynamic(() => import('../../components/payment/StripeCheckout'), { ssr: false });
@@ -771,7 +772,7 @@ export default function CheckoutPage() {
                             />
                             <span className="text-white">Express Shipping (2-3 days)</span>
                           </div>
-                          <span className="text-gold font-semibold">$25</span>
+                          <span className="text-gold font-semibold">{formatCurrency(25, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                         </label>
                       </div>
                     </div>
@@ -1106,7 +1107,7 @@ export default function CheckoutPage() {
                       <p className="text-white text-sm">{item.name}</p>
                       <p className="text-white/50 text-xs">Qty: {item.quantity}</p>
                     </div>
-                    <p className="text-gold font-semibold">${item.price * item.quantity}</p>
+                    <p className="text-gold font-semibold">{formatCurrency(item.price * item.quantity)}</p>
                   </div>
                 ))}
               </div>
@@ -1114,21 +1115,21 @@ export default function CheckoutPage() {
               <div className="border-t border-gold/30 pt-4 space-y-2">
                 <div className="flex justify-between text-white/70">
                   <span>Subtotal</span>
-                  <span>${totalPrice.toFixed(2)}</span>
+                  <span>{formatCurrency(totalPrice)}</span>
                 </div>
                 <div className="flex justify-between text-white/70">
                   <span>Shipping</span>
-                  <span>{shippingCost === 0 ? 'Free' : `$${shippingCost}`}</span>
+                  <span>{shippingCost === 0 ? 'Free' : formatCurrency(shippingCost)}</span>
                 </div>
                 {discount > 0 && (
                   <div className="flex justify-between text-green-400">
                     <span>Discount ({appliedCoupon})</span>
-                    <span>-${discount.toFixed(2)}</span>
+                    <span>-{formatCurrency(discount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-xl font-bold text-gold pt-2 border-t border-gold/30">
                   <span>Total</span>
-                  <span>${finalTotal.toFixed(2)}</span>
+                  <span>{formatCurrency(finalTotal)}</span>
                 </div>
               </div>
 

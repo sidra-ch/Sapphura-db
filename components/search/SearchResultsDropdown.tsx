@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { formatCurrency } from '../../lib/currency';
 import ProductSkeleton from '../product/ProductSkeleton';
 import { FALLBACK_PRODUCT_IMAGE } from '../../lib/media';
 
@@ -87,7 +88,7 @@ const SearchResultsDropdown: React.FC<SearchResultsDropdownProps> = ({ query, cl
                 <div>
                   <div className="font-bold text-gold">{product.name}</div>
                   <div className="text-sm text-white">{product.category}</div>
-                  <div className="text-sm text-gold">${product.price}</div>
+                  <div className="text-sm text-gold">{formatCurrency(product.price, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
                 </div>
               </Link>
             </li>

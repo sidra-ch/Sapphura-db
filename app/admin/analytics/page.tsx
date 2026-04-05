@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowLeft, TrendingUp, TrendingDown, DollarSign, ShoppingCart, Users, Eye, MousePointer } from 'lucide-react';
+import { formatCurrency } from '../../../lib/currency';
 
 const stats = [
-  { label: 'Total Revenue', value: '$45,230', change: '+12.5%', trend: 'up', icon: DollarSign },
+  { label: 'Total Revenue', value: formatCurrency(45230, { minimumFractionDigits: 0, maximumFractionDigits: 0 }), change: '+12.5%', trend: 'up', icon: DollarSign },
   { label: 'Total Orders', value: '156', change: '+8.2%', trend: 'up', icon: ShoppingCart },
   { label: 'Total Customers', value: '89', change: '+15.3%', trend: 'up', icon: Users },
   { label: 'Page Views', value: '12,450', change: '+22.1%', trend: 'up', icon: Eye },
@@ -78,7 +79,7 @@ export default function AnalyticsPage() {
                     className="flex-1 bg-gradient-to-t from-gold/30 to-gold rounded-t-lg relative group"
                   >
                     <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gold text-[#0a0a23] px-2 py-1 rounded text-xs font-bold opacity-0 group-hover:opacity-100 transition">
-                      ${data.sales.toLocaleString()}
+                      {formatCurrency(data.sales, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </div>
                   </motion.div>
                 ))}

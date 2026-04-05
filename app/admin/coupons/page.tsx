@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Plus, Edit, Trash2, Tag } from 'lucide-react';
+import { formatCurrency } from '../../../lib/currency';
 
 const coupons = [
   { id: 1, code: 'SARPURA10', discount: '10%', minOrder: 500, maxUses: 100, used: 45, validUntil: '2024-12-31', status: 'Active' },
@@ -57,7 +58,7 @@ export default function CouponsPage() {
                         {coupon.status}
                       </span>
                     </div>
-                    <p className="text-white/50 text-sm">{coupon.discount} discount • Min order: ${coupon.minOrder}</p>
+                    <p className="text-white/50 text-sm">{coupon.discount} discount • Min order: {formatCurrency(coupon.minOrder)}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto justify-between sm:justify-start">

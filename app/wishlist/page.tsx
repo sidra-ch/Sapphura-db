@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Heart, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useWishlist } from '../../components/wishlist/WishlistContext';
 import { useCart } from '../../components/cart/CartContext';
+import { formatCurrency } from '../../lib/currency';
 import { FALLBACK_PRODUCT_IMAGE } from '../../lib/media';
 import { buildMetaCartPayload, trackMetaEvent } from '../../lib/meta-pixel';
 
@@ -80,7 +81,7 @@ export default function WishlistPage() {
                   {item.name}
                 </Link>
                 <div className="flex justify-between items-center mt-3">
-                  <span className="text-white font-bold text-xl">${item.price}</span>
+                  <span className="text-white font-bold text-xl">{formatCurrency(item.price)}</span>
                   <div className="flex gap-2">
                     <button 
                       onClick={() => handleAddToCart(item)}

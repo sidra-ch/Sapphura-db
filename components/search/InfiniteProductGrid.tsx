@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react';
 import Link from 'next/link';
+import { formatCurrency } from '../../lib/currency';
 import { FALLBACK_PRODUCT_IMAGE } from '../../lib/media';
 import ProductSkeleton from '../product/ProductSkeleton';
 
@@ -49,7 +50,7 @@ const InfiniteProductGrid: React.FC<InfiniteProductGridProps> = ({ products, fet
               <h3 className="text-gold font-semibold line-clamp-1">{product.name}</h3>
               <p className="text-white/60 text-xs mt-1 line-clamp-1">{product.category || 'Product'}</p>
               {typeof product.price === 'number' && (
-                <p className="text-white font-bold mt-2">${product.price}</p>
+                <p className="text-white font-bold mt-2">{formatCurrency(product.price, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
               )}
             </div>
           </Link>
