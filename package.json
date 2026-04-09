@@ -7,7 +7,7 @@
     "build": "node scripts/run-next-build.js",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "node scripts/run-prisma-generate.js"
+    "postinstall": "node -e \"console.log('Skipping postinstall; Prisma generate runs during build')\""
   },
   "dependencies": {
     "@clerk/nextjs": "^7.0.6-canary.v20260319011914",
