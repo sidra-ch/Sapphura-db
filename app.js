@@ -1,32 +1,62 @@
 require('dotenv').config();
-const http = require('http');
-const next = require('next');
+const path = require('path');
+const fs = require('fs');
 
-const port = Number(process.env.PORT || 3000);
-const hostname = process.env.HOSTNAME || '0.0.0.0';
-const dev = process.env.NODE_ENV !== 'production';
+// Standard standalone entry for Phusion Passenger (cPanel)
+process.env.NODE_ENV = 'production';
+process.env.PORT = process.env.PORT || 3000;
+process.env.HOSTNAME = process.env.HOSTNAME || '127.0.0.1';
 
-const app = next({ dev, hostname, port });
-const handle = app.getRequestHandler();
+console.log(`> Starting Sapphura Standalone Server...`);
+console.log(`> Environment: ${process.env.NODE_ENV}`);
+console.log(`> Port: ${process.env.PORT}`);
 
-app
-  .prepare()
-  .then(() => {
-    http
-      .createServer((req, res) => handle(req, res))
-      .listen(port, hostname, () => {
-        console.log(`> Sapphura Next.js server ready on http://${hostname}:${port}`);
-        console.log(`> Environment: ${process.env.NODE_ENV}`);
-      });
-  })
-  .catch((error) => {
-    console.error('FATAL ERROR: Failed to start Next.js application');
-    console.error(error);
-    
-    // Provide diagnostic hints in logs
-    if (error.code === 'ECONNREFUSED' || error.message.includes('Can\'t reach database')) {
-      console.error('HINT: Check your DATABASE_URL in .env or cPanel variables');
+// Emergency logging for cPanel debugging
+const logFile = path.join(__dirname, 'startup_error.log');
+function logError(err) {
+    const message = `[${new Date().toISOString()}] FATAL STARTUP ERROR: ${err.message || err}\n${err.stack || ''}\n`;
+    try {
+        fs.appendFileSync(logFile, message);
+    } catch (e) {
+        console.error('Failed to write to log file:', e);
     }
-    
-    process.exit(1);
-  });
+    console.error(message);
+}
+
+// Try to find server.js in common standalone locations
+const pathsToTry = [
+    path.join(__dirname, 'server.js'), // If extracted directly to root
+    path.join(__dirname, '.next', 'standalone', 'server.js'), // If copied as a folder
+];
+
+let standalonePath = null;
+for (const p of pathsToTry) {
+    if (fs.existsSync(p)) {
+        standalonePath = p;
+        break;
+    }
+}
+
+try {
+    if (standalonePath) {
+        console.log(`> Found standalone server at: ${standalonePath}`);
+        require(standalonePath);
+    } else {
+        console.warn('WARNING: Standalone server.js not found. Falling back to Next server...');
+        const next = require('next');
+        const http = require('http');
+        const app = next({ dev: false, hostname: process.env.HOSTNAME, port: Number(process.env.PORT) });
+        const handle = app.getRequestHandler();
+        
+        app.prepare().then(() => {
+            http.createServer((req, res) => handle(req, res)).listen(process.env.PORT, () => {
+                console.log(`> Fallback server ready on http://${process.env.HOSTNAME}:${process.env.PORT}`);
+            });
+        }).catch(logError);
+    }
+} catch (err) {
+    logError(err);
+    // On cPanel, we want to keep the process alive long enough for Passenger to see the error? 
+    // Actually, exiting is better so Passenger shows the 503/error page.
+    setTimeout(() => process.exit(1), 1000); 
+}
