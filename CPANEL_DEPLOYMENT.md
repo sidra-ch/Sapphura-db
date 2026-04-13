@@ -41,7 +41,11 @@ Do not upload these:
 2. `.next/`
 3. `.git/`
 4. `.vercel/`
-5. local env files unless you have no better option
+5. local env files (add them via cPanel UI instead)
+
+> [!CAUTION]
+> **CRITICAL: DO NOT UPLOAD `node_modules` MANUALLY.**
+> Uploading `node_modules` from Windows to Linux will cause "503 Service Unavailable" or "Invalid ELF Header" errors because of OS-specific binaries. Always run `npm install` on the server terminal instead.
 
 ## 3. Recommended Folder Location
 
@@ -179,7 +183,28 @@ Check these in order:
 9. SSL is enabled for `https://sapphura.com`
 10. Environment variables are added in cPanel
 
-## 11. Quick Verdict
+## 11. Detailed 503 Troubleshooting
+
+If you see "503 Service Unavailable", the app is crashing. Follow these steps:
+
+1.  **Check `startup_error.log`**: Find this file in your app root. It contains the exact crash reason.
+2.  **Delete `node_modules`**: If you uploaded them from your PC, delete the folder completely on the server.
+3.  **Terminal Check**: Open the Terminal in cPanel and run:
+    ```bash
+    # Navigate to your app folder
+    cd /home/YOUR_USERNAME/sapphura
+    
+    # Clean and install (Ensures Linux-compatible binaries)
+    rm -rf node_modules
+    npm install
+    
+    # Build on server
+    npm run build
+    ```
+4.  **Prisma Check**: If Prisma fails, run `npx prisma generate` in the terminal to download the correct Linux engine.
+5.  **Restart App**: Go back to `Setup Node.js App` and click **Restart**.
+
+## 12. Quick Verdict
 
 The project is deployable.
 
