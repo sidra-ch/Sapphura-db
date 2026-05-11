@@ -1,11 +1,11 @@
 @extends('layouts.admin')
-@section('title', 'Order #' . $order->id . ' – Admin')
+@section('title', 'Order #' . ($order->public_id ?: $order->id) . ' – Admin')
 
 @section('content')
 <div class="flex items-center justify-between mb-6">
     <div class="flex items-center gap-3">
         <a href="/admin/orders" class="text-cream/40 hover:text-gold transition">← Orders</a>
-        <h1 class="text-2xl font-bold">Order #{{ $order->id }}</h1>
+        <h1 class="text-2xl font-bold">Order #{{ $order->public_id ?: $order->id }}</h1>
         <span class="px-3 py-1 rounded-full text-xs font-semibold
             @if(in_array($order->status, ['delivered','completed'])) bg-green-500/20 text-green-400
             @elseif($order->status === 'cancelled') bg-red-500/20 text-red-400
@@ -74,7 +74,7 @@
         {{-- Tracking Information --}}
         <div class="glass rounded-xl p-6 no-print">
             <h2 class="text-lg font-semibold mb-4">Tracking Information</h2>
-            <form method="POST" action="/admin/orders/{{ $order->id }}/tracking" class="space-y-4">
+            <form method="POST" action="/admin/orders/{{ $order->public_id ?: $order->id }}/tracking" class="space-y-4">
                 @csrf @method('PATCH')
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -142,7 +142,7 @@
         {{-- Admin Notes --}}
         <div class="glass rounded-xl p-6 no-print">
             <h2 class="text-lg font-semibold mb-4">Admin Notes</h2>
-            <form method="POST" action="/admin/orders/{{ $order->id }}/notes" class="space-y-3">
+            <form method="POST" action="/admin/orders/{{ $order->public_id ?: $order->id }}/notes" class="space-y-3">
                 @csrf @method('PATCH')
                 <textarea name="admin_notes" rows="3" placeholder="Add internal notes about this order..."
                     class="w-full px-4 py-3 bg-white/5 border border-gold/20 rounded-lg text-cream focus:border-gold outline-none transition text-sm resize-none">{{ $order->admin_notes ?? '' }}</textarea>
@@ -156,7 +156,7 @@
         {{-- Status Update --}}
         <div class="glass rounded-xl p-6 no-print">
             <h2 class="text-lg font-semibold mb-4">Update Status</h2>
-            <form method="POST" action="/admin/orders/{{ $order->id }}/status" class="space-y-3">
+            <form method="POST" action="/admin/orders/{{ $order->public_id ?: $order->id }}/status" class="space-y-3">
                 @csrf @method('PATCH')
                 <select name="status"
                     class="w-full px-3 py-2.5 bg-white/5 border border-gold/20 rounded-lg text-cream focus:border-gold outline-none transition text-sm [&>option]:text-black [&>option]:bg-white">

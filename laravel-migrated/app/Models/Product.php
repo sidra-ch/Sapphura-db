@@ -8,6 +8,24 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property int $id
+ * @property string|null $public_id
+ * @property string $name
+ * @property string $slug
+ * @property string $description
+ * @property float $price
+ * @property float|null $sale_price
+ * @property string|null $sku
+ * @property int $stock
+ * @property string $status
+ * @property bool $is_featured
+ * @property string|null $images
+ * @property int|null $category_id
+ * @property int|null $subcategory_id
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ */
 class Product extends Model
 {
     use SoftDeletes;

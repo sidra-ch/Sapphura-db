@@ -1,0 +1,11 @@
+node_modules/
+vendor/
+.git/
+.env
+storage/
+public/storage
+
+laravel-migrated.zip
+.next/
+media-files.zip
+*.zip

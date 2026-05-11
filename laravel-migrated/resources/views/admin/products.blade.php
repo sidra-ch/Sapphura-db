@@ -75,8 +75,8 @@
                         </td>
                         <td class="p-4">
                             <div class="flex gap-2">
-                                <a href="/admin/products/{{ $product->id }}/edit" class="px-3 py-1 border border-gold/30 text-gold rounded text-xs hover:bg-gold/10 transition">Edit</a>
-                                <form method="POST" action="/admin/products/{{ $product->id }}" onsubmit="return confirm('Delete this product?')">
+                                <a href="/admin/products/{{ $product->public_id ?: $product->id }}/edit" class="px-3 py-1 border border-gold/30 text-gold rounded text-xs hover:bg-gold/10 transition">Edit</a>
+                                <form method="POST" action="/admin/products/{{ $product->public_id ?: $product->id }}" onsubmit="return confirm('Delete this product?')">
                                     @csrf @method('DELETE')
                                     <button class="px-3 py-1 border border-red-500/30 text-red-400 rounded text-xs hover:bg-red-500/10 transition">Delete</button>
                                 </form>

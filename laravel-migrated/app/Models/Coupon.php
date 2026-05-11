@@ -22,7 +22,7 @@ class Coupon extends Model
         if (! $this->is_active) return false;
         if ($this->max_uses && $this->used_count >= $this->max_uses) return false;
         if ($this->valid_from && now()->lt($this->valid_from)) return false;
-        if ($this->valid_until && now()->gt($this->valid_until->endOfDay())) return false;
+        if ($this->valid_until && now()->gt(\Illuminate\Support\Carbon::parse($this->valid_until)->endOfDay())) return false;
         if ($orderTotal < $this->min_order) return false;
         return true;
     }

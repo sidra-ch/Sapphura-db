@@ -98,15 +98,15 @@
             @forelse($topProducts ?? [] as $idx => $tp)
                 <div class="flex items-center gap-3 p-2 bg-white/5 rounded-lg">
                     <span class="w-6 h-6 rounded-full bg-gold/20 text-gold text-xs flex items-center justify-center font-bold">{{ $idx + 1 }}</span>
-                    @php $tpImg = is_string($tp->images) ? json_decode($tp->images, true) : ($tp->images ?? []); @endphp
+                    @php $tpImages = data_get($tp, 'images'); $tpImg = is_string($tpImages) ? json_decode($tpImages, true) : ($tpImages ?? []); @endphp
                     @if(!empty($tpImg))
                         <img src="{{ $tpImg[0] }}" class="w-10 h-10 object-cover rounded-lg" alt="">
                     @endif
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium truncate">{{ $tp->name }}</p>
-                        <p class="text-xs text-cream/40">{{ $tp->total_sold }} sold</p>
+                        <p class="text-sm font-medium truncate">{{ data_get($tp, 'name') }}</p>
+                        <p class="text-xs text-cream/40">{{ data_get($tp, 'total_sold', 0) }} sold</p>
                     </div>
-                    <span class="text-gold text-sm font-semibold">Rs. {{ number_format($tp->total_revenue) }}</span>
+                    <span class="text-gold text-sm font-semibold">Rs. {{ number_format(data_get($tp, 'total_revenue', 0)) }}</span>
                 </div>
             @empty
                 <p class="text-cream/40 text-sm">No sales data yet</p>
@@ -125,17 +125,17 @@
         <div class="space-y-3">
             @forelse($lowStockProducts ?? [] as $lsp)
                 <div class="flex items-center gap-3 p-2 bg-white/5 rounded-lg">
-                    @php $lspImg = is_string($lsp->images) ? json_decode($lsp->images, true) : ($lsp->images ?? []); @endphp
+                    @php $lspImages = data_get($lsp, 'images'); $lspImg = is_string($lspImages) ? json_decode($lspImages, true) : ($lspImages ?? []); @endphp
                     @if(!empty($lspImg))
                         <img src="{{ $lspImg[0] }}" class="w-10 h-10 object-cover rounded-lg" alt="">
                     @endif
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium truncate">{{ $lsp->name }}</p>
+                        <p class="text-sm font-medium truncate">{{ data_get($lsp, 'name') }}</p>
                     </div>
-                    <span class="px-2 py-0.5 rounded-full text-xs {{ $lsp->stock == 0 ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400' }}">
-                        {{ $lsp->stock == 0 ? 'Out of Stock' : $lsp->stock . ' left' }}
+                    <span class="px-2 py-0.5 rounded-full text-xs {{ data_get($lsp, 'stock', 0) == 0 ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400' }}">
+                        {{ data_get($lsp, 'stock', 0) == 0 ? 'Out of Stock' : data_get($lsp, 'stock', 0) . ' left' }}
                     </span>
-                    <a href="/admin/products/{{ $lsp->id }}/edit" class="text-gold text-xs hover:underline">Edit</a>
+                    <a href="/admin/products/{{ data_get($lsp, 'public_id') ?: data_get($lsp, 'id') }}/edit" class="text-gold text-xs hover:underline">Edit</a>
                 </div>
             @empty
                 <p class="text-green-400 text-sm">All products are well stocked!</p>
@@ -166,22 +166,22 @@
             <tbody class="divide-y divide-gold/5">
                 @forelse($recentOrders ?? [] as $order)
                     <tr class="hover:bg-white/5 transition">
-                        <td class="py-3 font-mono text-gold">#{{ $order->id }}</td>
-                        <td class="py-3">{{ $order->shipping_name ?? $order->user->name ?? 'N/A' }}</td>
-                        <td class="py-3 font-semibold">Rs. {{ number_format($order->total ?? 0) }}</td>
-                        <td class="py-3 text-cream/60 text-xs uppercase">{{ $order->payment_method ?? '—' }}</td>
+                        <td class="py-3 font-mono text-gold">#{{ data_get($order, 'id') }}</td>
+                        <td class="py-3">{{ data_get($order, 'shipping_name') ?? data_get($order, 'user.name') ?? 'N/A' }}</td>
+                        <td class="py-3 font-semibold">Rs. {{ number_format(data_get($order, 'total', 0)) }}</td>
+                        <td class="py-3 text-cream/60 text-xs uppercase">{{ data_get($order, 'payment_method') ?? '—' }}</td>
                         <td class="py-3">
                             <span class="px-2 py-0.5 rounded-full text-xs
-                                @if(in_array($order->status, ['delivered','completed'])) bg-green-500/20 text-green-400
-                                @elseif($order->status === 'cancelled') bg-red-500/20 text-red-400
-                                @elseif($order->status === 'shipped') bg-blue-500/20 text-blue-400
+                                @if(in_array(data_get($order, 'status'), ['delivered','completed'])) bg-green-500/20 text-green-400
+                                @elseif(data_get($order, 'status') === 'cancelled') bg-red-500/20 text-red-400
+                                @elseif(data_get($order, 'status') === 'shipped') bg-blue-500/20 text-blue-400
                                 @else bg-gold/20 text-gold @endif">
-                                {{ ucfirst($order->status ?? 'pending') }}
+                                {{ ucfirst(data_get($order, 'status', 'pending')) }}
                             </span>
                         </td>
-                        <td class="py-3 text-cream/50">{{ $order->created_at->format('d M Y') }}</td>
+                        <td class="py-3 text-cream/50">{{ optional(data_get($order, 'created_at'))->format('d M Y') }}</td>
                         <td class="py-3">
-                            <a href="/admin/orders/{{ $order->id }}" class="text-gold text-xs hover:underline">View →</a>
+                            <a href="/admin/orders/{{ data_get($order, 'public_id') ?: data_get($order, 'id') }}" class="text-gold text-xs hover:underline">View →</a>
                         </td>
                     </tr>
                 @empty

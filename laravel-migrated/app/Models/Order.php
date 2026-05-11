@@ -6,6 +6,23 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property string|null $public_id
+ * @property int|null $user_id
+ * @property float $total
+ * @property string $status
+ * @property string|null $payment_status
+ * @property string|null $payment_method
+ * @property string|null $shipping_name
+ * @property string|null $shipping_phone
+ * @property string|null $tracking_number
+ * @property string|null $tracking_carrier
+ * @property string|null $notes
+ * @property string|null $admin_notes
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ */
 class Order extends Model
 {
     protected $fillable = [

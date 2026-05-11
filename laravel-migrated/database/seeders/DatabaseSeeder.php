@@ -15,10 +15,10 @@ class DatabaseSeeder extends Seeder
     {
         // 1. Admin user
         User::updateOrCreate(
-            ['email' => env('ADMIN_DEFAULT_EMAIL', 'Sapphura@gmail.com')],
+            ['email' => env('ADMIN_DEFAULT_EMAIL', 'admin@sapphura.com')],
             [
                 'public_id' => (string) Str::uuid(),
-                'password' => Hash::make(env('ADMIN_DEFAULT_PASSWORD', '123456')),
+                'password' => Hash::make(env('ADMIN_DEFAULT_PASSWORD', 'admin@123')),
                 'name' => env('ADMIN_DEFAULT_NAME', 'Admin User'),
                 'phone' => env('ADMIN_DEFAULT_PHONE', '+923001234567'),
                 'role' => 'admin',

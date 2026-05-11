@@ -45,9 +45,9 @@
                         <td class="p-4 text-cream/60">{{ $customer->phone ?? '—' }}</td>
                         <td class="p-4 text-gold font-semibold">{{ $customer->orders_count ?? 0 }}</td>
                         <td class="p-4 font-semibold">Rs. {{ number_format($customer->orders_sum_total ?? 0) }}</td>
-                        <td class="p-4 text-cream/50">{{ $customer->created_at->format('d M Y') }}</td>
+                        <td class="p-4 text-cream/50">{{ $customer->created_at ? $customer->created_at->format('d M Y') : '—' }}</td>
                         <td class="p-4">
-                            <a href="/admin/customers/{{ $customer->id }}" class="px-3 py-1 border border-gold/30 text-gold rounded text-xs hover:bg-gold/10 transition">View</a>
+                            <a href="/admin/customers/{{ $customer->public_id ?: $customer->id }}" class="px-3 py-1 border border-gold/30 text-gold rounded text-xs hover:bg-gold/10 transition">View</a>
                         </td>
                     </tr>
                 @empty

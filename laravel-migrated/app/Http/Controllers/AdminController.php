@@ -28,6 +28,21 @@ use Illuminate\Support\Str;
 
 class AdminController extends Controller
 {
+    private function resolveProduct(string $identifier): Product
+    {
+        return Product::where('public_id', $identifier)->orWhere('id', $identifier)->firstOrFail();
+    }
+
+    private function resolveOrder(string $identifier): Order
+    {
+        return Order::where('public_id', $identifier)->orWhere('id', $identifier)->firstOrFail();
+    }
+
+    private function resolveCustomer(string $identifier): User
+    {
+        return User::where('public_id', $identifier)->orWhere('id', $identifier)->firstOrFail();
+    }
+
     // ─── Helper: log activity ───
     private function logActivity(string $action, string $module, string $description, ?array $properties = null): void
     {
@@ -115,17 +130,17 @@ class AdminController extends Controller
     {
         $query = Product::with('category');
         if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+            $query->where('name', 'like', '%' . (string) $request->input('search') . '%');
         }
         if ($request->filled('category')) {
-            $query->where('category_id', $request->category);
+            $query->where('category_id', $request->input('category'));
         }
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            $query->where('status', $request->input('status'));
         }
         if ($request->filled('stock')) {
-            if ($request->stock === 'low') $query->where('stock', '<', 5);
-            elseif ($request->stock === 'out') $query->where('stock', 0);
+            if ($request->input('stock') === 'low') $query->where('stock', '<', 5);
+            elseif ($request->input('stock') === 'out') $query->where('stock', 0);
         }
         $products = $query->latest()->paginate(15)->withQueryString();
         $categories = Category::orderBy('name')->get();
@@ -147,70 +162,70 @@ class AdminController extends Controller
             'description' => 'required|string',
         ]);
 
-        $images = $request->images ?? '[]';
+        $images = $request->input('images', '[]');
         if (is_string($images) && !str_starts_with(trim($images), '[')) {
             $images = json_encode(array_filter(array_map('trim', explode("\n", $images))));
         }
 
         Product::create([
             'public_id' => (string) Str::uuid(),
-            'name' => $request->name,
-            'slug' => Str::slug($request->name),
-            'description' => $request->description,
-            'price' => $request->price,
-            'sale_price' => $request->sale_price,
-            'sku' => $request->sku,
-            'stock' => $request->stock ?? 0,
-            'status' => $request->status ?? 'active',
+            'name' => $request->input('name'),
+            'slug' => Str::slug((string) $request->input('name')),
+            'description' => $request->input('description'),
+            'price' => $request->input('price'),
+            'sale_price' => $request->input('sale_price'),
+            'sku' => $request->input('sku'),
+            'stock' => $request->input('stock', 0),
+            'status' => $request->input('status', 'active'),
             'is_featured' => $request->boolean('is_featured'),
             'images' => $images,
-            'category_id' => $request->category_id,
+            'category_id' => $request->input('category_id'),
         ]);
 
         return redirect('/admin/products')->with('success', 'Product created.');
     }
 
-    public function editProduct(int $id)
+    public function editProduct(string $id)
     {
-        $product = Product::findOrFail($id);
+        $product = $this->resolveProduct($id);
         $categories = Category::orderBy('name')->get();
         return view('admin.product-form', compact('product', 'categories'));
     }
 
-    public function updateProduct(Request $request, int $id)
+    public function updateProduct(Request $request, string $id)
     {
-        $product = Product::findOrFail($id);
+        $product = $this->resolveProduct($id);
         $request->validate([
             'name' => 'required|string|max:255',
             'price' => 'required|numeric|min:0',
             'category_id' => 'required|exists:categories,id',
         ]);
 
-        $images = $request->images ?? $product->images;
+        $images = $request->input('images', $product->images);
         if (is_string($images) && !str_starts_with(trim($images), '[')) {
             $images = json_encode(array_filter(array_map('trim', explode("\n", $images))));
         }
 
         $product->update([
-            'name' => $request->name,
-            'slug' => Str::slug($request->name),
-            'description' => $request->description,
-            'price' => $request->price,
-            'sale_price' => $request->sale_price,
-            'sku' => $request->sku,
-            'stock' => $request->stock ?? $product->stock,
-            'status' => $request->status ?? $product->status,
+            'name' => $request->input('name'),
+            'slug' => Str::slug((string) $request->input('name')),
+            'description' => $request->input('description'),
+            'price' => $request->input('price'),
+            'sale_price' => $request->input('sale_price'),
+            'sku' => $request->input('sku'),
+            'stock' => $request->input('stock', $product->stock),
+            'status' => $request->input('status', $product->status),
             'is_featured' => $request->boolean('is_featured'),
             'images' => $images,
-            'category_id' => $request->category_id,
+            'category_id' => $request->input('category_id'),
         ]);
 
         return redirect('/admin/products')->with('success', 'Product updated.');
     }
 
-    public function deleteProduct(int $id)
+    public function deleteProduct(string $id)
     {
-        Product::findOrFail($id)->delete();
+        $this->resolveProduct($id)->delete();
         return redirect('/admin/products')->with('success', 'Product deleted.');
     }
 
@@ -219,19 +234,19 @@ class AdminController extends Controller
     {
         $query = Order::with('user');
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            $query->where('status', $request->input('status'));
         }
         if ($request->filled('payment')) {
-            $query->where('payment_method', $request->payment);
+            $query->where('payment_method', $request->input('payment'));
         }
         if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
+            $query->whereDate('created_at', '>=', (string) $request->input('date_from'));
         }
         if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
+            $query->whereDate('created_at', '<=', (string) $request->input('date_to'));
         }
         if ($request->filled('search')) {
-            $s = $request->search;
+            $s = (string) $request->input('search');
             $query->where(fn ($q) => $q->where('public_id', 'like', "%{$s}%")
                 ->orWhere('id', 'like', "%{$s}%")
                 ->orWhere('shipping_name', 'like', "%{$s}%")
@@ -243,17 +258,18 @@ class AdminController extends Controller
         return view('admin.orders', compact('orders'));
     }
 
-    public function showOrder(int $id)
+    public function showOrder(string $id)
     {
-        $order = Order::with(['user', 'items.product', 'paymentTransactions', 'statusHistory.changedByUser'])->findOrFail($id);
+        $order = $this->resolveOrder($id);
+        $order->load(['user', 'items.product', 'paymentTransactions', 'statusHistory.changedByUser']);
         return view('admin.order-detail', compact('order'));
     }
 
-    public function updateOrderStatus(Request $request, int $id)
+    public function updateOrderStatus(Request $request, string $id)
     {
-        $order = Order::findOrFail($id);
+        $order = $this->resolveOrder($id);
         $oldStatus = $order->status;
-        $newStatus = $request->status;
+        $newStatus = (string) $request->input('status');
 
         $order->update(['status' => $newStatus]);
 
@@ -269,20 +285,20 @@ class AdminController extends Controller
         return back()->with('success', 'Order status updated to ' . ucfirst($newStatus) . '.');
     }
 
-    public function updateOrderTracking(Request $request, int $id)
+    public function updateOrderTracking(Request $request, string $id)
     {
-        $order = Order::findOrFail($id);
+        $order = $this->resolveOrder($id);
         $order->update([
-            'tracking_number' => $request->tracking_number,
-            'tracking_carrier' => $request->tracking_carrier,
+            'tracking_number' => $request->input('tracking_number'),
+            'tracking_carrier' => $request->input('tracking_carrier'),
         ]);
         return back()->with('success', 'Tracking information updated.');
     }
 
-    public function updateOrderNotes(Request $request, int $id)
+    public function updateOrderNotes(Request $request, string $id)
     {
-        $order = Order::findOrFail($id);
-        $order->update(['admin_notes' => $request->admin_notes]);
+        $order = $this->resolveOrder($id);
+        $order->update(['admin_notes' => $request->input('admin_notes')]);
         return back()->with('success', 'Notes saved.');
     }
 
@@ -296,7 +312,7 @@ class AdminController extends Controller
     public function storeCategory(Request $request)
     {
         $request->validate(['name' => 'required|string|max:255|unique:categories,name']);
-        Category::create(['name' => $request->name]);
+        Category::create(['name' => $request->input('name')]);
         return back()->with('success', 'Category created.');
     }
 
@@ -315,7 +331,7 @@ class AdminController extends Controller
     {
         $query = User::withCount('orders')->withSum('orders', 'total');
         if ($request->filled('search')) {
-            $s = $request->search;
+            $s = (string) $request->input('search');
             $query->where(fn ($q) => $q->where('name', 'like', "%{$s}%")
                 ->orWhere('email', 'like', "%{$s}%")
                 ->orWhere('phone', 'like', "%{$s}%"));
@@ -324,10 +340,11 @@ class AdminController extends Controller
         return view('admin.customers', compact('customers'));
     }
 
-    public function showCustomer(int $id)
+    public function showCustomer(string $id)
     {
-        $customer = User::withCount('orders')->withSum('orders', 'total')->findOrFail($id);
-        $orders = Order::where('user_id', $id)->latest()->paginate(10);
+        $customer = $this->resolveCustomer($id);
+        $orders = Order::where('user_id', $customer->id)->latest()->paginate(10);
+        $customer->loadCount('orders')->loadSum('orders', 'total');
         return view('admin.customer-detail', compact('customer', 'orders'));
     }
 
@@ -372,14 +389,14 @@ class AdminController extends Controller
         ]);
 
         Coupon::create([
-            'code' => strtoupper(trim($request->code)),
-            'description' => $request->description,
-            'type' => $request->type,
-            'value' => $request->value,
-            'min_order' => $request->min_order ?? 0,
-            'max_uses' => $request->max_uses,
-            'valid_from' => $request->valid_from,
-            'valid_until' => $request->valid_until,
+            'code' => strtoupper(trim((string) $request->input('code'))),
+            'description' => $request->input('description'),
+            'type' => $request->input('type'),
+            'value' => $request->input('value'),
+            'min_order' => $request->input('min_order', 0),
+            'max_uses' => $request->input('max_uses'),
+            'valid_from' => $request->input('valid_from'),
+            'valid_until' => $request->input('valid_until'),
             'is_active' => $request->boolean('is_active', true),
         ]);
 
@@ -402,14 +419,14 @@ class AdminController extends Controller
         ]);
 
         $coupon->update([
-            'code' => strtoupper(trim($request->code)),
-            'description' => $request->description,
-            'type' => $request->type,
-            'value' => $request->value,
-            'min_order' => $request->min_order ?? 0,
-            'max_uses' => $request->max_uses,
-            'valid_from' => $request->valid_from,
-            'valid_until' => $request->valid_until,
+            'code' => strtoupper(trim((string) $request->input('code'))),
+            'description' => $request->input('description'),
+            'type' => $request->input('type'),
+            'value' => $request->input('value'),
+            'min_order' => $request->input('min_order', 0),
+            'max_uses' => $request->input('max_uses'),
+            'valid_from' => $request->input('valid_from'),
+            'valid_until' => $request->input('valid_until'),
             'is_active' => $request->boolean('is_active', true),
         ]);
 

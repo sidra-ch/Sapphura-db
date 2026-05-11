@@ -18,6 +18,7 @@ use App\Services\CloudinaryService;
 use App\Services\PaymentProviderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -30,6 +31,27 @@ class LegacyBridgeController extends Controller
     private function normalizeEmail(string $email): string
     {
         return strtolower(trim($email));
+    }
+
+    private function resolveOtpEmail(Request $request): string
+    {
+        $candidates = [
+            (string) $request->input('email', ''),
+            (string) $request->input('customerEmail', ''),
+            (string) $request->input('customer_email', ''),
+            (string) data_get($request->input('customer', []), 'email', ''),
+            (string) data_get($request->input('contact', []), 'email', ''),
+            (string) data_get($request->input('billing', []), 'email', ''),
+        ];
+
+        foreach ($candidates as $candidate) {
+            $normalized = $this->normalizeEmail($candidate);
+            if ($normalized !== '' && filter_var($normalized, FILTER_VALIDATE_EMAIL)) {
+                return $normalized;
+            }
+        }
+
+        return '';
     }
 
     private function buildOtpProofToken(string $email, string $purpose): string
@@ -145,12 +167,14 @@ class LegacyBridgeController extends Controller
         $action = (string) $request->input('action', '');
         $purpose = (string) $request->input('purpose', 'payment');
         $purposeKey = 'payment:'.strtolower($purpose);
-        $email = $this->normalizeEmail((string) $request->input('email', ''));
+        $email = $this->resolveOtpEmail($request);
         $phone = preg_replace('/\D+/', '', (string) $request->input('phone', ''));
-        $identity = $email !== '' ? $email : ($phone ? "phone-{$phone}@otp.local" : '');
+        $identity = $email;
 
         if ($identity === '') {
-            return response()->json(['error' => 'Email or phone is required'], 400);
+            return response()->json([
+                'error' => 'A valid email is required for OTP delivery. SMS/WhatsApp OTP is currently disabled.',
+            ], 400);
         }
 
         $user = User::firstOrCreate(
@@ -191,14 +215,29 @@ class LegacyBridgeController extends Controller
                 $emailSent = false;
             }
 
+            if (! $emailSent) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'OTP created but email delivery failed',
+                    'identity' => $identity,
+                    'requestedChannel' => 'email',
+                    'effectiveChannel' => null,
+                    'channels' => ['email'],
+                    'delivery' => [['channel' => 'email', 'sent' => false]],
+                    'expiry' => $expiresAt->toISOString(),
+                    'requestId' => $user->id,
+                    'debugOtp' => app()->environment('local') ? $otp : null,
+                ], 502);
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => $emailSent ? 'OTP sent via email' : 'OTP created but email delivery failed',
+                'message' => 'OTP sent via email',
                 'identity' => $identity,
                 'requestedChannel' => 'email',
                 'effectiveChannel' => 'email',
                 'channels' => ['email'],
-                'delivery' => [['channel' => 'email', 'sent' => $emailSent]],
+                'delivery' => [['channel' => 'email', 'sent' => true]],
                 'expiry' => $expiresAt->toISOString(),
                 'requestId' => $user->id,
                 'debugOtp' => app()->environment('local') ? $otp : null,
@@ -413,101 +452,24 @@ class LegacyBridgeController extends Controller
             $categoryIdByName = $categories->pluck('id', 'name')->all();
             $existingSlugs = $existingProducts->pluck('slug')->flip()->all();
 
-            $libraryAssets = [];
-            foreach (($assets['images'] ?? []) as $asset) {
-                $libraryAssets[] = ['publicId' => $asset['public_id'], 'url' => $asset['secure_url'], 'type' => 'image'];
-            }
-            foreach (($assets['videos'] ?? []) as $asset) {
-                $libraryAssets[] = ['publicId' => $asset['public_id'], 'url' => $asset['secure_url'], 'type' => 'video'];
-            }
+            $libraryAssets = $this->buildCloudinaryLibraryAssets($assets);
+            $groups = $this->groupAssetsByNormalizedKey($libraryAssets);
 
-            // Group by normalized key
-            $groups = [];
-            foreach ($libraryAssets as $asset) {
-                $key = $this->normalizeAssetKey($asset['publicId']);
-                $groups[$key][] = $asset;
-            }
+            $matching = $this->matchExistingProductsWithAssetGroups($existingProducts, $groups);
+            $productMatches = $matching['productMatches'];
+            $claimedGroupKeys = $matching['claimedGroupKeys'];
+            $existingMediaUrls = $matching['existingMediaUrls'];
+            $relinkableProducts = $matching['relinkableProducts'];
+            $alreadyLinkedProducts = $matching['alreadyLinkedProducts'];
 
-            // Match existing products
-            $claimedGroupKeys = [];
-            $productMatches = [];
-            foreach ($existingProducts as $product) {
-                $currentMedia = json_decode($product->images ?: '[]', true) ?: [];
-                $groupKeys = array_unique(array_filter(
-                    array_map(fn ($url) => $this->getMediaReferenceKey($url), $currentMedia),
-                    fn ($key) => isset($groups[$key])
-                ));
-                $matchedMedia = [];
-                foreach ($groupKeys as $gk) {
-                    foreach (($groups[$gk] ?? []) as $m) {
-                        $matchedMedia[] = $m;
-                    }
-                }
-                $nextMediaUrls = $this->getUniqueMediaUrls($matchedMedia);
-                $currentMediaUrls = array_values(array_unique($currentMedia));
-
-                foreach ($groupKeys as $gk) {
-                    $claimedGroupKeys[$gk] = true;
-                }
-
-                if (count($groupKeys) > 0) {
-                    $productMatches[] = [
-                        'id' => $product->id,
-                        'slug' => $product->slug,
-                        'groupKeys' => $groupKeys,
-                        'currentMediaUrls' => $currentMediaUrls,
-                        'nextMediaUrls' => $nextMediaUrls,
-                        'needsUpdate' => count($nextMediaUrls) > 0 && json_encode($currentMediaUrls) !== json_encode($nextMediaUrls),
-                    ];
-                }
-            }
-
-            $relinkableProducts = array_filter($productMatches, fn ($p) => $p['needsUpdate']);
-            $alreadyLinkedProducts = array_filter($productMatches, fn ($p) => !$p['needsUpdate']);
-
-            $existingMediaUrls = [];
-            foreach ($productMatches as $pm) {
-                foreach ($pm['nextMediaUrls'] as $url) {
-                    $existingMediaUrls[$url] = true;
-                }
-            }
-
-            $importableGroups = [];
-            foreach ($groups as $normalizedKey => $media) {
-                $uniqueMedia = [];
-                $seenUrls = [];
-                foreach ($media as $asset) {
-                    if (!isset($seenUrls[$asset['url']])) {
-                        $seenUrls[$asset['url']] = true;
-                        $uniqueMedia[] = $asset;
-                    }
-                }
-
-                $alreadyLinked = isset($claimedGroupKeys[$normalizedKey]) || count(array_filter($uniqueMedia, fn ($a) => !isset($existingMediaUrls[$a['url']]))) === 0;
-                if ($alreadyLinked) continue;
-
-                $categoryName = $this->inferCategoryName($normalizedKey);
-                $categoryId = $categoryIdByName[$categoryName] ?? ($categories[0]->id ?? null);
-                $assetBaseName = $this->getAssetBaseName($uniqueMedia[0]['publicId'] ?? $normalizedKey);
-                $name = $this->buildDisplayName($assetBaseName);
-                if (!$name || !$categoryId) continue;
-
-                $slug = Str::slug($name) ?: "product-{$normalizedKey}";
-                $suffix = 1;
-                while (isset($existingSlugs[$slug])) {
-                    $slug = (Str::slug($name) ?: 'product') . "-{$suffix}";
-                    $suffix++;
-                }
-
-                $importableGroups[] = [
-                    'normalizedKey' => $normalizedKey,
-                    'name' => $name,
-                    'slug' => $slug,
-                    'categoryName' => $categoryName,
-                    'categoryId' => $categoryId,
-                    'media' => $uniqueMedia,
-                ];
-            }
+            $importableGroups = $this->buildImportableGroups(
+                $groups,
+                $claimedGroupKeys,
+                $existingMediaUrls,
+                $categoryIdByName,
+                $categories,
+                $existingSlugs
+            );
 
             if ($dryRun) {
                 return response()->json([
@@ -529,35 +491,8 @@ class LegacyBridgeController extends Controller
                 ]);
             }
 
-            // Relink existing products
-            foreach ($relinkableProducts as $pm) {
-                Product::where('id', $pm['id'])->update([
-                    'images' => json_encode($pm['nextMediaUrls']),
-                ]);
-            }
-
-            // Create new products
-            $createdProducts = [];
-            foreach ($importableGroups as $group) {
-                $created = Product::create([
-                    'public_id' => (string) Str::uuid(),
-                    'name' => $group['name'],
-                    'slug' => $group['slug'],
-                    'description' => $group['name'] . ' imported from Cloudinary media library.',
-                    'price' => $defaultPrice,
-                    'stock' => $defaultStock,
-                    'status' => $status,
-                    'category_id' => $group['categoryId'],
-                    'images' => json_encode(array_column($group['media'], 'url')),
-                ]);
-
-                $createdProducts[] = [
-                    'id' => $created->id,
-                    'slug' => $created->slug,
-                    'name' => $created->name,
-                    'mediaCount' => count($group['media']),
-                ];
-            }
+            $this->relinkProductsToCloudinaryMedia($relinkableProducts);
+            $createdProducts = $this->createProductsFromImportGroups($importableGroups, $defaultPrice, $defaultStock, $status);
 
             return response()->json([
                 'mode' => 'import',
@@ -571,6 +506,187 @@ class LegacyBridgeController extends Controller
     }
 
     // ----- Cloudinary import helpers -----
+
+    private function buildCloudinaryLibraryAssets(array $assets): array
+    {
+        $libraryAssets = [];
+
+        foreach (($assets['images'] ?? []) as $asset) {
+            $libraryAssets[] = ['publicId' => $asset['public_id'], 'url' => $asset['secure_url'], 'type' => 'image'];
+        }
+        foreach (($assets['videos'] ?? []) as $asset) {
+            $libraryAssets[] = ['publicId' => $asset['public_id'], 'url' => $asset['secure_url'], 'type' => 'video'];
+        }
+
+        return $libraryAssets;
+    }
+
+    private function groupAssetsByNormalizedKey(array $libraryAssets): array
+    {
+        $groups = [];
+        foreach ($libraryAssets as $asset) {
+            $key = $this->normalizeAssetKey((string) ($asset['publicId'] ?? ''));
+            $groups[$key][] = $asset;
+        }
+
+        return $groups;
+    }
+
+    /**
+     * @param Collection<int, Product> $existingProducts
+     */
+    private function matchExistingProductsWithAssetGroups(Collection $existingProducts, array $groups): array
+    {
+        $claimedGroupKeys = [];
+        $productMatches = [];
+
+        foreach ($existingProducts as $product) {
+            $currentMedia = json_decode($product->images ?: '[]', true) ?: [];
+            $groupKeys = array_unique(array_filter(
+                array_map(fn ($url) => $this->getMediaReferenceKey((string) $url), $currentMedia),
+                fn ($key) => isset($groups[$key])
+            ));
+
+            $matchedMedia = [];
+            foreach ($groupKeys as $gk) {
+                foreach (($groups[$gk] ?? []) as $m) {
+                    $matchedMedia[] = $m;
+                }
+            }
+
+            $nextMediaUrls = $this->getUniqueMediaUrls($matchedMedia);
+            $currentMediaUrls = array_values(array_unique($currentMedia));
+
+            foreach ($groupKeys as $gk) {
+                $claimedGroupKeys[$gk] = true;
+            }
+
+            if (count($groupKeys) > 0) {
+                $productMatches[] = [
+                    'id' => $product->id,
+                    'slug' => $product->slug,
+                    'groupKeys' => $groupKeys,
+                    'currentMediaUrls' => $currentMediaUrls,
+                    'nextMediaUrls' => $nextMediaUrls,
+                    'needsUpdate' => count($nextMediaUrls) > 0 && json_encode($currentMediaUrls) !== json_encode($nextMediaUrls),
+                ];
+            }
+        }
+
+        $relinkableProducts = array_filter($productMatches, fn ($p) => $p['needsUpdate']);
+        $alreadyLinkedProducts = array_filter($productMatches, fn ($p) => ! $p['needsUpdate']);
+
+        $existingMediaUrls = [];
+        foreach ($productMatches as $pm) {
+            foreach ($pm['nextMediaUrls'] as $url) {
+                $existingMediaUrls[$url] = true;
+            }
+        }
+
+        return [
+            'productMatches' => $productMatches,
+            'claimedGroupKeys' => $claimedGroupKeys,
+            'existingMediaUrls' => $existingMediaUrls,
+            'relinkableProducts' => $relinkableProducts,
+            'alreadyLinkedProducts' => $alreadyLinkedProducts,
+        ];
+    }
+
+    /**
+     * @param Collection<int, Category> $categories
+     */
+    private function buildImportableGroups(
+        array $groups,
+        array $claimedGroupKeys,
+        array $existingMediaUrls,
+        array $categoryIdByName,
+        Collection $categories,
+        array &$existingSlugs
+    ): array {
+        $importableGroups = [];
+        $defaultCategoryId = $categories->first()?->id;
+
+        foreach ($groups as $normalizedKey => $media) {
+            $uniqueMedia = [];
+            $seenUrls = [];
+            foreach ($media as $asset) {
+                if (! isset($seenUrls[$asset['url']])) {
+                    $seenUrls[$asset['url']] = true;
+                    $uniqueMedia[] = $asset;
+                }
+            }
+
+            $alreadyLinked = isset($claimedGroupKeys[$normalizedKey])
+                || count(array_filter($uniqueMedia, fn ($a) => ! isset($existingMediaUrls[$a['url']]))) === 0;
+            if ($alreadyLinked) {
+                continue;
+            }
+
+            $categoryName = $this->inferCategoryName((string) $normalizedKey);
+            $categoryId = $categoryIdByName[$categoryName] ?? $defaultCategoryId;
+            $assetBaseName = $this->getAssetBaseName((string) ($uniqueMedia[0]['publicId'] ?? $normalizedKey));
+            $name = $this->buildDisplayName($assetBaseName);
+            if (! $name || ! $categoryId) {
+                continue;
+            }
+
+            $slug = Str::slug($name) ?: "product-{$normalizedKey}";
+            $suffix = 1;
+            while (isset($existingSlugs[$slug])) {
+                $slug = (Str::slug($name) ?: 'product') . "-{$suffix}";
+                $suffix++;
+            }
+            $existingSlugs[$slug] = true;
+
+            $importableGroups[] = [
+                'normalizedKey' => $normalizedKey,
+                'name' => $name,
+                'slug' => $slug,
+                'categoryName' => $categoryName,
+                'categoryId' => $categoryId,
+                'media' => $uniqueMedia,
+            ];
+        }
+
+        return $importableGroups;
+    }
+
+    private function relinkProductsToCloudinaryMedia(array $relinkableProducts): void
+    {
+        foreach ($relinkableProducts as $pm) {
+            Product::where('id', $pm['id'])->update([
+                'images' => json_encode($pm['nextMediaUrls']),
+            ]);
+        }
+    }
+
+    private function createProductsFromImportGroups(array $importableGroups, float $defaultPrice, int $defaultStock, string $status): array
+    {
+        $createdProducts = [];
+
+        foreach ($importableGroups as $group) {
+            $created = Product::create([
+                'public_id' => (string) Str::uuid(),
+                'name' => $group['name'],
+                'slug' => $group['slug'],
+                'description' => $group['name'] . ' imported from Cloudinary media library.',
+                'price' => $defaultPrice,
+                'stock' => $defaultStock,
+                'status' => $status,
+                'category_id' => $group['categoryId'],
+                'images' => json_encode(array_column($group['media'], 'url')),
+            ]);
+
+            $createdProducts[] = [
+                'id' => $created->id,
+                'slug' => $created->slug,
+                'name' => $created->name,
+                'mediaCount' => count($group['media']),
+            ];
+        }
+
+        return $createdProducts;
+    }
 
     private function getAssetBaseName(string $publicId): string
     {
@@ -1417,7 +1533,7 @@ class LegacyBridgeController extends Controller
             if ($coupon->max_uses && $coupon->used_count >= $coupon->max_uses) {
                 return response()->json(['valid' => false, 'error' => 'This coupon has reached its usage limit']);
             }
-            if ($coupon->valid_until && now()->gt($coupon->valid_until->endOfDay())) {
+            if ($coupon->valid_until && now()->gt(\Illuminate\Support\Carbon::parse($coupon->valid_until)->endOfDay())) {
                 return response()->json(['valid' => false, 'error' => 'This coupon has expired']);
             }
             if ($subtotal < $coupon->min_order) {
