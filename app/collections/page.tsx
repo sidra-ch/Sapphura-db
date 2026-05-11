@@ -30,6 +30,53 @@ interface Product {
   stock?: number;
 }
 
+const fallbackProducts: Product[] = [
+  {
+    id: 'fallback-jewelry',
+    name: 'Signature Jewelry',
+    slug: 'collections-jewelry',
+    price: 12990,
+    images: ['https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635070/neckles-2_ifgegk.jpg'],
+    image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635070/neckles-2_ifgegk.jpg',
+    categoryId: 1,
+    category: 'Jewelry',
+    stock: 12,
+  },
+  {
+    id: 'fallback-abaya',
+    name: 'Premium Abaya',
+    slug: 'collections-abaya',
+    price: 11490,
+    images: ['https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635050/clothes_collection-4_leuaww.jpg'],
+    image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635050/clothes_collection-4_leuaww.jpg',
+    categoryId: 2,
+    category: 'Abaya',
+    stock: 10,
+  },
+  {
+    id: 'fallback-clothing',
+    name: 'Luxury Clothing Edit',
+    slug: 'collections-clothing',
+    price: 9990,
+    images: ['https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635133/suit-33_oy1nkf.jpg'],
+    image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635133/suit-33_oy1nkf.jpg',
+    categoryId: 4,
+    category: 'Clothing',
+    stock: 16,
+  },
+  {
+    id: 'fallback-makeup',
+    name: 'Beauty Essentials',
+    slug: 'collections-makeup',
+    price: 6490,
+    images: ['https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635068/make-up_dfzsza.jpg'],
+    image: 'https://res.cloudinary.com/dwmxdyvd2/image/upload/v1773635068/make-up_dfzsza.jpg',
+    categoryId: 5,
+    category: 'Makeup',
+    stock: 18,
+  },
+];
+
 function CollectionsContent() {
   const searchParams = useSearchParams();
   const categoryParam = searchParams?.get('category') || '';
@@ -98,24 +145,24 @@ function CollectionsContent() {
 
         if (!isMounted) return;
 
-        setProducts(
-          Array.isArray(data.products)
-            ? data.products.map((product: Product) => ({
-                id: String(product.id),
-                name: product.name,
-                slug: product.slug,
-                price: Number(product.price),
-                images: Array.isArray(product.images) ? product.images : [],
-                image: product.image,
-                categoryId: Number(product.categoryId),
-                category: product.category,
-                stock: product.stock,
-              }))
-            : []
-        );
+        const mappedProducts = Array.isArray(data.products)
+          ? data.products.map((product: Product) => ({
+              id: String(product.id),
+              name: product.name,
+              slug: product.slug,
+              price: Number(product.price),
+              images: Array.isArray(product.images) ? product.images : [],
+              image: product.image,
+              categoryId: Number(product.categoryId),
+              category: product.category,
+              stock: product.stock,
+            }))
+          : [];
+
+        setProducts(mappedProducts.length ? mappedProducts : fallbackProducts);
       } catch {
         if (isMounted) {
-          setProducts([]);
+          setProducts(fallbackProducts);
         }
       } finally {
         if (isMounted) {

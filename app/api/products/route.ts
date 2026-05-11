@@ -5,6 +5,17 @@ import { requireClerkRole } from '../../../lib/clerk-rbac';
 
 export const dynamic = 'force-dynamic';
 
+function isRecoverableProductsReadError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+  return (
+    message.includes('client password must be a string') ||
+    message.includes('the server does not support ssl connections') ||
+    message.includes('can\'t reach database server') ||
+    message.includes('authentication failed') ||
+    message.includes('sasl')
+  );
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -76,6 +87,12 @@ export async function GET(req: NextRequest) {
       }),
     });
   } catch (error) {
+    if (isRecoverableProductsReadError(error)) {
+      console.warn('GET /api/products degraded mode:', error instanceof Error ? error.message : String(error));
+      return NextResponse.json({ products: [], degraded: true }, { status: 200 });
+    }
+
+    console.error('GET /api/products failed', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to fetch products' },
       { status: 500 }

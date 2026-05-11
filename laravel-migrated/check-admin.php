@@ -4,12 +4,12 @@ require 'vendor/autoload.php';
 $app = require 'bootstrap/app.php';
 $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 
-$u = App\Models\User::where('email', 'sapphura@gmail.com')->first();
+$u = App\Models\User::where('email', 'admin@sapphura.com')->first();
 if ($u) {
     echo "Found: {$u->email}\n";
     echo "Role: {$u->role}\n";
     echo "Name: {$u->name}\n";
-    echo "Pass '123456' matches: " . (Illuminate\Support\Facades\Hash::check('123456', $u->password) ? 'YES' : 'NO') . "\n";
+    echo "Pass 'admin@123' matches: " . (Illuminate\Support\Facades\Hash::check('admin@123', $u->password) ? 'YES' : 'NO') . "\n";
 } else {
     echo "User NOT FOUND in database\n";
     echo "\nAll users:\n";

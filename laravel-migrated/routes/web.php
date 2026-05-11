@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdminProductImportController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\StoreController;
@@ -45,6 +46,10 @@ Route::get('/exchange-policy', [PageController::class, 'exchangePolicy'])->name(
 Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/products', [AdminController::class, 'products'])->name('admin.products');
+    Route::get('/bulk-import-products', [AdminProductImportController::class, 'showForm'])->name('admin.products.import.form');
+    Route::post('/bulk-import-products/preview', [AdminProductImportController::class, 'preview'])->name('admin.products.import.preview');
+    Route::post('/bulk-import-products/commit', [AdminProductImportController::class, 'commit'])->name('admin.products.import.commit');
+    Route::get('/bulk-import-products/template', [AdminProductImportController::class, 'downloadTemplate'])->name('admin.products.import.template');
     Route::get('/products/create', [AdminController::class, 'createProduct'])->name('admin.products.create');
     Route::post('/products', [AdminController::class, 'storeProduct'])->name('admin.products.store');
     Route::get('/products/{id}/edit', [AdminController::class, 'editProduct'])->name('admin.products.edit');

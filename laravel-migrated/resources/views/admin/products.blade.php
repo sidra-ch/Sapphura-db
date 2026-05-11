@@ -4,7 +4,10 @@
 @section('content')
 <div class="flex items-center justify-between mb-6">
     <h1 class="text-2xl font-bold">Products</h1>
-    <a href="/admin/products/create" class="px-5 py-2.5 bg-gradient-to-r from-gold to-gold-light text-ink font-bold rounded-lg text-sm tracking-wider uppercase">+ Add Product</a>
+    <div class="flex items-center gap-2">
+        <a href="/admin/bulk-import-products" class="px-4 py-2.5 border border-gold/30 text-gold rounded-lg text-sm font-semibold hover:bg-gold/10 transition">Bulk Import</a>
+        <a href="/admin/products/create" class="px-5 py-2.5 bg-gradient-to-r from-gold to-gold-light text-ink font-bold rounded-lg text-sm tracking-wider uppercase">+ Add Product</a>
+    </div>
 </div>
 
 {{-- Search & Filters --}}
