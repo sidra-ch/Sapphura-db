@@ -18,7 +18,7 @@
                         </div>
                     @endif
                     <div class="p-5">
-                        <p class="text-xs text-gold mb-2">{{ $blog->created_at->format('d M Y') }}</p>
+                        <p class="text-xs text-gold mb-2">{{ optional($blog->created_at)->format('d M Y') ?: '—' }}</p>
                         <h2 class="font-semibold mb-2 group-hover:text-gold transition">{{ $blog->title }}</h2>
                         <p class="text-cream/50 text-sm line-clamp-3">{{ $blog->excerpt ?? Str::limit(strip_tags($blog->content), 120) }}</p>
                     </div>

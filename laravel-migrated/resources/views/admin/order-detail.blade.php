@@ -122,7 +122,7 @@
                             </p>
                             @if($history->note) <p class="text-xs text-cream/50 mt-0.5">{{ $history->note }}</p> @endif
                             <p class="text-xs text-cream/30 mt-0.5">
-                                {{ $history->created_at->format('d M Y, H:i') }}
+                                {{ optional($history->created_at)->format('d M Y, H:i') ?: '—' }}
                                 @if($history->changedByUser) · by {{ $history->changedByUser->name ?? 'Admin' }} @endif
                             </p>
                         </div>
@@ -132,7 +132,7 @@
                         <div class="w-3 h-3 rounded-full bg-gold mt-0.5"></div>
                         <div>
                             <p class="text-sm font-medium">Order placed</p>
-                            <p class="text-xs text-cream/30">{{ $order->created_at->format('d M Y, H:i') }}</p>
+                            <p class="text-xs text-cream/30">{{ optional($order->created_at)->format('d M Y, H:i') ?: '—' }}</p>
                         </div>
                     </div>
                 @endforelse
@@ -230,7 +230,7 @@
             </div>
             <div class="flex justify-between text-cream/60">
                 <span>Order Date</span>
-                <span>{{ $order->created_at->format('d M Y, H:i') }}</span>
+                <span>{{ optional($order->created_at)->format('d M Y, H:i') ?: '—' }}</span>
             </div>
         </div>
     </div>

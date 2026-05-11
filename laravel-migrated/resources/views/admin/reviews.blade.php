@@ -38,7 +38,7 @@
                                 {{ ($review->is_approved ?? false) ? 'Approved' : 'Pending' }}
                             </span>
                         </td>
-                        <td class="p-4 text-cream/50">{{ $review->created_at->format('d M Y') }}</td>
+                        <td class="p-4 text-cream/50">{{ optional($review->created_at)->format('d M Y') ?: '—' }}</td>
                         <td class="p-4">
                             <div class="flex gap-2">
                                 <form method="POST" action="/admin/reviews/{{ $review->id }}/toggle">

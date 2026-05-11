@@ -91,7 +91,7 @@
                                 <span class="text-cream/20 text-xs">—</span>
                             @endif
                         </td>
-                        <td class="p-4 text-cream/50">{{ $order->created_at->format('d M Y') }}</td>
+                        <td class="p-4 text-cream/50">{{ optional($order->created_at)->format('d M Y') ?: '—' }}</td>
                         <td class="p-4">
                             <a href="/admin/orders/{{ $order->id }}" class="px-3 py-1 border border-gold/30 text-gold rounded text-xs hover:bg-gold/10 transition">View</a>
                         </td>

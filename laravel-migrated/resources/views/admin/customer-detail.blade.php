@@ -27,7 +27,7 @@
             </div>
             <div class="flex justify-between">
                 <span class="text-cream/50">Joined</span>
-                <span>{{ $customer->created_at->format('d M Y') }}</span>
+                <span>{{ optional($customer->created_at)->format('d M Y') ?: '—' }}</span>
             </div>
             <div class="flex justify-between">
                 <span class="text-cream/50">Role</span>
@@ -88,7 +88,7 @@
                         @endphp
                         <tr class="hover:bg-white/5 transition">
                             <td class="p-4 font-mono text-gold">#{{ $order->id }}</td>
-                            <td class="p-4 text-cream/60">{{ $order->created_at->format('d M Y, h:i A') }}</td>
+                            <td class="p-4 text-cream/60">{{ optional($order->created_at)->format('d M Y, h:i A') ?: '—' }}</td>
                             <td class="p-4">
                                 @php $items = $order->items ?? []; @endphp
                                 {{ count($items) }} item{{ count($items) !== 1 ? 's' : '' }}
