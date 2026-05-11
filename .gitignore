@@ -42,3 +42,20 @@ yarn-error.log*
 next-env.d.ts
 
 node_modules.zip
+
+# local archives and exports
+*.zip
+*.sql
+*.csv
+
+# local deployment helpers
+error-page.html
+migrate-runner.php
+laravel-migrated/check-admin.php
+laravel-migrated/check-data.php
+laravel-migrated/deploy-helper.php
+laravel-migrated/public/migrate-runner.php
+laravel-migrated/public/run-setup.php
+laravel-migrated/database_export.sql
+laravel-migrated/search_results.csv
+laravel-migrated/package-lock.json

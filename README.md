@@ -1,5 +1,12 @@
 # Sapphura
 
+## Deployment Docs
+
+1. [DEPLOYMENT_STANDARD.md](DEPLOYMENT_STANDARD.md)
+2. [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md)
+3. [CPANEL_DEPLOYMENT.md](CPANEL_DEPLOYMENT.md)
+4. [CPANEL_ENV_VARS.md](CPANEL_ENV_VARS.md)
+
 ## Local Setup
 
 1. Install dependencies:
