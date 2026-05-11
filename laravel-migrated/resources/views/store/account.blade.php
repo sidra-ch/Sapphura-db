@@ -21,7 +21,7 @@
             <div class="border-t border-gold/10 pt-4 space-y-2 text-sm">
                 <div class="flex justify-between text-cream/60">
                     <span>Member since</span>
-                    <span>{{ $user->created_at->format('M Y') }}</span>
+                    <span>{{ optional($user->created_at)->format('M Y') ?: 'N/A' }}</span>
                 </div>
                 <div class="flex justify-between text-cream/60">
                     <span>Total orders</span>
@@ -49,7 +49,7 @@
                                     <p class="font-mono text-sm text-gold">#{{ $order->id }}</p>
                                 </div>
                                 <div class="text-right">
-                                    <span class="text-xs text-cream/40">{{ $order->created_at->format('d M Y') }}</span>
+                                    <span class="text-xs text-cream/40">{{ optional($order->created_at)->format('d M Y') ?: 'N/A' }}</span>
                                     <p class="text-sm font-semibold">Rs. {{ number_format($order->total_amount ?? $order->total ?? 0) }}</p>
                                 </div>
                             </div>
