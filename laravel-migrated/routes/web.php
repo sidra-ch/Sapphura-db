@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdminMediaController;
 use App\Http\Controllers\AdminProductImportController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PageController;
@@ -61,7 +62,9 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::patch('/orders/{id}/tracking', [AdminController::class, 'updateOrderTracking'])->name('admin.orders.tracking');
     Route::patch('/orders/{id}/notes', [AdminController::class, 'updateOrderNotes'])->name('admin.orders.notes');
     Route::get('/categories', [AdminController::class, 'categories'])->name('admin.categories');
+    Route::get('/categories/create', fn() => redirect()->route('admin.categories'))->name('admin.categories.create');
     Route::post('/categories', [AdminController::class, 'storeCategory'])->name('admin.categories.store');
+    Route::put('/categories/{id}/rename', [AdminController::class, 'updateCategory'])->name('admin.categories.rename');
     Route::delete('/categories/{id}', [AdminController::class, 'deleteCategory'])->name('admin.categories.delete');
     Route::get('/customers', [AdminController::class, 'customers'])->name('admin.customers');
     Route::get('/customers/{id}', [AdminController::class, 'showCustomer'])->name('admin.customers.show');
@@ -75,4 +78,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::put('/coupons/{id}', [AdminController::class, 'updateCoupon'])->name('admin.coupons.update');
     Route::delete('/coupons/{id}', [AdminController::class, 'deleteCoupon'])->name('admin.coupons.delete');
     Route::get('/settings', [AdminController::class, 'settings'])->name('admin.settings');
+    Route::get('/media-library', [AdminMediaController::class, 'index'])->name('admin.media.library');
+    Route::post('/media-library/upload', [AdminMediaController::class, 'upload'])->name('admin.media.upload');
+    Route::delete('/media-library/{id}', [AdminMediaController::class, 'destroy'])->name('admin.media.destroy');
 });

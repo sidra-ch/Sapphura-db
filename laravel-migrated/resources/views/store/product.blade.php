@@ -69,6 +69,35 @@
 
             <p class="text-cream/60 leading-relaxed mb-6">{{ $product->description }}</p>
 
+            {{-- Size Chart (Stitch Suits only) --}}
+            @if(($product->category->name ?? '') === 'Stitch Suits')
+            <div class="mb-6" x-data="{ open: false }">
+                <button type="button" @click="open = !open"
+                        class="flex items-center gap-2 text-xs uppercase tracking-widest font-bold transition mb-3"
+                        style="color:rgba(212,175,55,0.85);">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 7h16a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V8a1 1 0 011-1z"/>
+                    </svg>
+                    <span x-text="open ? 'Hide Size Chart ▲' : 'View Size Chart ▼'">View Size Chart ▼</span>
+                </button>
+                <div x-show="open" x-transition class="rounded-xl overflow-hidden" style="border:1px solid rgba(212,175,55,0.15);">
+                    <div class="grid grid-cols-1 sm:grid-cols-2">
+                        <div class="p-3 border-b sm:border-b-0 sm:border-r" style="border-color:rgba(212,175,55,0.12);">
+                            <p class="text-[10px] uppercase tracking-widest mb-2" style="color:rgba(212,175,55,0.5);">Shirt / Kameez</p>
+                            <img src="/stitch suit/stitch-size.jpeg" alt="Shirt Size Chart" class="w-full rounded-lg">
+                        </div>
+                        <div class="p-3">
+                            <p class="text-[10px] uppercase tracking-widest mb-2" style="color:rgba(212,175,55,0.5);">Trouser</p>
+                            <img src="/stitch suit/trouser-size.jpeg" alt="Trouser Size Chart" class="w-full rounded-lg">
+                        </div>
+                    </div>
+                    <div class="px-3 py-2" style="background:rgba(0,0,0,0.3);">
+                        <p class="text-[10px]" style="color:rgba(255,247,239,0.3);">Measurements in inches. For custom fit, add note at checkout.</p>
+                    </div>
+                </div>
+            </div>
+            @endif
+
             {{-- Variants --}}
             @if($product->variants->count())
                 <div class="mb-6">

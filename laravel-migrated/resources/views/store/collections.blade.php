@@ -1,12 +1,93 @@
 @extends('layouts.app')
-@section('title', 'Collections – Sapphura')
+@section('title', request('category') ? request('category') . ' – Sapphura' : 'Collections – Sapphura')
 
 @section('content')
 <div class="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+
+    {{-- ── Stitch Suits Hero Banner (only when category=Stitch Suits) ── --}}
+    @if(request('category') === 'Stitch Suits')
+    <div class="relative overflow-hidden rounded-2xl mb-8"
+         style="background:#07090b; border:1px solid rgba(212,175,55,0.15);">
+        {{-- Atmospheric glow --}}
+        <div class="pointer-events-none absolute inset-0"
+             style="background: radial-gradient(ellipse 60% 50% at 80% 50%, rgba(212,175,55,0.07) 0%, transparent 70%);"></div>
+
+        <div class="relative z-10 flex flex-col md:flex-row items-center gap-6 p-6 md:p-8">
+            {{-- Left: heading --}}
+            <div class="flex-1">
+                <p class="text-[9px] uppercase tracking-[0.5em] mb-3 flex items-center gap-2"
+                   style="color:rgba(212,175,55,0.5);">
+                    <span class="inline-block h-px w-5" style="background:rgba(212,175,55,0.35);"></span>
+                    Stitched Collection · 2026
+                </p>
+                <h1 class="font-light leading-[0.9]"
+                    style="font-family:Georgia,serif; font-size:clamp(2rem,4.5vw,3.8rem); color:#fff7ef;">
+                    Stitch Suits<br>
+                    <em style="font-style:italic; -webkit-text-stroke:1px rgba(212,175,55,0.55); color:transparent;">Edit.</em>
+                </h1>
+                <p class="mt-3 text-sm" style="color:rgba(255,247,239,0.38); max-width:340px;">
+                    Premium stitched suits — select any design, choose your size, and order directly.
+                </p>
+                {{-- Size chart toggle --}}
+                <button type="button"
+                        onclick="document.getElementById('size-chart').classList.toggle('hidden')"
+                        class="mt-4 inline-flex items-center gap-2 rounded-full px-5 py-2 text-[10px] uppercase tracking-[0.28em] transition-all"
+                        style="border:1px solid rgba(212,175,55,0.4); color:rgba(212,175,55,0.85); background:rgba(212,175,55,0.06);"
+                        onmouseover="this.style.background='rgba(212,175,55,0.15)';"
+                        onmouseout="this.style.background='rgba(212,175,55,0.06)';">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 7h16a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V8a1 1 0 011-1z"/>
+                    </svg>
+                    View Size Chart
+                </button>
+            </div>
+            {{-- Right: mini size chart thumbnails --}}
+            <div class="flex gap-3 flex-shrink-0">
+                <div class="relative overflow-hidden rounded-xl cursor-pointer"
+                     style="border:1px solid rgba(212,175,55,0.15);"
+                     onclick="document.getElementById('size-chart').classList.toggle('hidden')">
+                    <img src="/stitch suit/stitch-size.jpeg" alt="Shirt Size Chart"
+                         class="w-24 h-28 md:w-28 md:h-32 object-cover opacity-70 hover:opacity-100 transition-opacity">
+                    <div class="absolute bottom-0 left-0 right-0 py-1 text-center text-[8px] uppercase tracking-widest"
+                         style="background:rgba(0,0,0,0.65); color:rgba(212,175,55,0.7);">Shirt</div>
+                </div>
+                <div class="relative overflow-hidden rounded-xl cursor-pointer"
+                     style="border:1px solid rgba(212,175,55,0.15);"
+                     onclick="document.getElementById('size-chart').classList.toggle('hidden')">
+                    <img src="/stitch suit/trouser-size.jpeg" alt="Trouser Size Chart"
+                         class="w-24 h-28 md:w-28 md:h-32 object-cover opacity-70 hover:opacity-100 transition-opacity">
+                    <div class="absolute bottom-0 left-0 right-0 py-1 text-center text-[8px] uppercase tracking-widest"
+                         style="background:rgba(0,0,0,0.65); color:rgba(212,175,55,0.7);">Trouser</div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Expandable size chart --}}
+        <div id="size-chart" class="hidden border-t px-6 pb-6 pt-4" style="border-color:rgba(212,175,55,0.1);">
+            <p class="text-[10px] uppercase tracking-[0.38em] mb-4" style="color:rgba(212,175,55,0.5);">Size Reference Charts</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-xs text-cream/50 mb-2">Shirt / Kameez Size Chart</p>
+                    <img src="/stitch suit/stitch-size.jpeg" alt="Shirt Size Chart"
+                         class="w-full rounded-xl" style="border:1px solid rgba(212,175,55,0.12);">
+                </div>
+                <div>
+                    <p class="text-xs text-cream/50 mb-2">Trouser Size Chart</p>
+                    <img src="/stitch suit/trouser-size.jpeg" alt="Trouser Size Chart"
+                         class="w-full rounded-xl" style="border:1px solid rgba(212,175,55,0.12);">
+                </div>
+            </div>
+            <p class="text-[10px] text-cream/30 mt-3">
+                💡 Measure in inches. If between sizes, order the larger size. For custom stitching, add size note in order comments.
+            </p>
+        </div>
+    </div>
+    @else
     <div class="text-center mb-10">
         <h1 class="text-3xl md:text-4xl font-bold">Our Collections</h1>
         <p class="text-cream/50 mt-2">Discover luxury pieces crafted for you</p>
     </div>
+    @endif
 
     <div class="flex flex-col lg:flex-row gap-8">
         {{-- Filters Sidebar --}}

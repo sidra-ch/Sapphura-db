@@ -319,11 +319,21 @@ class AdminController extends Controller
     public function deleteCategory(int $id)
     {
         $category = Category::findOrFail($id);
-        if ($category->products()->exists()) {
-            return back()->with('error', 'Cannot delete category with products.');
-        }
+        // Move products to Uncategorized (category_id = null) before deleting
+        $category->products()->update(['category_id' => null]);
         $category->delete();
-        return back()->with('success', 'Category deleted.');
+        return back()->with('success', 'Category deleted. Its products are now uncategorized.');
+    }
+
+    public function updateCategory(Request $request, int $id)
+    {
+        $request->validate(['name' => 'required|string|max:255|unique:categories,name,' . $id]);
+        $category = Category::findOrFail($id);
+        $category->update([
+            'name' => $request->input('name'),
+            'slug' => Str::slug($request->input('name')),
+        ]);
+        return back()->with('success', 'Category renamed to "' . $request->input('name') . '".');
     }
 
     // Customers

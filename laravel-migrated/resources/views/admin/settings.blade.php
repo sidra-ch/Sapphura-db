@@ -118,7 +118,7 @@
     <h2 class="text-lg font-bold mb-4">Quick Actions</h2>
     <div class="flex flex-wrap gap-3">
         <a href="/admin/products/create" class="px-4 py-2 bg-gold/10 text-gold rounded-lg text-sm hover:bg-gold/20 transition">+ Add Product</a>
-        <a href="/admin/categories/create" class="px-4 py-2 bg-gold/10 text-gold rounded-lg text-sm hover:bg-gold/20 transition">+ Add Category</a>
+        <a href="/admin/categories" class="px-4 py-2 bg-gold/10 text-gold rounded-lg text-sm hover:bg-gold/20 transition">+ Add Category</a>
         <a href="/admin/coupons/create" class="px-4 py-2 bg-gold/10 text-gold rounded-lg text-sm hover:bg-gold/20 transition">+ Create Coupon</a>
         <a href="/admin/orders" class="px-4 py-2 bg-gold/10 text-gold rounded-lg text-sm hover:bg-gold/20 transition">View Orders</a>
     </div>
