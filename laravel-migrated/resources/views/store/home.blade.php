@@ -1,5 +1,5 @@
-﻿@extends('layouts.app')
-@section('title', 'Sapphura Ã¢â‚¬â€œ Luxury Fashion & Jewelry')
+@extends('layouts.app')
+@section('title', 'Sapphura - Luxury Fashion & Jewelry')
 
 @section('content')
 
@@ -206,19 +206,19 @@
 <section class="border-b border-gold/[0.08] bg-ink py-14 md:py-16">
     <div class="section-shell">
         <div class="mb-10 text-center">
-            <p class="text-[10px] uppercase tracking-[0.38em] text-sand md:text-[11px]">The Sapphura Framework</p>
-            <h2 class="mt-2 text-2xl font-semibold text-cream md:text-3xl">Built On Calm Luxury</h2>
+            <p class="text-[10px] uppercase tracking-[0.38em] text-sand md:text-[11px]">Why Choose Sapphura</p>
+            <h2 class="mt-2 text-2xl font-semibold text-cream md:text-3xl">Our Promise to You</h2>
         </div>
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             @foreach([
-                ['icon' => 'Ã¢â„¢â€º', 'title' => 'Navy & Gold Identity', 'desc' => 'A refined color system that signals trust, elegance, and premium quality across every touchpoint.'],
-                ['icon' => 'Ã¢Å“Â¦', 'title' => 'Signature Aesthetics', 'desc' => 'Subtle gradients, gold accents, and quiet details that enhance product focus without distraction.'],
-                ['icon' => 'Ã¢Å¡Â¡', 'title' => 'Premium Delivery', 'desc' => 'Nationwide shipping with careful packaging designed to make unboxing feel like unwrapping a gift.'],
-                ['icon' => 'Ã°Å¸â€ºÂ¡', 'title' => 'Trusted Quality', 'desc' => 'Every piece is quality-checked and backed by a satisfaction guarantee with easy exchange support.'],
+                ['icon' => '&#9812;', 'title' => 'Navy & Gold Identity', 'desc' => 'A refined color system that signals trust, elegance, and premium quality across every touchpoint.'],
+                ['icon' => '&#10022;', 'title' => 'Signature Aesthetics', 'desc' => 'Subtle gradients, gold accents, and quiet details that enhance product focus without distraction.'],
+                ['icon' => '&#128666;', 'title' => 'Premium Delivery', 'desc' => 'Nationwide shipping with careful packaging designed to make unboxing feel like unwrapping a gift.'],
+                ['icon' => '&#10003;', 'title' => 'Trusted Quality', 'desc' => 'Every piece is quality-checked and backed by a satisfaction guarantee with easy exchange support.'],
             ] as $feature)
                 <div class="luxury-card group rounded-2xl p-6 transition-all hover:-translate-y-1.5">
                     <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-gold/20 bg-gold/[0.08] text-xl text-gold">
-                        {{ $feature['icon'] }}
+                        {!! $feature['icon'] !!}
                     </div>
                     <h3 class="mb-2 text-sm font-semibold uppercase tracking-[0.14em] text-cream">{{ $feature['title'] }}</h3>
                     <p class="text-xs leading-relaxed text-cream/60">{{ $feature['desc'] }}</p>
