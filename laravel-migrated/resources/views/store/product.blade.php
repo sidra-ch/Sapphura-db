@@ -1,5 +1,5 @@
-@extends('layouts.app')
-@section('title', $product->name . ' – Sapphura')
+﻿@extends('layouts.app')
+@section('title', $product->name . ' â€“ Sapphura')
 
 @section('content')
 @php $images = json_decode($product->images ?: '[]', true); @endphp
@@ -78,17 +78,17 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 7h16a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V8a1 1 0 011-1z"/>
                     </svg>
-                    <span x-text="open ? 'Hide Size Chart ▲' : 'View Size Chart ▼'">View Size Chart ▼</span>
+                    <span x-text="open ? 'Hide Size Chart â–²' : 'View Size Chart â–¼'">View Size Chart â–¼</span>
                 </button>
                 <div x-show="open" x-transition class="rounded-xl overflow-hidden" style="border:1px solid rgba(212,175,55,0.15);">
                     <div class="grid grid-cols-1 sm:grid-cols-2">
                         <div class="p-3 border-b sm:border-b-0 sm:border-r" style="border-color:rgba(212,175,55,0.12);">
                             <p class="text-[10px] uppercase tracking-widest mb-2" style="color:rgba(212,175,55,0.5);">Shirt / Kameez</p>
-                            <img src="/stitch suit/stitch-size.jpeg" alt="Shirt Size Chart" class="w-full rounded-lg">
+                            <img src="/stitch%20suit/stitch-size.jpeg" alt="Shirt Size Chart" class="w-full rounded-lg">
                         </div>
                         <div class="p-3">
                             <p class="text-[10px] uppercase tracking-widest mb-2" style="color:rgba(212,175,55,0.5);">Trouser</p>
-                            <img src="/stitch suit/trouser-size.jpeg" alt="Trouser Size Chart" class="w-full rounded-lg">
+                            <img src="/stitch%20suit/trouser-size.jpeg" alt="Trouser Size Chart" class="w-full rounded-lg">
                         </div>
                     </div>
                     <div class="px-3 py-2" style="background:rgba(0,0,0,0.3);">
@@ -119,7 +119,7 @@
             <div class="mb-6">
                 <h4 class="text-xs uppercase tracking-widest text-gold font-bold mb-3">Quantity</h4>
                 <div class="flex items-center gap-3">
-                    <button @click="qty = Math.max(1, qty - 1)" class="w-10 h-10 rounded-lg border border-gold/30 flex items-center justify-center hover:bg-gold/10 transition text-lg">−</button>
+                    <button @click="qty = Math.max(1, qty - 1)" class="w-10 h-10 rounded-lg border border-gold/30 flex items-center justify-center hover:bg-gold/10 transition text-lg">âˆ’</button>
                     <span class="w-12 text-center font-bold" x-text="qty"></span>
                     <button @click="qty++" class="w-10 h-10 rounded-lg border border-gold/30 flex items-center justify-center hover:bg-gold/10 transition text-lg">+</button>
                 </div>
@@ -153,9 +153,9 @@
 
             {{-- Trust signals --}}
             <div class="glass rounded-lg p-4 flex items-center justify-center gap-6 text-xs text-cream/50">
-                <span>✦ Free Shipping</span>
-                <span>✦ Easy Returns</span>
-                <span>✦ 3-5 Days Delivery</span>
+                <span>âœ¦ Free Shipping</span>
+                <span>âœ¦ Easy Returns</span>
+                <span>âœ¦ 3-5 Days Delivery</span>
             </div>
         </div>
     </div>
@@ -197,3 +197,4 @@
     @endif
 </div>
 @endsection
+

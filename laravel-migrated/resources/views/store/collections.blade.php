@@ -1,10 +1,10 @@
-@extends('layouts.app')
-@section('title', request('category') ? request('category') . ' – Sapphura' : 'Collections – Sapphura')
+﻿@extends('layouts.app')
+@section('title', request('category') ? request('category') . ' â€“ Sapphura' : 'Collections â€“ Sapphura')
 
 @section('content')
 <div class="max-w-7xl mx-auto px-4 sm:px-6 py-10">
 
-    {{-- ── Stitch Suits Hero Banner (only when category=Stitch Suits) ── --}}
+    {{-- â”€â”€ Stitch Suits Hero Banner (only when category=Stitch Suits) â”€â”€ --}}
     @if(request('category') === 'Stitch Suits')
     <div class="relative overflow-hidden rounded-2xl mb-8"
          style="background:#07090b; border:1px solid rgba(212,175,55,0.15);">
@@ -18,7 +18,7 @@
                 <p class="text-[9px] uppercase tracking-[0.5em] mb-3 flex items-center gap-2"
                    style="color:rgba(212,175,55,0.5);">
                     <span class="inline-block h-px w-5" style="background:rgba(212,175,55,0.35);"></span>
-                    Stitched Collection · 2026
+                    Stitched Collection Â· 2026
                 </p>
                 <h1 class="font-light leading-[0.9]"
                     style="font-family:Georgia,serif; font-size:clamp(2rem,4.5vw,3.8rem); color:#fff7ef;">
@@ -26,7 +26,7 @@
                     <em style="font-style:italic; -webkit-text-stroke:1px rgba(212,175,55,0.55); color:transparent;">Edit.</em>
                 </h1>
                 <p class="mt-3 text-sm" style="color:rgba(255,247,239,0.38); max-width:340px;">
-                    Premium stitched suits — select any design, choose your size, and order directly.
+                    Premium stitched suits â€” select any design, choose your size, and order directly.
                 </p>
                 {{-- Size chart toggle --}}
                 <button type="button"
@@ -46,7 +46,7 @@
                 <div class="relative overflow-hidden rounded-xl cursor-pointer"
                      style="border:1px solid rgba(212,175,55,0.15);"
                      onclick="document.getElementById('size-chart').classList.toggle('hidden')">
-                    <img src="/stitch suit/stitch-size.jpeg" alt="Shirt Size Chart"
+                    <img src="/stitch%20suit/stitch-size.jpeg" alt="Shirt Size Chart"
                          class="w-24 h-28 md:w-28 md:h-32 object-cover opacity-70 hover:opacity-100 transition-opacity">
                     <div class="absolute bottom-0 left-0 right-0 py-1 text-center text-[8px] uppercase tracking-widest"
                          style="background:rgba(0,0,0,0.65); color:rgba(212,175,55,0.7);">Shirt</div>
@@ -54,7 +54,7 @@
                 <div class="relative overflow-hidden rounded-xl cursor-pointer"
                      style="border:1px solid rgba(212,175,55,0.15);"
                      onclick="document.getElementById('size-chart').classList.toggle('hidden')">
-                    <img src="/stitch suit/trouser-size.jpeg" alt="Trouser Size Chart"
+                    <img src="/stitch%20suit/trouser-size.jpeg" alt="Trouser Size Chart"
                          class="w-24 h-28 md:w-28 md:h-32 object-cover opacity-70 hover:opacity-100 transition-opacity">
                     <div class="absolute bottom-0 left-0 right-0 py-1 text-center text-[8px] uppercase tracking-widest"
                          style="background:rgba(0,0,0,0.65); color:rgba(212,175,55,0.7);">Trouser</div>
@@ -68,17 +68,17 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <p class="text-xs text-cream/50 mb-2">Shirt / Kameez Size Chart</p>
-                    <img src="/stitch suit/stitch-size.jpeg" alt="Shirt Size Chart"
+                    <img src="/stitch%20suit/stitch-size.jpeg" alt="Shirt Size Chart"
                          class="w-full rounded-xl" style="border:1px solid rgba(212,175,55,0.12);">
                 </div>
                 <div>
                     <p class="text-xs text-cream/50 mb-2">Trouser Size Chart</p>
-                    <img src="/stitch suit/trouser-size.jpeg" alt="Trouser Size Chart"
+                    <img src="/stitch%20suit/trouser-size.jpeg" alt="Trouser Size Chart"
                          class="w-full rounded-xl" style="border:1px solid rgba(212,175,55,0.12);">
                 </div>
             </div>
             <p class="text-[10px] text-cream/30 mt-3">
-                💡 Measure in inches. If between sizes, order the larger size. For custom stitching, add size note in order comments.
+                ðŸ’¡ Measure in inches. If between sizes, order the larger size. For custom stitching, add size note in order comments.
             </p>
         </div>
     </div>
@@ -123,8 +123,8 @@
                     <h4 class="text-xs uppercase tracking-widest text-gold font-bold mb-3">Sort By</h4>
                     <select name="sort" class="w-full px-3 py-2 rounded bg-navy border border-gold/20 text-cream text-sm focus:outline-none focus:border-gold [&>option]:text-black [&>option]:bg-white">
                         <option value="newest" {{ request('sort') === 'newest' ? 'selected' : '' }}>Newest</option>
-                        <option value="price_asc" {{ request('sort') === 'price_asc' ? 'selected' : '' }}>Price: Low → High</option>
-                        <option value="price_desc" {{ request('sort') === 'price_desc' ? 'selected' : '' }}>Price: High → Low</option>
+                        <option value="price_asc" {{ request('sort') === 'price_asc' ? 'selected' : '' }}>Price: Low â†’ High</option>
+                        <option value="price_desc" {{ request('sort') === 'price_desc' ? 'selected' : '' }}>Price: High â†’ Low</option>
                     </select>
                 </div>
                 <div class="flex gap-2">
@@ -157,3 +157,4 @@
     </div>
 </div>
 @endsection
+
