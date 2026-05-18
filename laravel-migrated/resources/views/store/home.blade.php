@@ -613,12 +613,12 @@
                     <p class="text-[10px] uppercase tracking-[0.38em] text-sand md:text-[11px]">Stay Updated</p>
                     <h2 class="mt-2 text-2xl font-semibold text-cream md:text-3xl">Join The Inner Circle</h2>
                     <p class="mt-4 text-sm text-cream/50 leading-relaxed">Get exclusive access to new arrivals, special offers, and styling tips delivered straight to your inbox.</p>
-                    <form class="mt-6 space-y-3" onsubmit="event.preventDefault(); this.querySelector('button').textContent='Subscribed Ã¢Å“â€œ';">
+                    <form class="mt-6 space-y-3" onsubmit="event.preventDefault(); this.querySelector('button').textContent='Subscribed!';">
                         <input type="email" placeholder="Your email address" required
                                class="w-full px-4 py-3 rounded-xl bg-ink border border-gold/20 text-cream placeholder-cream/30 focus:outline-none focus:border-gold text-sm">
                         <button type="submit" class="w-full py-3 bg-gold text-ink font-bold text-xs rounded-xl hover:bg-gold-light transition tracking-[0.18em] uppercase">Subscribe</button>
                     </form>
-                    <p class="mt-3 text-[10px] text-cream/30 uppercase tracking-[0.14em]">No spam Ã¢â‚¬â€ just curated luxury updates.</p>
+                    <p class="mt-3 text-[10px] text-cream/30 uppercase tracking-[0.14em]">No spam. Just curated luxury updates.</p>
                 </div>
             </div>
         </div>
