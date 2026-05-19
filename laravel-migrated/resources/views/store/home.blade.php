@@ -41,7 +41,7 @@
        x-transition:leave="transition-opacity ease-in duration-700"
        x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
        class="absolute inset-0 z-0">
-    <video src="/eid collection video.mp4" autoplay muted loop playsinline class="h-full w-full object-cover"></video>
+    <video src="/eid%20collection%20video.mp4" autoplay muted loop playsinline class="h-full w-full object-cover"></video>
   </div>
 
   {{-- Gradient: left directional scrim --}}

@@ -49,6 +49,50 @@ class CloudinaryService
         ];
     }
 
+    public static function uploadFile(\Illuminate\Http\UploadedFile $file, string $folder = 'admin-uploads'): array
+    {
+        if (!self::configured()) {
+            throw new \RuntimeException('Cloudinary credentials are not configured');
+        }
+
+        $cloudName = self::cloudName();
+        $apiKey    = env('CLOUDINARY_API_KEY');
+        $apiSecret = env('CLOUDINARY_API_SECRET');
+        $timestamp = time();
+
+        $mimeType     = $file->getMimeType() ?? '';
+        $resourceType = str_starts_with($mimeType, 'video') ? 'video' : 'image';
+
+        $paramsToSign = "folder={$folder}&timestamp={$timestamp}";
+        $signature    = sha1($paramsToSign . $apiSecret);
+
+        $url = "https://api.cloudinary.com/v1_1/{$cloudName}/{$resourceType}/upload";
+
+        $response = Http::timeout(120)
+            ->attach('file', fopen($file->getRealPath(), 'r'), $file->getClientOriginalName())
+            ->post($url, [
+                'api_key'   => $apiKey,
+                'timestamp' => $timestamp,
+                'folder'    => $folder,
+                'signature' => $signature,
+            ]);
+
+        if (!$response->successful()) {
+            throw new \RuntimeException('Cloudinary upload failed: ' . $response->body());
+        }
+
+        $data = $response->json();
+        return [
+            'url'           => $data['secure_url'] ?? '',
+            'public_id'     => $data['public_id'] ?? '',
+            'resource_type' => $resourceType,
+            'width'         => $data['width'] ?? null,
+            'height'        => $data['height'] ?? null,
+            'bytes'         => $data['bytes'] ?? null,
+            'format'        => $data['format'] ?? '',
+        ];
+    }
+
     private static function listAllResources(string $resourceType, ?string $prefix = null): array
     {
         $resources = [];

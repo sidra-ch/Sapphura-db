@@ -1,8 +1,12 @@
 <?php
 
 use App\Http\Controllers\Api\LegacyBridgeController;
+use App\Http\Controllers\WhatsappWebhookController;
 use App\Http\Middleware\AdminApiKey;
 use Illuminate\Support\Facades\Route;
+
+// ---------- WhatsApp Webhook (Twilio) ----------
+Route::post('/whatsapp/webhook', [WhatsappWebhookController::class, 'receive']);
 
 // ---------- Public routes ----------
 
