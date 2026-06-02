@@ -1,10 +1,10 @@
 ﻿@extends('layouts.app')
-@section('title', request('category') ? request('category') . ' â€“ Sapphura' : 'Collections â€“ Sapphura')
+@section('title', request('category') ? request('category') . ' - Sapphura' : 'Collections - Sapphura')
 
 @section('content')
 <div class="max-w-7xl mx-auto px-4 sm:px-6 py-10">
 
-    {{-- â”€â”€ Stitch Suits Hero Banner (only when category=Stitch Suits) â”€â”€ --}}
+    {{-- Stitch Suits Hero Banner (only when category=Stitch Suits) --}}
     @if(request('category') === 'Stitch Suits')
     <div class="relative overflow-hidden rounded-2xl mb-8"
          style="background:#07090b; border:1px solid rgba(212,175,55,0.15);">
@@ -18,7 +18,7 @@
                 <p class="text-[9px] uppercase tracking-[0.5em] mb-3 flex items-center gap-2"
                    style="color:rgba(212,175,55,0.5);">
                     <span class="inline-block h-px w-5" style="background:rgba(212,175,55,0.35);"></span>
-                    Stitched Collection Â· 2026
+                    Stitched Collection 2026
                 </p>
                 <h1 class="font-light leading-[0.9]"
                     style="font-family:Georgia,serif; font-size:clamp(2rem,4.5vw,3.8rem); color:#fff7ef;">
@@ -26,7 +26,7 @@
                     <em style="font-style:italic; -webkit-text-stroke:1px rgba(212,175,55,0.55); color:transparent;">Edit.</em>
                 </h1>
                 <p class="mt-3 text-sm" style="color:rgba(255,247,239,0.38); max-width:340px;">
-                    Premium stitched suits â€” select any design, choose your size, and order directly.
+                    Premium stitched suits - select any design, choose your size, and order directly.
                 </p>
                 {{-- Size chart toggle --}}
                 <button type="button"
@@ -78,7 +78,7 @@
                 </div>
             </div>
             <p class="text-[10px] text-cream/30 mt-3">
-                ðŸ’¡ Measure in inches. If between sizes, order the larger size. For custom stitching, add size note in order comments.
+                Measure in inches. If between sizes, order the larger size. For custom stitching, add size note in order comments.
             </p>
         </div>
     </div>
@@ -123,8 +123,8 @@
                     <h4 class="text-xs uppercase tracking-widest text-gold font-bold mb-3">Sort By</h4>
                     <select name="sort" class="w-full px-3 py-2 rounded bg-navy border border-gold/20 text-cream text-sm focus:outline-none focus:border-gold [&>option]:text-black [&>option]:bg-white">
                         <option value="newest" {{ request('sort') === 'newest' ? 'selected' : '' }}>Newest</option>
-                        <option value="price_asc" {{ request('sort') === 'price_asc' ? 'selected' : '' }}>Price: Low â†’ High</option>
-                        <option value="price_desc" {{ request('sort') === 'price_desc' ? 'selected' : '' }}>Price: High â†’ Low</option>
+                        <option value="price_asc" {{ request('sort') === 'price_asc' ? 'selected' : '' }}>Price: Low to High</option>
+                        <option value="price_desc" {{ request('sort') === 'price_desc' ? 'selected' : '' }}>Price: High to Low</option>
                     </select>
                 </div>
                 <div class="flex gap-2">

@@ -56,16 +56,92 @@
 
     {{-- Step 3: Payment --}}
     <div x-show="step === 2" class="glass rounded-xl p-6 space-y-4" style="display:none;">
-        <h2 class="text-lg font-bold mb-4">Payment Method</h2>
-        @foreach([['cod', 'Cash on Delivery', 'Pay when you receive'], ['stripe', 'Credit/Debit Card', 'Secure payment via Stripe'], ['jazzcash', 'JazzCash', 'Mobile wallet'], ['easypaisa', 'EasyPaisa', 'Mobile wallet']] as [$val, $label, $desc])
-            <label class="flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition" :class="form.payment === '{{ $val }}' ? 'border-gold bg-gold/5' : 'border-gold/20'" @click="form.payment = '{{ $val }}'; otpSent = false; otpVerified = false; otpToken = ''; otpCode = ''; otpError = ''">
-                <input type="radio" name="payment" value="{{ $val }}" x-model="form.payment" class="accent-[#d4af37]">
-                <div><p class="font-semibold text-sm">{{ $label }}</p><p class="text-xs text-cream/50">{{ $desc }}</p></div>
-            </label>
-        @endforeach
+        <h2 class="text-lg font-bold mb-1">Payment Method</h2>
+        <p class="text-xs text-cream/40 mb-5">Pakistan ke popular payment methods — choose karein jo easy ho</p>
+
+        {{-- EasyPaisa --}}
+        <label class="flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200"
+               :class="form.payment === 'easypaisa' ? 'border-[#1ba462] bg-[#1ba462]/8' : 'border-gold/15 hover:border-[#1ba462]/40'"
+               @click="form.payment = 'easypaisa'">
+            <input type="radio" name="payment" value="easypaisa" x-model="form.payment" class="sr-only">
+            <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#1ba462]/15 text-[#1ba462] font-bold text-sm">EP</div>
+            <div class="flex-1">
+                <p class="font-semibold text-sm text-cream">EasyPaisa</p>
+                <p class="text-xs text-cream/45">Mobile wallet &middot; Telenor users ke liye best</p>
+            </div>
+            <div class="ml-auto flex-shrink-0 h-5 w-5 rounded-full border-2 transition-all duration-200 flex items-center justify-center"
+                 :class="form.payment === 'easypaisa' ? 'border-[#1ba462] bg-[#1ba462]' : 'border-cream/20'">
+                <div class="h-2 w-2 rounded-full bg-white" x-show="form.payment === 'easypaisa'"></div>
+            </div>
+        </label>
+
+        {{-- JazzCash --}}
+        <label class="flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200"
+               :class="form.payment === 'jazzcash' ? 'border-[#e31837] bg-[#e31837]/8' : 'border-gold/15 hover:border-[#e31837]/40'"
+               @click="form.payment = 'jazzcash'">
+            <input type="radio" name="payment" value="jazzcash" x-model="form.payment" class="sr-only">
+            <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#e31837]/15 text-[#f87171] font-bold text-sm">JC</div>
+            <div class="flex-1">
+                <p class="font-semibold text-sm text-cream">JazzCash</p>
+                <p class="text-xs text-cream/45">Mobile wallet &middot; Jazz/Warid users ke liye best</p>
+            </div>
+            <div class="ml-auto flex-shrink-0 h-5 w-5 rounded-full border-2 transition-all duration-200 flex items-center justify-center"
+                 :class="form.payment === 'jazzcash' ? 'border-[#e31837] bg-[#e31837]' : 'border-cream/20'">
+                <div class="h-2 w-2 rounded-full bg-white" x-show="form.payment === 'jazzcash'"></div>
+            </div>
+        </label>
+
+        {{-- Cash on Delivery --}}
+        <label class="flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200"
+               :class="form.payment === 'cod' ? 'border-gold bg-gold/5' : 'border-gold/15 hover:border-gold/40'"
+               @click="form.payment = 'cod'">
+            <input type="radio" name="payment" value="cod" x-model="form.payment" class="sr-only">
+            <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gold/10 text-xl">&#x1F4B5;</div>
+            <div class="flex-1">
+                <p class="font-semibold text-sm text-cream">Cash on Delivery <span class="ml-1 text-[9px] rounded-full bg-gold/15 text-gold px-2 py-0.5 uppercase tracking-wider">Most Popular</span></p>
+                <p class="text-xs text-cream/45">Delivery pe pay karein &middot; Nationwide available</p>
+            </div>
+            <div class="ml-auto flex-shrink-0 h-5 w-5 rounded-full border-2 transition-all duration-200 flex items-center justify-center"
+                 :class="form.payment === 'cod' ? 'border-gold bg-gold' : 'border-cream/20'">
+                <div class="h-2 w-2 rounded-full bg-ink" x-show="form.payment === 'cod'"></div>
+            </div>
+        </label>
+
+        {{-- Credit/Debit Card --}}
+        <label class="flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200"
+               :class="form.payment === 'stripe' ? 'border-blue-400 bg-blue-400/5' : 'border-gold/15 hover:border-blue-400/40'"
+               @click="form.payment = 'stripe'">
+            <input type="radio" name="payment" value="stripe" x-model="form.payment" class="sr-only">
+            <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-xl">&#x1F4B3;</div>
+            <div class="flex-1">
+                <p class="font-semibold text-sm text-cream">Debit / Credit Card</p>
+                <p class="text-xs text-cream/45">Visa &middot; Mastercard &middot; SSL encrypted</p>
+            </div>
+            <div class="ml-auto flex-shrink-0 h-5 w-5 rounded-full border-2 transition-all duration-200 flex items-center justify-center"
+                 :class="form.payment === 'stripe' ? 'border-blue-400 bg-blue-400' : 'border-cream/20'">
+                <div class="h-2 w-2 rounded-full bg-white" x-show="form.payment === 'stripe'"></div>
+            </div>
+        </label>
+
+        {{-- EasyPaisa account info (shown when selected) --}}
+        <div x-show="form.payment === 'easypaisa'" class="rounded-xl border border-[#1ba462]/20 bg-[#1ba462]/5 p-4 text-sm space-y-1">
+            <p class="font-semibold text-[#4ade80] text-xs uppercase tracking-wider mb-2">EasyPaisa Instructions</p>
+            <p class="text-cream/60">Account: <span class="text-cream font-medium">0332-XXXXXXX</span></p>
+            <p class="text-cream/60">Name: <span class="text-cream font-medium">Sapphura Store</span></p>
+            <p class="text-[10px] text-cream/40 mt-2">Order place hone ke baad screenshot WhatsApp par bhejein: <a href="https://wa.me/923320924951" class="text-[#4ade80] hover:underline">0332-0924951</a></p>
+        </div>
+
+        {{-- JazzCash account info (shown when selected) --}}
+        <div x-show="form.payment === 'jazzcash'" class="rounded-xl border border-[#e31837]/20 bg-[#e31837]/5 p-4 text-sm space-y-1">
+            <p class="font-semibold text-[#f87171] text-xs uppercase tracking-wider mb-2">JazzCash Instructions</p>
+            <p class="text-cream/60">Account: <span class="text-cream font-medium">0332-XXXXXXX</span></p>
+            <p class="text-cream/60">Name: <span class="text-cream font-medium">Sapphura Store</span></p>
+            <p class="text-[10px] text-cream/40 mt-2">Order place hone ke baad screenshot WhatsApp par bhejein: <a href="https://wa.me/923320924951" class="text-[#f87171] hover:underline">0332-0924951</a></p>
+        </div>
+
         <div class="flex gap-3 mt-4">
-            <button @click="step = 1" class="px-6 py-3 border border-gold/30 text-gold rounded-lg text-sm">Back</button>
-            <button @click="step = 3" class="flex-1 py-3 bg-gradient-to-r from-gold to-gold-light text-ink font-bold rounded-lg text-sm tracking-wider uppercase">Review Order</button>
+            <button @click="step = 1" class="px-6 py-3 border border-gold/30 text-gold rounded-xl text-sm transition hover:bg-gold/10">Back</button>
+            <button @click="if(form.payment) step = 3" class="flex-1 py-3 bg-gradient-to-r from-gold to-gold-light text-ink font-bold rounded-xl text-sm tracking-wider uppercase">Review Order</button>
         </div>
     </div>
 
@@ -117,47 +193,9 @@
             <p><span class="text-cream/50">Payment:</span> <span x-text="form.payment.toUpperCase()"></span></p>
         </div>
 
-        {{-- OTP Verification --}}
-        <div class="border-t border-gold/10 pt-4">
-            <template x-if="!otpSent">
-                <div>
-                    <p class="text-sm text-cream/60 mb-3">We'll send a verification code to your email before placing the order.</p>
-                    <button @click="sendOtp()" :disabled="otpLoading"
-                            class="w-full py-3 bg-gradient-to-r from-gold to-gold-light text-ink font-bold rounded-lg text-sm tracking-wider uppercase disabled:opacity-50">
-                        <span x-show="!otpLoading">Send Verification Code</span>
-                        <span x-show="otpLoading">Sending...</span>
-                    </button>
-                </div>
-            </template>
-            <template x-if="otpSent && !otpVerified">
-                <div class="space-y-3">
-                    <p class="text-sm text-cream/60">Enter the 6-digit code sent to <span class="text-gold" x-text="form.email"></span></p>
-                    <div x-show="debugOtp" class="bg-green-900/30 border border-green-500/30 rounded-lg p-3 text-sm text-green-400">
-                        Debug OTP: <span x-text="debugOtp" class="font-mono font-bold"></span>
-                    </div>
-                    <input x-model="otpCode" type="text" maxlength="6" placeholder="Enter 6-digit OTP"
-                           class="w-full px-4 py-3 rounded-lg bg-navy border border-gold/20 text-cream text-center text-2xl tracking-[0.5em] font-mono placeholder-cream/30 focus:outline-none focus:border-gold">
-                    <button @click="verifyOtp()" :disabled="otpLoading || otpCode.length !== 6"
-                            class="w-full py-3 bg-gradient-to-r from-gold to-gold-light text-ink font-bold rounded-lg text-sm tracking-wider uppercase disabled:opacity-50">
-                        <span x-show="!otpLoading">Verify Code</span>
-                        <span x-show="otpLoading">Verifying...</span>
-                    </button>
-                    <button @click="sendOtp()" :disabled="otpLoading" class="w-full py-2 text-gold text-xs hover:underline">Resend Code</button>
-                </div>
-            </template>
-            <template x-if="otpVerified">
-                <div class="bg-green-900/20 border border-green-500/20 rounded-lg p-3 flex items-center gap-2 text-sm text-green-400">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                    Email verified successfully
-                </div>
-            </template>
-        </div>
-
-        <div x-show="otpError" class="bg-red-900/20 border border-red-500/20 rounded-lg p-3 text-sm text-red-400" x-text="otpError"></div>
-
         <div class="flex gap-3 mt-4">
             <button @click="step = 2" class="px-6 py-3 border border-gold/30 text-gold rounded-lg text-sm">Back</button>
-            <button @click="placeOrder()" :disabled="submitting || !otpVerified"
+            <button @click="placeOrder()" :disabled="submitting"
                     class="flex-1 py-3 bg-gradient-to-r from-gold to-gold-light text-ink font-bold rounded-lg text-sm tracking-wider uppercase disabled:opacity-50">
                 <span x-show="!submitting">Place Order</span>
                 <span x-show="submitting">Processing...</span>
@@ -172,13 +210,6 @@ function checkoutForm() {
     return {
         step: 0,
         submitting: false,
-        otpSent: false,
-        otpVerified: false,
-        otpLoading: false,
-        otpCode: '',
-        otpError: '',
-        otpToken: '',
-        debugOtp: '',
         form: {
             email: '', name: '', phone: '', address: '', city: '', postalCode: '', country: 'Pakistan',
             shipping: 'standard', shippingCost: 200, payment: 'cod',
@@ -214,62 +245,6 @@ function checkoutForm() {
             this.form.discountLabel = '';
             this.couponError = '';
         },
-        async sendOtp() {
-            this.otpLoading = true;
-            this.otpError = '';
-            this.debugOtp = '';
-            try {
-                const res = await fetch('/api/otp', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-                    body: JSON.stringify({
-                        action: 'send',
-                        email: this.form.email,
-                        phone: this.form.phone,
-                        purpose: 'payment-' + this.form.payment,
-                    })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    this.otpSent = true;
-                    this.otpCode = '';
-                    if (data.debugOtp) this.debugOtp = data.debugOtp;
-                } else {
-                    this.otpError = data.error || 'Failed to send OTP';
-                }
-            } catch (e) {
-                this.otpError = 'Network error. Please try again.';
-            }
-            this.otpLoading = false;
-        },
-        async verifyOtp() {
-            this.otpLoading = true;
-            this.otpError = '';
-            try {
-                const res = await fetch('/api/otp', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-                    body: JSON.stringify({
-                        action: 'verify',
-                        email: this.form.email,
-                        phone: this.form.phone,
-                        otp: this.otpCode,
-                        purpose: 'payment-' + this.form.payment,
-                    })
-                });
-                const data = await res.json();
-                if (data.success && data.verificationToken) {
-                    this.otpVerified = true;
-                    this.otpToken = data.verificationToken;
-                    this.debugOtp = '';
-                } else {
-                    this.otpError = data.error || 'Invalid OTP';
-                }
-            } catch (e) {
-                this.otpError = 'Network error. Please try again.';
-            }
-            this.otpLoading = false;
-        },
         async placeOrder() {
             this.submitting = true;
             try {
@@ -293,7 +268,7 @@ function checkoutForm() {
                         discount: this.form.discountAmount || 0,
                         discountCode: this.form.discountCode || '',
                         items: items,
-                        paymentVerification: { otpVerificationToken: this.otpToken },
+                        paymentVerification: {},
                     })
                 });
                 const data = await res.json();

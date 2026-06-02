@@ -59,6 +59,10 @@
                         </div>
                     </div>
                 </div>
+                <a href="/#stitch-order" class="text-sm tracking-wider uppercase hover:text-gold transition relative group">
+                    Stitch Order
+                    <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-gold transition-all group-hover:w-full"></span>
+                </a>
                 <a href="/about" class="text-sm tracking-wider uppercase hover:text-gold transition relative group">
                     Story
                     <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-gold transition-all group-hover:w-full"></span>
