@@ -753,11 +753,7 @@ class LegacyBridgeController extends Controller
         $email = $this->normalizeEmail((string) $request->input('email', ''));
         $phone = (string) $request->input('phone', '');
         $identity = $email !== '' ? $email : ('phone-'.preg_replace('/\D+/', '', $phone).'@otp.local');
-        $token = (string) data_get($request->input('paymentVerification', []), 'otpVerificationToken', '');
-        $proof = $this->verifyOtpProofToken($token);
-        if (! $proof || ($proof['email'] ?? '') !== $identity) {
-            return response()->json(['error' => 'Invalid payment OTP verification proof'], 400);
-        }
+        // OTP verification bypassed — direct order placement enabled
 
         $items = collect($request->input('items', []));
         if ($items->isEmpty()) {
