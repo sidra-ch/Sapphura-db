@@ -9,7 +9,6 @@ import ShopTheLook from '../components/sections/ShopTheLook';
 import SimpleVideoSlider from '../components/sections/SimpleVideoSlider';
 import FAQ from '../components/sections/FAQ';
 import Newsletter from '../components/sections/Newsletter';
-import Footer from '../components/layout/Footer';
 import Testimonials from '../components/sections/Testimonials';
 import BrandStory from '../components/sections/BrandStory';
 import WhatsAppFloating from '../components/sections/WhatsAppFloating';
@@ -30,8 +29,6 @@ export default function HomePage() {
       <InstagramGallery />
       <FAQ />
       <Newsletter />
-
-      <Footer />
       <WhatsAppFloating />
     </div>
   );
