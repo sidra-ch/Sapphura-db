@@ -302,7 +302,7 @@ class LegacyBridgeController extends Controller
 
     public function productsIndex(Request $request): JsonResponse
     {
-        $query = Product::query()->where('status', 'active')->with('category')->orderByDesc('created_at');
+        $query = Product::query()->where('status', 'active')->with(['category','variants'])->orderByDesc('created_at');
         if ($request->query('featured') === '1') {
             $query->where('is_featured', true);
         }
@@ -765,7 +765,23 @@ class LegacyBridgeController extends Controller
             ['public_id' => (string) Str::uuid(), 'password' => Hash::make('guest-'.microtime(true)), 'role' => 'customer']
         );
 
-        $order = DB::transaction(function () use ($request, $items, $user) {
+        // Batch fetch products referenced in the cart to avoid per-item queries
+        $identifiers = $items->map(fn ($i) => data_get($i, 'id'))->filter()->unique()->values();
+        $publicIds = $identifiers->filter(fn ($v) => !is_numeric($v))->values()->all();
+        $numericIds = $identifiers->filter(fn ($v) => is_numeric($v))->map(fn ($v) => (int) $v)->values()->all();
+
+        $productsQuery = Product::query();
+        if (!empty($publicIds)) {
+            $productsQuery->orWhereIn('public_id', $publicIds);
+        }
+        if (!empty($numericIds)) {
+            $productsQuery->orWhereIn('id', $numericIds);
+        }
+        $fetchedProducts = $productsQuery->get();
+        $productsById = $fetchedProducts->keyBy('id');
+        $productsByPublic = $fetchedProducts->keyBy('public_id');
+
+        $order = DB::transaction(function () use ($request, $items, $user, $productsById, $productsByPublic) {
             $order = Order::create([
                 'public_id' => (string) Str::uuid(),
                 'user_id' => $user->id,
@@ -786,9 +802,14 @@ class LegacyBridgeController extends Controller
             ]);
 
             foreach ($items as $item) {
-                $product = Product::where('public_id', data_get($item, 'id'))
-                    ->orWhere('id', data_get($item, 'id'))
-                    ->first();
+                $identifier = data_get($item, 'id');
+                $product = null;
+                if ($identifier === null) continue;
+                if (is_numeric($identifier)) {
+                    $product = $productsById->get((int) $identifier) ?: $productsByPublic->get((string) $identifier);
+                } else {
+                    $product = $productsByPublic->get((string) $identifier) ?: null;
+                }
                 if (! $product) {
                     continue;
                 }

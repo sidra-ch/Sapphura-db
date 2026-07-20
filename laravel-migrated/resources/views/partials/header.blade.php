@@ -59,8 +59,8 @@
                         </div>
                     </div>
                 </div>
-                <a href="/#stitch-order" class="text-sm tracking-wider uppercase hover:text-gold transition relative group">
-                    Stitch Order
+                <a href="/stitching" class="text-sm tracking-wider uppercase hover:text-gold transition relative group">
+                    Stitch Service
                     <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-gold transition-all group-hover:w-full"></span>
                 </a>
                 <a href="/about" class="text-sm tracking-wider uppercase hover:text-gold transition relative group">
@@ -104,6 +104,7 @@
         <nav class="px-4 py-4 space-y-3">
             <a href="/" class="block text-sm uppercase tracking-wider hover:text-gold transition">Home</a>
             <a href="/collections" class="block text-sm uppercase tracking-wider hover:text-gold transition">Shop</a>
+            <a href="/stitching" class="block text-sm uppercase tracking-wider hover:text-gold transition">Stitch Service</a>
             <a href="/about" class="block text-sm uppercase tracking-wider hover:text-gold transition">Story</a>
             <a href="/contact" class="block text-sm uppercase tracking-wider hover:text-gold transition">Contact</a>
             @auth

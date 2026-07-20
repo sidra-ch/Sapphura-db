@@ -12,14 +12,14 @@ class StoreController extends Controller
     public function home()
     {
         $categories = Category::withCount(['products' => fn ($q) => $q->where('status', 'active')])->orderBy('name')->get();
-        $featured = Product::where('status', 'active')->where('is_featured', true)->with('category')->latest()->take(8)->get();
-        $latest = Product::where('status', 'active')->with('category')->latest()->take(8)->get();
+        $featured = Product::where('status', 'active')->where('is_featured', true)->with(['category','variants'])->latest()->take(8)->get();
+        $latest = Product::where('status', 'active')->with(['category','variants'])->latest()->take(8)->get();
         return view('store.home', compact('categories', 'featured', 'latest'));
     }
 
     public function collections(Request $request)
     {
-        $query = Product::where('status', 'active')->with('category');
+        $query = Product::where('status', 'active')->with(['category','variants']);
 
         if ($request->filled('category')) {
             $query->whereHas('category', fn ($q) => $q->where('name', $request->category));
@@ -51,7 +51,7 @@ class StoreController extends Controller
     {
         $product = Product::where('slug', $slug)->where('status', 'active')->with(['category', 'variants'])->firstOrFail();
         $reviews = Review::where('product_id', $product->id)->where('is_approved', true)->with('user')->latest('created_at')->take(10)->get();
-        $related = Product::where('category_id', $product->category_id)->where('id', '!=', $product->id)->where('status', 'active')->take(4)->get();
+        $related = Product::where('category_id', $product->category_id)->where('id', '!=', $product->id)->where('status', 'active')->with(['category','variants'])->take(4)->get();
         return view('store.product', compact('product', 'reviews', 'related'));
     }
 
@@ -62,7 +62,7 @@ class StoreController extends Controller
         if (strlen($q) >= 2) {
             $products = Product::where('status', 'active')
                 ->where(fn ($query) => $query->where('name', 'like', "%{$q}%")->orWhere('description', 'like', "%{$q}%"))
-                ->with('category')->take(20)->get();
+                ->with(['category','variants'])->take(20)->get();
         }
         return view('store.search', compact('q', 'products'));
     }

@@ -16,4 +16,5 @@ class PageController extends Controller
     public function termsOfService() { return view('pages.terms-of-service'); }
     public function refundPolicy() { return view('pages.refund-policy'); }
     public function exchangePolicy() { return view('pages.exchange-policy'); }
+    public function stitching() { return view('pages.stitching'); }
 }

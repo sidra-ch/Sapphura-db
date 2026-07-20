@@ -6,6 +6,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -21,11 +23,25 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
+        $throttleKey = 'login|'.$request->ip().'|'.strtolower($request->input('email'));
+        $maxAttempts = 5;
+        $decaySeconds = 60;
+
+        if (RateLimiter::tooManyAttempts($throttleKey, $maxAttempts)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            throw ValidationException::withMessages([
+                'email' => ["Too many login attempts. Please try again in {$seconds} seconds."],
+            ]);
+        }
+
         if (Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
+            RateLimiter::clear($throttleKey);
             $request->session()->regenerate();
             $user = Auth::user();
             return redirect()->intended($user->role === 'admin' ? '/admin' : '/account');
         }
+
+        RateLimiter::hit($throttleKey, $decaySeconds);
 
         return back()->withErrors(['email' => 'Invalid email or password.'])->onlyInput('email');
     }

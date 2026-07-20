@@ -42,6 +42,7 @@ Route::get('/shipping-rates', [PageController::class, 'shippingRates'])->name('s
 Route::get('/terms-of-service', [PageController::class, 'termsOfService'])->name('terms-of-service');
 Route::get('/refund-policy', [PageController::class, 'refundPolicy'])->name('refund-policy');
 Route::get('/exchange-policy', [PageController::class, 'exchangePolicy'])->name('exchange-policy');
+Route::get('/stitching', [PageController::class, 'stitching'])->name('stitching');
 
 // Admin (protected)
 Route::prefix('admin')->middleware('auth')->group(function () {

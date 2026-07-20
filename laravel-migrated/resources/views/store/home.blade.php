@@ -4,160 +4,88 @@
 @section('content')
 
 {{-- ============================================================
-     HERO — Cinematic 3-slide carousel
+     ANNOUNCEMENT BAR
 ============================================================ --}}
-<section class="relative overflow-hidden bg-[#07090f]"
-         style="height:92vh; min-height:600px;"
-         x-data="{
-           s:0, prog:0, iv:null,
-           start(){ clearInterval(this.iv); this.iv=setInterval(()=>{ this.prog+=100/65; if(this.prog>=100){ this.prog=0; this.s=(this.s+1)%3; } },100); },
-           go(n){ this.s=n; this.prog=0; }
-         }"
-         x-init="start()">
-
-  {{-- Slide 0 --}}
-  <div x-show="s===0"
-       x-transition:enter="transition-opacity duration-[1200ms]"
-       x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-       x-transition:leave="transition-opacity duration-700"
-       x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-       class="absolute inset-0 z-0">
-    <video src="/clothes-vdo-1.mp4" muted loop autoplay playsinline class="h-full w-full object-cover"></video>
+<div class="border-b border-gold/[0.1] bg-gold/8 py-3 px-6">
+  <div class="section-shell">
+    <div class="flex items-center justify-center gap-3 text-center">
+      <span class="text-lg">✨</span>
+      <p class="text-[10px] uppercase tracking-[0.25em] text-gold/80 font-light">
+        Free Delivery on Orders Above PKR 1,500 • Custom Stitching Available
+      </p>
+      <span class="text-lg">✨</span>
+    </div>
   </div>
+</div>
 
-  {{-- Slide 1 --}}
-  <div x-show="s===1"
-       x-transition:enter="transition-opacity duration-[1200ms]"
-       x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-       x-transition:leave="transition-opacity duration-700"
-       x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-       class="absolute inset-0 z-0">
-    <video src="/stitchclothes-1.mp4" muted loop autoplay playsinline class="h-full w-full object-cover"></video>
+{{-- ============================================================
+     ELEGANT HERO — Premium Fashion Brand
+============================================================ --}}
+<section class="relative overflow-hidden py-20 md:py-32 px-6 sm:px-10 md:px-16"
+         style="background:linear-gradient(135deg, rgba(10,22,48,0.9) 0%, rgba(19,33,63,0.6) 50%, rgba(10,22,48,0.8) 100%); min-height:600px;">
+  
+  {{-- Background accent elements --}}
+  <div class="absolute inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute -top-24 -right-32 w-96 h-96 rounded-full" 
+         style="background:radial-gradient(circle, rgba(212,175,55,0.08) 0%, transparent 70%);"></div>
+    <div class="absolute -bottom-32 -left-24 w-80 h-80 rounded-full" 
+         style="background:radial-gradient(circle, rgba(212,175,55,0.05) 0%, transparent 70%);"></div>
   </div>
-
-  {{-- Slide 2 --}}
-  <div x-show="s===2"
-       x-transition:enter="transition-opacity duration-[1200ms]"
-       x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-       x-transition:leave="transition-opacity duration-700"
-       x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-       class="absolute inset-0 z-0">
-    <video src="/bangals-vdo1.mp4" muted loop autoplay playsinline class="h-full w-full object-cover"></video>
-  </div>
-
-  {{-- Scrim overlays --}}
-  <div class="pointer-events-none absolute inset-0 z-10"
-       style="background:linear-gradient(108deg,rgba(7,9,15,.90) 0%,rgba(7,9,15,.55) 42%,rgba(7,9,15,.12) 72%,transparent 100%);"></div>
-  <div class="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[40%]"
-       style="background:linear-gradient(to top,rgba(10,22,48,1) 0%,rgba(10,22,48,.6) 40%,transparent 100%);"></div>
-  <div class="pointer-events-none absolute inset-x-0 top-0 z-10 h-[18%]"
-       style="background:linear-gradient(to bottom,rgba(7,9,15,.5) 0%,transparent 100%);"></div>
 
   {{-- Content --}}
-  <div class="relative z-20 flex h-full flex-col justify-between px-6 pb-10 pt-24 sm:px-10 md:px-16 lg:px-20">
+  <div class="relative z-10 max-w-4xl mx-auto text-center">
     {{-- Eyebrow --}}
-    <div class="flex items-center gap-3">
-      <span class="h-px w-8 block bg-gold/50"></span>
-      <span class="text-[9px] uppercase tracking-[0.5em] font-light text-gold/70"
-            x-text="['New Arrivals · 2026','Summer Collection','Signature Jewelry'][s]"></span>
+    <div class="inline-flex items-center gap-3 mb-6">
+      <span class="h-px w-8 bg-gold/50"></span>
+      <span class="text-[9px] uppercase tracking-[0.5em] font-light text-gold/70">Summer Collection 2026</span>
+      <span class="h-px w-8 bg-gold/50"></span>
     </div>
 
     {{-- Headline --}}
-    <div class="flex-1 flex items-end pb-6">
-      <div class="w-full max-w-2xl">
+    <h1 class="text-5xl sm:text-6xl md:text-7xl font-light leading-tight mb-6 text-cream"
+        style="font-family:Georgia,serif; letter-spacing:-0.02em;">
+      Timeless <span class="text-gold">Elegance</span>
+    </h1>
 
-        <div x-show="s===0"
-             x-transition:enter="transition ease-out duration-700"
-             x-transition:enter-start="opacity-0 translate-y-8"
-             x-transition:enter-end="opacity-100 translate-y-0">
-          <h1 class="font-light leading-[0.88] text-white"
-              style="font-family:Georgia,serif; font-size:clamp(3.2rem,9vw,8.5rem); letter-spacing:-0.02em;">
-            Timeless<br>
-            <span style="-webkit-text-stroke:1px rgba(212,175,55,0.6); color:transparent;">Elegance.</span>
-          </h1>
-          <p class="mt-4 text-[11px] font-light uppercase tracking-[0.2em] text-white/30">Where craft meets luxury</p>
-        </div>
+    {{-- Subheading --}}
+    <p class="text-base sm:text-lg text-cream/70 max-w-2xl mx-auto mb-10 leading-relaxed">
+      Discover our curated collection of premium women's fashion, jewelry, and accessories crafted with luxury and sophistication in mind.
+    </p>
 
-        <div x-show="s===1"
-             x-transition:enter="transition ease-out duration-700"
-             x-transition:enter-start="opacity-0 translate-y-8"
-             x-transition:enter-end="opacity-100 translate-y-0">
-          <h1 class="font-light leading-[0.88] text-white"
-              style="font-family:Georgia,serif; font-size:clamp(3.2rem,9vw,8.5rem); letter-spacing:-0.02em;">
-            Summer<br>
-            <span style="-webkit-text-stroke:1px rgba(212,175,55,0.6); color:transparent;">Edit.</span>
-          </h1>
-          <p class="mt-4 text-[11px] font-light uppercase tracking-[0.2em] text-white/30">Explore the season's finest</p>
-        </div>
-
-        <div x-show="s===2"
-             x-transition:enter="transition ease-out duration-700"
-             x-transition:enter-start="opacity-0 translate-y-8"
-             x-transition:enter-end="opacity-100 translate-y-0">
-          <h1 class="font-light leading-[0.88] text-white"
-              style="font-family:Georgia,serif; font-size:clamp(3.2rem,9vw,8.5rem); letter-spacing:-0.02em;">
-            Premium<br>
-            <span style="-webkit-text-stroke:1px rgba(212,175,55,0.6); color:transparent;">Jewelry.</span>
-          </h1>
-          <p class="mt-4 text-[11px] font-light uppercase tracking-[0.2em] text-white/30">Rings · Necklaces · Earrings</p>
-        </div>
-
-        {{-- CTAs --}}
-        <div class="mt-8 flex flex-wrap items-center gap-4">
-          <a :href="['/collections','/collections?category=Clothing','/collections?category=Jewelry'][s]"
-             class="inline-flex items-center gap-3 px-7 py-3.5 text-[10px] uppercase tracking-[0.3em] font-medium transition-all duration-300"
-             style="border:1px solid rgba(212,175,55,0.6); color:rgba(212,175,55,0.9); background:transparent;"
-             onmouseover="this.style.background='#d4af37'; this.style.color='#09111f'; this.style.borderColor='#d4af37';"
-             onmouseout="this.style.background='transparent'; this.style.color='rgba(212,175,55,0.9)'; this.style.borderColor='rgba(212,175,55,0.6)';">
-            Shop Now
-            <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4-4 4M3 12h18"/>
-            </svg>
-          </a>
-          <a href="/collections" class="text-[10px] uppercase tracking-[0.38em] font-light text-white/25 hover:text-white/60 transition-colors duration-300">
-            View All
-          </a>
-        </div>
-      </div>
-    </div>
-
-    {{-- Bottom controls --}}
-    <div class="flex items-end justify-between gap-4">
-      <div class="hidden sm:flex flex-col items-center gap-2">
-        <div class="relative h-9 w-px overflow-hidden bg-white/10">
-          <div class="absolute inset-x-0 top-0 h-4 bg-white/40"
-               style="animation:scrollDrop 2s ease-in-out infinite;"></div>
-        </div>
-        <span class="text-[7px] uppercase tracking-[0.5em] text-white/20">Scroll</span>
-      </div>
-      <div class="flex items-center gap-5">
-        <button @click="go(0)" class="flex items-center gap-2 group">
-          <span class="text-[9px] font-light transition-colors duration-300" :class="s===0 ? 'text-gold' : 'text-white/25 group-hover:text-white/50'">01</span>
-          <span class="h-px block transition-all duration-500" :class="s===0 ? 'w-10 bg-gold' : 'w-3 bg-white/20'"></span>
-        </button>
-        <button @click="go(1)" class="flex items-center gap-2 group">
-          <span class="text-[9px] font-light transition-colors duration-300" :class="s===1 ? 'text-gold' : 'text-white/25 group-hover:text-white/50'">02</span>
-          <span class="h-px block transition-all duration-500" :class="s===1 ? 'w-10 bg-gold' : 'w-3 bg-white/20'"></span>
-        </button>
-        <button @click="go(2)" class="flex items-center gap-2 group">
-          <span class="text-[9px] font-light transition-colors duration-300" :class="s===2 ? 'text-gold' : 'text-white/25 group-hover:text-white/50'">03</span>
-          <span class="h-px block transition-all duration-500" :class="s===2 ? 'w-10 bg-gold' : 'w-3 bg-white/20'"></span>
-        </button>
-        <div class="h-px w-24 overflow-hidden bg-white/7">
-          <div class="h-full bg-gold/55 transition-none" :style="'width:' + prog + '%'"></div>
-        </div>
-      </div>
+    {{-- CTAs --}}
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+      <a href="/collections" 
+         class="inline-flex items-center gap-3 px-8 py-4 text-[10px] uppercase tracking-[0.3em] font-semibold transition-all duration-300 rounded-lg"
+         style="background:#d4af37; color:#09111f; border:1px solid #d4af37;"
+         onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 32px rgba(212,175,55,0.3)';"
+         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+        Shop Collection
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4-4 4M3 12h18"/>
+        </svg>
+      </a>
+      <a href="#new-arrivals" 
+         class="inline-flex items-center gap-3 px-8 py-4 text-[10px] uppercase tracking-[0.3em] font-semibold transition-all duration-300 rounded-lg"
+         style="background:transparent; color:#d4af37; border:1px solid rgba(212,175,55,0.5);"
+         onmouseover="this.style.borderColor='rgba(212,175,55,0.9)'; this.style.color='#e8c967';"
+         onmouseout="this.style.borderColor='rgba(212,175,55,0.5)'; this.style.color='#d4af37';">
+        Explore More
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+        </svg>
+      </a>
     </div>
   </div>
 
-  <style>
-    @keyframes scrollDrop {
-      0%   { transform:translateY(-100%); opacity:0; }
-      20%  { opacity:1; }
-      80%  { opacity:1; }
-      100% { transform:translateY(220%); opacity:0; }
-    }
-  </style>
+  {{-- Scroll indicator --}}
+  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 z-10 hidden md:flex">
+    <span class="text-[8px] uppercase tracking-[0.4em] text-cream/30">Scroll to Explore</span>
+    <div class="flex flex-col gap-1">
+      <svg class="w-5 h-5 text-cream/30 animate-bounce" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+      </svg>
+    </div>
+  </div>
 </section>
 
 {{-- ============================================================

@@ -52,7 +52,7 @@ const InfiniteProductGrid = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {products.map((product: any) => (
-        <div key={product.id} className="border p-2">
+        <div key={product.id} className="product-card card">
           <Image
             src={cloudinaryUrl(product.imageUrl, { width: 400, format: 'webp' })}
             alt={product.name}
@@ -60,11 +60,12 @@ const InfiniteProductGrid = () => {
             height={400}
             placeholder="blur"
             blurDataURL="/placeholder.png"
-            className="rounded mb-2"
+            className="product-image mb-2"
             sizes="(max-width: 768px) 100vw, 33vw"
             loading="lazy"
           />
-          <div className="font-semibold">{product.name}</div>
+          <div className="product-title">{product.name}</div>
+          {product.price !== undefined && <div className="product-price">{product.price}</div>}
         </div>
       ))}
       <div ref={loader}>{loading && 'Loading...'}</div>
