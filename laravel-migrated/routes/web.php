@@ -7,6 +7,8 @@ use App\Http\Controllers\AdminProductImportController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\StoreController;
+use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Support\Facades\Route;
 
 // Store pages
@@ -20,11 +22,18 @@ Route::get('/wishlist', [StoreController::class, 'wishlist'])->name('wishlist');
 Route::get('/order-confirmation', [StoreController::class, 'orderConfirmation'])->name('order-confirmation');
 
 // Auth
+Route::redirect('/login', '/sign-in', 301)->name('login');
+Route::redirect('/admin/login', '/sign-in', 301);
 Route::get('/sign-in', [AuthController::class, 'showSignIn'])->name('sign-in');
 Route::post('/sign-in', [AuthController::class, 'signIn']);
 Route::get('/sign-up', [AuthController::class, 'showSignUp'])->name('sign-up');
 Route::post('/sign-up', [AuthController::class, 'signUp']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('forgot-password');
+Route::post('/forgot-password', [AuthController::class, 'sendResetLink']);
+Route::get('/reset-password', [AuthController::class, 'showResetPassword'])->name('reset-password');
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 // Account (protected)
 Route::middleware('auth')->group(function () {
@@ -43,6 +52,79 @@ Route::get('/terms-of-service', [PageController::class, 'termsOfService'])->name
 Route::get('/refund-policy', [PageController::class, 'refundPolicy'])->name('refund-policy');
 Route::get('/exchange-policy', [PageController::class, 'exchangePolicy'])->name('exchange-policy');
 Route::get('/stitching', [PageController::class, 'stitching'])->name('stitching');
+
+Route::get('/sitemap.xml', function () {
+    $pages = [
+        '/',
+        '/collections',
+        '/about',
+        '/contact',
+        '/faq',
+        '/blogs',
+        '/track-order',
+        '/how-to-order',
+        '/shipping-rates',
+        '/terms-of-service',
+        '/refund-policy',
+        '/exchange-policy',
+        '/stitching',
+        '/search',
+    ];
+
+    $urls = [];
+    foreach ($pages as $path) {
+        $urls[] = [
+            'loc' => url($path),
+            'lastmod' => now()->toAtomString(),
+            'changefreq' => 'weekly',
+            'priority' => $path === '/' ? '1.0' : '0.7',
+        ];
+    }
+
+    $categories = Category::select(['slug', 'updated_at'])->get();
+    foreach ($categories as $category) {
+        $slug = trim((string) ($category->slug ?? ''));
+        if ($slug === '') {
+            continue;
+        }
+
+        $urls[] = [
+            'loc' => url('/collections?category=' . urlencode($slug)),
+            'lastmod' => optional($category->updated_at)->toAtomString() ?? now()->toAtomString(),
+            'changefreq' => 'weekly',
+            'priority' => '0.8',
+        ];
+    }
+
+    $products = Product::where('status', '=', 'active', 'and')->select(['slug', 'updated_at'])->get();
+    foreach ($products as $product) {
+        $slug = trim((string) ($product->slug ?? ''));
+        if ($slug === '') {
+            continue;
+        }
+
+        $urls[] = [
+            'loc' => url('/product/' . $slug),
+            'lastmod' => optional($product->updated_at)->toAtomString() ?? now()->toAtomString(),
+            'changefreq' => 'daily',
+            'priority' => '0.9',
+        ];
+    }
+
+    $xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+    $xml .= "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n";
+    foreach ($urls as $entry) {
+        $xml .= "  <url>\n";
+        $xml .= '    <loc>' . e((string) ($entry['loc'] ?? '')) . "</loc>\n";
+        $xml .= '    <lastmod>' . e((string) ($entry['lastmod'] ?? '')) . "</lastmod>\n";
+        $xml .= '    <changefreq>' . e((string) ($entry['changefreq'] ?? 'weekly')) . "</changefreq>\n";
+        $xml .= '    <priority>' . e((string) ($entry['priority'] ?? '0.7')) . "</priority>\n";
+        $xml .= "  </url>\n";
+    }
+    $xml .= '</urlset>';
+
+    return response($xml, 200)->header('Content-Type', 'application/xml');
+})->name('sitemap');
 
 // Admin (protected)
 Route::prefix('admin')->middleware('auth')->group(function () {

@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Checkout – Sapphura')
+@section('description', 'Secure checkout at Sapphura - complete your order with EasyPaisa, JazzCash, Stripe, or cash on delivery.')
 
 @section('content')
 <div class="max-w-3xl mx-auto px-4 sm:px-6 py-10" x-data="checkoutForm()">

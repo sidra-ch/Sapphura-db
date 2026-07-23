@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Cart – Sapphura')
+@section('description', 'Review your Sapphura shopping cart - check items, update quantities, and proceed to secure checkout.')
 
 @section('content')
 <div class="max-w-4xl mx-auto px-4 sm:px-6 py-10" x-data>

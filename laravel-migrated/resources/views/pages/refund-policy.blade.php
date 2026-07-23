@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Refund Policy – Sapphura')
+@section('description', 'Sapphura refund policy - eligible for returns within 7 days. Learn about our refund process, non-refundable items, and how to request a refund.')
 
 @section('content')
 <div class="max-w-3xl mx-auto px-4 sm:px-6 py-16">

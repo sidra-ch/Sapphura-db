@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'FAQ – Sapphura')
+@section('description', 'Frequently asked questions about Sapphura products, delivery, payments, returns, and exchanges. Find answers to common queries.')
 
 @section('content')
 <div class="max-w-3xl mx-auto px-4 sm:px-6 py-16">

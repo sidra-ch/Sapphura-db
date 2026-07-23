@@ -24,6 +24,12 @@
                 </div>
             @endif
 
+            @if(session('status'))
+                <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-3 mb-6 text-sm text-green-300">
+                    {{ session('status') }}
+                </div>
+            @endif
+
             <form method="POST" action="/sign-in" class="space-y-5">
                 @csrf
                 <div>
@@ -33,10 +39,15 @@
                         placeholder="your@email.com">
                 </div>
                 <div>
-                    <label class="block text-sm text-cream/70 mb-1.5">Password</label>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-sm text-cream/70">Password</label>
+                    </div>
                     <input type="password" name="password" required
                         class="w-full px-4 py-3 bg-white/5 border border-gold/20 rounded-lg text-cream focus:border-gold focus:ring-1 focus:ring-gold/50 outline-none transition"
                         placeholder="••••••••">
+                    <div class="mt-2 text-right">
+                        <a href="/forgot-password" class="text-xs text-gold hover:underline">Forgot Password?</a>
+                    </div>
                 </div>
                 <button type="submit"
                     class="w-full py-3 bg-gradient-to-r from-gold to-gold-light text-ink font-bold rounded-lg tracking-wider uppercase text-sm hover:shadow-lg hover:shadow-gold/20 transition">

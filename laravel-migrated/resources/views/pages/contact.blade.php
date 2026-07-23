@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Contact Us – Sapphura')
+@section('description', 'Get in touch with Sapphura. Reach us via phone, WhatsApp, email, or visit our store. We offer nationwide delivery across Pakistan.')
 
 @section('content')
 {{-- Hero --}}

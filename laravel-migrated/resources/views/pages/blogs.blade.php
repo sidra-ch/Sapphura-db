@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Blog – Sapphura')
+@section('description', 'Read the latest fashion tips, styling guides, and updates from Sapphura. Stay inspired with our blog.')
 
 @section('content')
 <div class="max-w-5xl mx-auto px-4 sm:px-6 py-16">

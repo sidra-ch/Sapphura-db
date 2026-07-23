@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Terms of Service – Sapphura')
+@section('description', 'Sapphura terms of service - read about our terms regarding products, orders, payments, shipping, returns, and intellectual property.')
 
 @section('content')
 <div class="max-w-3xl mx-auto px-4 sm:px-6 py-16">

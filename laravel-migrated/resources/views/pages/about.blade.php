@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'About Us – Sapphura')
+@section('description', 'Learn about Sapphura - our story, mission, and commitment to delivering luxury fashion, jewelry, and premium stitching services across Pakistan.')
 
 @section('content')
 {{-- Hero --}}

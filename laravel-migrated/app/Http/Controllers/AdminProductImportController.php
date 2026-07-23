@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use SimpleXMLElement;
+use ZipArchive;
 
 class AdminProductImportController extends Controller
 {
@@ -89,7 +91,7 @@ class AdminProductImportController extends Controller
     public function preview(Request $request)
     {
         $request->validate([
-            'csv_file' => 'required|file|mimetypes:text/plain,text/csv,text/tsv,application/csv,application/vnd.ms-excel|max:5120',
+            'csv_file' => 'required|file|mimetypes:text/plain,text/csv,text/tsv,application/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|max:10240',
         ]);
 
         $csv = $request->file('csv_file');
@@ -97,7 +99,7 @@ class AdminProductImportController extends Controller
             return back()->with('error', 'CSV file upload failed. Please try again.');
         }
 
-        [$previewRows, $validRows, $summary] = $this->parseAndValidateCsv($csv);
+        [$previewRows, $validRows, $summary] = $this->parseAndValidateFile($csv);
 
         if (($summary['total_rows'] ?? 0) === 0) {
             return back()->with('error', 'CSV file is empty or invalid.');
@@ -196,21 +198,15 @@ class AdminProductImportController extends Controller
         return redirect()->route('admin.products')->with('success', $message);
     }
 
-    private function parseAndValidateCsv(UploadedFile $file): array
+    private function parseAndValidateFile(UploadedFile $file): array
     {
-        $path = $file->getRealPath();
-        if ($path === false) {
+        $rows = $this->readTabularRows($file);
+        if (empty($rows)) {
             return [[], [], ['total_rows' => 0, 'valid_rows' => 0, 'invalid_rows' => 0]];
         }
 
-        $handle = fopen($path, 'rb');
-        if ($handle === false) {
-            return [[], [], ['total_rows' => 0, 'valid_rows' => 0, 'invalid_rows' => 0]];
-        }
-
-        $headers = fgetcsv($handle);
+        $headers = array_shift($rows);
         if (!is_array($headers)) {
-            fclose($handle);
             return [[], [], ['total_rows' => 0, 'valid_rows' => 0, 'invalid_rows' => 0]];
         }
 
@@ -219,7 +215,6 @@ class AdminProductImportController extends Controller
 
         foreach ($required as $key) {
             if (!in_array($key, $headers, true)) {
-                fclose($handle);
                 return [
                     [[
                         'row_number' => 0,
@@ -243,7 +238,7 @@ class AdminProductImportController extends Controller
         $validRows = [];
         $rowIndex = 1;
 
-        while (($line = fgetcsv($handle)) !== false) {
+        foreach ($rows as $line) {
             $rowIndex++;
             $data = [];
             foreach ($headers as $index => $key) {
@@ -289,7 +284,7 @@ class AdminProductImportController extends Controller
                 $errors[] = 'Category is required.';
             } elseif (ctype_digit($categoryRaw)) {
                 $numeric = (int) $categoryRaw;
-                $categoryId = Category::where('id', $numeric)->exists() ? $numeric : null;
+                $categoryId = Category::where('id', '=', $numeric, 'and')->exists() ? $numeric : null;
                 if ($categoryId === null) {
                     $errors[] = 'Category ID not found: ' . $categoryRaw;
                 }
@@ -339,8 +334,6 @@ class AdminProductImportController extends Controller
             }
         }
 
-        fclose($handle);
-
         $summary = [
             'total_rows' => count($previewRows),
             'valid_rows' => count($validRows),
@@ -348,6 +341,151 @@ class AdminProductImportController extends Controller
         ];
 
         return [$previewRows, $validRows, $summary];
+    }
+
+    private function readTabularRows(UploadedFile $file): array
+    {
+        $extension = Str::lower((string) $file->getClientOriginalExtension());
+        if ($extension === 'xlsx') {
+            return $this->readXlsxRows($file);
+        }
+
+        return $this->readCsvRows($file);
+    }
+
+    private function readCsvRows(UploadedFile $file): array
+    {
+        $path = $file->getRealPath();
+        if ($path === false) {
+            return [];
+        }
+
+        $handle = fopen($path, 'rb');
+        if ($handle === false) {
+            return [];
+        }
+
+        $rows = [];
+        while (($line = fgetcsv($handle)) !== false) {
+            $rows[] = $line;
+        }
+        fclose($handle);
+
+        return $rows;
+    }
+
+    private function readXlsxRows(UploadedFile $file): array
+    {
+        $path = $file->getRealPath();
+        if ($path === false || !class_exists(ZipArchive::class)) {
+            return [];
+        }
+
+        $zip = new ZipArchive();
+        if ($zip->open($path) !== true) {
+            return [];
+        }
+
+        $sharedStrings = $this->readSharedStrings($zip);
+        $sheetXml = $zip->getFromName('xl/worksheets/sheet1.xml');
+        $zip->close();
+
+        if (!is_string($sheetXml) || trim($sheetXml) === '') {
+            return [];
+        }
+
+        $sheet = simplexml_load_string($sheetXml);
+        if (!$sheet instanceof SimpleXMLElement || !isset($sheet->sheetData->row)) {
+            return [];
+        }
+
+        $rows = [];
+        foreach ($sheet->sheetData->row as $row) {
+            $cells = [];
+            foreach ($row->c as $cell) {
+                $reference = (string) ($cell['r'] ?? '');
+                $columnIndex = $this->columnReferenceToIndex($reference);
+                $rawValue = (string) ($cell->v ?? '');
+                $value = '';
+
+                $type = (string) ($cell['t'] ?? '');
+                if ($type === 's') {
+                    $value = $sharedStrings[(int) $rawValue] ?? '';
+                } elseif ($type === 'inlineStr') {
+                    $value = trim((string) ($cell->is->t ?? ''));
+                } else {
+                    $value = trim($rawValue);
+                }
+
+                if ($columnIndex >= 0) {
+                    $cells[$columnIndex] = $value;
+                }
+            }
+
+            if (empty($cells)) {
+                continue;
+            }
+
+            ksort($cells);
+            $max = max(array_keys($cells));
+            $line = array_fill(0, $max + 1, '');
+            foreach ($cells as $i => $v) {
+                $line[$i] = $v;
+            }
+            $rows[] = $line;
+        }
+
+        return $rows;
+    }
+
+    private function readSharedStrings(ZipArchive $zip): array
+    {
+        $shared = $zip->getFromName('xl/sharedStrings.xml');
+        if (!is_string($shared) || trim($shared) === '') {
+            return [];
+        }
+
+        $xml = simplexml_load_string($shared);
+        if (!$xml instanceof SimpleXMLElement || !isset($xml->si)) {
+            return [];
+        }
+
+        $values = [];
+        foreach ($xml->si as $item) {
+            if (isset($item->t)) {
+                $values[] = (string) $item->t;
+                continue;
+            }
+
+            if (!isset($item->r)) {
+                $values[] = '';
+                continue;
+            }
+
+            $parts = [];
+            foreach ($item->r as $run) {
+                $parts[] = (string) ($run->t ?? '');
+            }
+            $values[] = implode('', $parts);
+        }
+
+        return $values;
+    }
+
+    private function columnReferenceToIndex(string $cellReference): int
+    {
+        $letters = preg_replace('/[^A-Z]/', '', strtoupper($cellReference));
+        if ($letters === null || $letters === '') {
+            return -1;
+        }
+
+        $index = 0;
+        $length = strlen($letters);
+        for ($i = 0; $i < $length; $i++) {
+            $index = ($index * 26) + (ord($letters[$i]) - 64);
+        }
+
+        return $index - 1;
     }
 
     private function splitMediaList(string $value): array

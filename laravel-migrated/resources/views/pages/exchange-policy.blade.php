@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Exchange Policy – Sapphura')
+@section('description', 'Sapphura exchange policy - exchange within 7 days for unworn items. Learn about the exchange process, eligible items, and shipping.')
 
 @section('content')
 <div class="max-w-3xl mx-auto px-4 sm:px-6 py-16">

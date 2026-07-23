@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Custom Stitching Service — Sapphura')
+@section('description', 'Custom stitching services by Sapphura - choose from premium designs, submit your measurements, and get expertly tailored suits delivered to your door.')
 
 @section('content')
 

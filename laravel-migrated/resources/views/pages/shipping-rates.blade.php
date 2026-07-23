@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Shipping Rates – Sapphura')
+@section('description', 'View Sapphura shipping rates - standard delivery Rs.200, express Rs.500, free shipping on orders above Rs.5,000. Nationwide delivery across Pakistan.')
 
 @section('content')
 <div class="max-w-3xl mx-auto px-4 sm:px-6 py-16">

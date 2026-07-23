@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Track Your Order – Sapphura')
+@section('description', 'Track your Sapphura order - enter your order ID to check the current status, payment info, and delivery progress.')
 
 @section('content')
 <div class="max-w-lg mx-auto px-4 sm:px-6 py-16">

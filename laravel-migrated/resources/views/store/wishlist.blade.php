@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Wishlist – Sapphura')
+@section('description', 'Your Sapphura wishlist - save your favorite luxury jewelry and fashion pieces for later.')
 
 @section('content')
 <div class="max-w-7xl mx-auto px-4 sm:px-6 py-10" x-data>

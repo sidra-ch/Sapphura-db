@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'How to Order – Sapphura')
+@section('description', 'Learn how to order from Sapphura - browse, add to cart, checkout, and get your order delivered nationwide in 3-5 business days.')
 
 @section('content')
 <div class="max-w-3xl mx-auto px-4 sm:px-6 py-16">

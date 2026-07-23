@@ -1,23 +1,56 @@
 ﻿@extends('layouts.app')
-@section('title', $product->name . ' - Sapphura')
+@section('title', $product->name . ' – Sapphura')
+@section('description', Str::limit(strip_tags($product->description ?? $product->name), 160))
+@section('og_type', 'product')
+@section('og_image', $product->images ? json_decode($product->images)[0] ?? asset('/logo-1.png') : asset('/logo-1.png'))
 
 @section('content')
-@php $images = json_decode($product->images ?: '[]', true); @endphp
+@php
+    $images = json_decode($product->images ?: '[]', true);
+    $firstImage = $images[0] ?? null;
+    $ogImage = $firstImage ?? asset('/logo-1.png');
+@endphp
+
+{{-- Product JSON-LD --}}
+<script type="application/ld+json">
+{
+    "@@context": "https://schema.org",
+    "@type": "Product",
+    "name": @json($product->name),
+    "description": @json(Str::limit(strip_tags($product->description ?? $product->name), 300)),
+    "image": @json($firstImage ? [$firstImage] : []),
+    "brand": { "@type": "Brand", "name": "Sapphura" },
+    "url": "{{ url('/product/' . $product->slug) }}",
+    "offers": {
+        "@type": "Offer",
+        "price": @json($product->price),
+        "priceCurrency": "PKR",
+        "availability": "{{ $product->stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock' }}",
+        "url": "{{ url('/product/' . $product->slug) }}"
+    }@if($product->reviews->count()),
+    "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": @json(round($product->reviews->avg('rating'), 1)),
+        "reviewCount": @json($product->reviews->count())
+    }
+    @endif
+}
+</script>
 <div class="max-w-7xl mx-auto px-4 sm:px-6 py-10">
-    {{-- Breadcrumb --}}
-    <nav class="text-sm text-cream/40 mb-8">
-        <a href="/" class="hover:text-gold transition">Home</a>
-        <span class="mx-2">/</span>
-        <a href="/collections" class="hover:text-gold transition">Shop</a>
-        <span class="mx-2">/</span>
-        <a href="/collections?category={{ urlencode($product->category->name ?? '') }}" class="hover:text-gold transition">{{ $product->category->name ?? '' }}</a>
-        <span class="mx-2">/</span>
-        <span class="text-cream">{{ $product->name }}</span>
-    </nav>
+    @php
+        $breadcrumbItems = [
+            ['label' => 'Shop', 'url' => '/collections'],
+        ];
+        if ($product->category) {
+            $breadcrumbItems[] = ['label' => $product->category->name, 'url' => '/collections?category=' . urlencode($product->category->name)];
+        }
+        $breadcrumbItems[] = ['label' => $product->name];
+    @endphp
+    @include('partials.breadcrumb', ['items' => $breadcrumbItems])
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-12" x-data="{ selectedImage: 0, qty: 1, selectedVariant: null }">
         {{-- Images --}}
-        <div>
+        <div class="lg:sticky lg:top-28 lg:self-start">
             <div class="aspect-square rounded-xl overflow-hidden glass mb-4">
                 @if(count($images) > 0)
                     <template x-for="(img, idx) in {{ json_encode($images) }}" :key="idx">
@@ -126,8 +159,8 @@
             </div>
 
             {{-- Add to Cart --}}
-            <div class="flex gap-3 mb-6">
-                <button @click="$store.cart.add({
+            <div class="flex gap-3 mb-6" id="main-add-to-cart-wrapper">
+                <button id="main-add-to-cart" @click="$store.cart.add({
                     id: '{{ $product->public_id ?: $product->id }}' + (selectedVariant ? '-' + selectedVariant.id : ''),
                     productId: {{ $product->id }},
                     slug: '{{ $product->slug }}',
@@ -195,6 +228,7 @@
             </div>
         </section>
     @endif
+
 </div>
 @endsection
 

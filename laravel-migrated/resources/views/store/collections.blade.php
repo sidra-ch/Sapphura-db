@@ -1,8 +1,16 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 @section('title', request('category') ? request('category') . ' - Sapphura' : 'Collections - Sapphura')
 
 @section('content')
 <div class="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+
+    @php
+        $breadcrumbItems = [['label' => 'Collections', 'url' => '/collections']];
+        if (request('category')) {
+            $breadcrumbItems[] = ['label' => request('category')];
+        }
+    @endphp
+    @include('partials.breadcrumb', ['items' => $breadcrumbItems])
 
     {{-- Stitch Suits Hero Banner (only when category=Stitch Suits) --}}
     @if(request('category') === 'Stitch Suits')
@@ -125,6 +133,7 @@
                         <option value="newest" {{ request('sort') === 'newest' ? 'selected' : '' }}>Newest</option>
                         <option value="price_asc" {{ request('sort') === 'price_asc' ? 'selected' : '' }}>Price: Low to High</option>
                         <option value="price_desc" {{ request('sort') === 'price_desc' ? 'selected' : '' }}>Price: High to Low</option>
+                        <option value="best_sellers" {{ request('sort') === 'best_sellers' ? 'selected' : '' }}>Best Sellers</option>
                     </select>
                 </div>
                 <div class="flex gap-2">
@@ -136,22 +145,22 @@
 
         {{-- Product Grid --}}
         <div class="flex-1">
+            @if($products->count())
             <div class="flex items-center justify-between mb-6">
                 <p class="text-sm text-cream/50">{{ $products->total() }} products</p>
             </div>
-            @if($products->count())
-                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                    @foreach($products as $product)
-                        @include('partials.product-card', ['product' => $product])
-                    @endforeach
-                </div>
-                <div class="mt-10">{{ $products->links() }}</div>
+            <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 items-stretch">
+                @foreach($products as $product)
+                    @include('partials.product-card', ['product' => $product])
+                @endforeach
+            </div>
+            <div class="mt-10">{{ $products->links() }}</div>
             @else
-                <div class="text-center py-20">
-                    <svg class="w-16 h-16 text-cream/20 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                    <p class="text-cream/50">No products found</p>
-                    <a href="/collections" class="text-gold hover:underline text-sm mt-2 inline-block">Clear filters</a>
-                </div>
+            <div class="text-center py-20">
+                <svg class="w-16 h-16 text-cream/20 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                <p class="text-cream/50">No products found</p>
+                <a href="/collections" class="text-gold hover:underline text-sm mt-2 inline-block">Clear filters</a>
+            </div>
             @endif
         </div>
     </div>

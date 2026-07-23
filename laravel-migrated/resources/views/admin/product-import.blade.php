@@ -12,7 +12,7 @@
 
 <div class="grid lg:grid-cols-3 gap-6 mb-6">
     <div class="glass rounded-xl p-5 lg:col-span-2">
-        <h2 class="text-lg font-semibold mb-3">Step 1: Upload CSV</h2>
+        <h2 class="text-lg font-semibold mb-3">Step 1: Upload File</h2>
         <form method="POST" action="{{ route('admin.products.import.preview') }}" enctype="multipart/form-data" class="space-y-4">
             @csrf
 
@@ -25,8 +25,8 @@
             @endif
 
             <div>
-                <label class="block text-sm text-cream/70 mb-1.5">CSV File</label>
-                <input type="file" name="csv_file" accept=".csv,text/csv" required
+                <label class="block text-sm text-cream/70 mb-1.5">File (CSV or XLSX)</label>
+                <input type="file" name="csv_file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required
                     class="w-full px-4 py-2.5 bg-white/5 border border-gold/20 rounded-lg text-sm">
             </div>
 
@@ -47,6 +47,7 @@
             <p>is_featured: yes/no or 1/0</p>
             <p>image_urls and video_urls: separate by |</p>
             <p>Phase 2: you can also use image_files and video_files for local files.</p>
+            <p>Excel support: .xlsx (first sheet is imported).</p>
             <p>Local media folders supported: /import-media, /uploads, /storage</p>
         </div>
     </div>

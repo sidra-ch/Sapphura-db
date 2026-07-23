@@ -5,14 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Admin') – Sapphura</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config = { theme: { extend: { colors: { gold: '#d4af37', 'gold-light': '#e8c967', navy: '#0a1630', 'navy-soft': '#13213f', ink: '#09111f', cream: '#fff7ef' } } } }</script>
-    <style>body { font-family: system-ui, sans-serif; background: #09111f; color: #fff7ef; }</style>
+    @vite(['resources/css/app.css'])
     @stack('styles')
 </head>
-<body class="min-h-screen flex" x-data="{ sidebarOpen: true }">
+<body class="min-h-screen flex overflow-x-hidden" x-data="{ sidebarOpen: window.innerWidth >= 1024 }">
+    <div x-show="sidebarOpen" x-cloak @click="sidebarOpen = false" class="fixed inset-0 z-40 bg-black/60 lg:hidden"></div>
+
     {{-- Sidebar --}}
-    <aside :class="sidebarOpen ? 'w-64' : 'w-16'" class="bg-ink border-r border-gold/10 min-h-screen transition-all duration-300 flex flex-col">
+    <aside
+        :class="sidebarOpen ? 'translate-x-0 lg:w-64' : '-translate-x-full lg:translate-x-0 lg:w-16'"
+        class="fixed lg:static inset-y-0 left-0 z-50 w-64 bg-ink border-r border-gold/10 min-h-screen transition-all duration-300 flex flex-col">
         <div class="p-4 border-b border-gold/10 flex items-center justify-between">
             <a href="/admin" class="flex items-center gap-2" x-show="sidebarOpen">
                 <div class="w-8 h-8 rounded-full bg-gradient-to-br from-gold to-gold-light flex items-center justify-center">
@@ -53,14 +55,17 @@
     </aside>
 
     {{-- Main Content --}}
-    <div class="flex-1 flex flex-col min-h-screen">
-        <header class="bg-ink/80 backdrop-blur border-b border-gold/10 px-6 py-4 flex items-center justify-between">
+    <div class="flex-1 flex flex-col min-h-screen min-w-0">
+        <header class="bg-ink/80 backdrop-blur border-b border-gold/10 px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
+            <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden text-cream/70 hover:text-gold transition p-1.5">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
             <h1 class="text-lg font-bold tracking-wider">@yield('page-title', 'Dashboard')</h1>
             <div class="flex items-center gap-3">
                 <span class="text-sm text-cream/50">Admin</span>
             </div>
         </header>
-        <main class="flex-1 p-6">
+        <main class="flex-1 p-4 sm:p-6 min-w-0 overflow-x-auto">
             @if(session('success'))
                 <div class="mb-4 p-3 rounded-lg bg-green-500/15 border border-green-500/30 text-green-400 text-sm">{{ session('success') }}</div>
             @endif
@@ -72,6 +77,7 @@
     </div>
 
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>[x-cloak]{display:none!important;}</style>
     @stack('scripts')
 </body>
 </html>
