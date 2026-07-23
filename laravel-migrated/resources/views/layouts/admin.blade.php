@@ -5,7 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Admin') – Sapphura</title>
-    @vite(['resources/css/app.css'])
+    @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
+        @vite(['resources/css/app.css'])
+    @else
+        <script>
+            tailwind = {
+                config: {
+                    theme: {
+                        extend: {
+                            colors: {
+                                gold: '#d4af37',
+                                'gold-light': '#e8c967',
+                                navy: '#0a1630',
+                                'navy-soft': '#13213f',
+                                sand: '#dbc6a4',
+                                ink: '#09111f',
+                                cream: '#fff7ef',
+                                'cream-dark': '#f7efe5',
+                            },
+                            fontFamily: {
+                                sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+                                serif: ['Cormorant Garamond', 'Georgia', 'serif'],
+                            },
+                        }
+                    }
+                }
+            }
+        </script>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: #0a1630; color: #fff7ef; }
+            h1, h2, h3, .font-serif { font-family: 'Cormorant Garamond', Georgia, serif; }
+            [x-cloak]{display:none!important;}
+        </style>
+    @endif
     @stack('styles')
 </head>
 <body class="min-h-screen flex overflow-x-hidden" x-data="{ sidebarOpen: window.innerWidth >= 1024 }">

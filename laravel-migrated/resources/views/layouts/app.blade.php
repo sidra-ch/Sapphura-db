@@ -27,7 +27,61 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @else
+        <script>
+            tailwind = {
+                config: {
+                    theme: {
+                        extend: {
+                            colors: {
+                                gold: '#d4af37',
+                                'gold-light': '#e8c967',
+                                navy: '#0a1630',
+                                'navy-soft': '#13213f',
+                                sand: '#dbc6a4',
+                                ink: '#09111f',
+                                cream: '#fff7ef',
+                                'cream-dark': '#f7efe5',
+                            },
+                            fontFamily: {
+                                sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+                                serif: ['Cormorant Garamond', 'Georgia', 'serif'],
+                            },
+                        }
+                    }
+                }
+            }
+        </script>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            html { scroll-padding-top: 112px; }
+            @media (max-width: 1023px) { html { scroll-padding-top: 102px; } }
+            @media (max-width: 639px) { html { scroll-padding-top: 94px; } }
+            body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: #0a1630; color: #fff7ef; }
+            h1, h2, h3, .font-serif { font-family: 'Cormorant Garamond', Georgia, serif; }
+            .glass { background: rgba(19, 33, 63, 0.75); backdrop-filter: blur(18px); border: 1px solid rgba(212, 175, 55, 0.18); }
+            .gold-glow { box-shadow: 0 0 20px rgba(212, 175, 55, 0.15); }
+            .section-shell { max-width: 1280px; margin-left: auto; margin-right: auto; padding-left: 1.25rem; padding-right: 1.25rem; }
+            .luxury-card { background: linear-gradient(180deg, rgba(19, 33, 63, 0.65), rgba(9, 17, 31, 0.5)); border: 1px solid rgba(212, 175, 55, 0.14); position: relative; overflow: hidden; }
+            .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+            .scrollbar-hide::-webkit-scrollbar { display: none; }
+            .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+            .luxury-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(212, 175, 55, 0.05), transparent 50%); opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+            .luxury-card:hover::before { opacity: 1; }
+            .luxury-card:hover { border-color: rgba(212, 175, 55, 0.32); box-shadow: 0 10px 35px rgba(3, 8, 20, 0.5); }
+            @keyframes floatOrb { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-18px) scale(1.05); } }
+            .floating-orb { animation: floatOrb 7s ease-in-out infinite; }
+            @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+            .animate-marquee { animation: marquee 30s linear infinite; }
+            @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+            .animate-float { animation: float 7s ease-in-out infinite; }
+            @keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 8px rgba(212, 175, 55, 0.2); } 50% { box-shadow: 0 0 24px rgba(212, 175, 55, 0.5); } }
+            .animate-pulse-glow { animation: pulseGlow 3.4s ease-in-out infinite; }
+            @media (min-width: 640px) { .section-shell { padding-left: 2rem; padding-right: 2rem; } }
+        </style>
+    @endif
 
     {{-- Organization JSON-LD --}}
     <script type="application/ld+json">
