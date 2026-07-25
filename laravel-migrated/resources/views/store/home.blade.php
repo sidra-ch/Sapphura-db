@@ -2,69 +2,410 @@
 @section('title', 'Sapphura — Luxury Fashion & Jewelry')
 @section('description', 'Shop luxury jewelry, ready-to-wear fashion, unstitched collections, and custom stitching at Sapphura. Premium quality, nationwide delivery.')
 
+@push('styles')
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap');
+
+    #sapphura-hero {
+        overflow-x: clip;
+        background:
+            radial-gradient(circle at 15% 20%, rgba(212, 175, 55, 0.14), transparent 44%),
+            linear-gradient(138deg, #060f22 0%, #0a1b36 48%, #060f22 100%);
+    }
+
+    #sapphura-hero .hero-carousel {
+        position: relative;
+        overflow: hidden;
+        width: 100%;
+        max-width: 100vw;
+        border-top: 1px solid rgba(212, 175, 55, 0.26);
+        border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+        min-height: clamp(430px, 46vw, 620px);
+    }
+
+    #sapphura-hero .hero-track {
+        position: relative;
+        width: 100%;
+        overflow: hidden;
+        min-height: inherit;
+    }
+
+    #sapphura-hero .hero-slide {
+        position: absolute;
+        inset: 0;
+        display: block;
+        overflow: hidden;
+        opacity: 0;
+        transform: scale(1.008);
+        pointer-events: none;
+        transition: opacity 0.85s ease, transform 1s ease;
+    }
+
+    #sapphura-hero .hero-slide.is-active {
+        opacity: 1;
+        transform: scale(1);
+        pointer-events: auto;
+    }
+
+    #sapphura-hero .hero-slide::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        background:
+            linear-gradient(90deg, rgba(6, 15, 34, 0.9) 0%, rgba(6, 15, 34, 0.72) 34%, rgba(6, 15, 34, 0.42) 56%, rgba(6, 15, 34, 0.14) 74%, rgba(6, 15, 34, 0.36) 100%),
+            linear-gradient(180deg, rgba(6, 15, 34, 0.12) 0%, rgba(6, 15, 34, 0.34) 100%);
+    }
+
+    #sapphura-hero .hero-copy {
+        position: relative;
+        z-index: 3;
+        min-height: inherit;
+        display: flex;
+        align-items: center;
+        padding: clamp(1.15rem, 2.4vw, 2rem) 0;
+    }
+
+    #sapphura-hero .hero-copy-inner {
+        width: 100%;
+        max-width: min(560px, 100%);
+    }
+
+    #sapphura-hero .hero-kicker {
+        font-family: "Manrope", sans-serif;
+        color: rgba(248, 246, 241, 0.82);
+        letter-spacing: 0.3em;
+        font-weight: 600;
+    }
+
+    #sapphura-hero .hero-title {
+        margin-top: 0.5rem;
+        color: #f8f6f1;
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: clamp(2.3rem, 4.9vw, 5rem);
+        line-height: 0.92;
+        font-weight: 600;
+        letter-spacing: 0.008em;
+        max-width: 10ch;
+    }
+
+    #sapphura-hero .hero-title em {
+        color: #d4af37;
+        font-style: normal;
+        font-weight: 500;
+    }
+
+    #sapphura-hero .hero-description {
+        margin-top: 1rem;
+        color: rgba(248, 246, 241, 0.88);
+        max-width: 42ch;
+        line-height: 1.78;
+        font-family: "Manrope", sans-serif;
+        font-size: clamp(0.94rem, 1.1vw, 1.06rem);
+    }
+
+    #sapphura-hero .hero-actions {
+        margin-top: 1.55rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.8rem;
+    }
+
+    #sapphura-hero .hero-btn-primary,
+    #sapphura-hero .hero-btn-secondary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.55rem;
+        border-radius: 0.45rem;
+        padding: 0.82rem 1.55rem;
+        font-size: 0.67rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        font-family: "Manrope", sans-serif;
+        transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease, color 0.4s ease;
+    }
+
+    #sapphura-hero .hero-btn-primary {
+        border: 1px solid rgba(212, 175, 55, 0.9);
+        background: linear-gradient(135deg, #d4af37 0%, #bc9528 100%);
+        color: #0a1630;
+        box-shadow: 0 12px 24px rgba(4, 10, 24, 0.33), inset 0 0 0 1px rgba(248, 246, 241, 0.2);
+    }
+
+    #sapphura-hero .hero-btn-primary:hover {
+        transform: translateY(-1px) scale(1.01);
+        box-shadow: 0 16px 30px rgba(4, 10, 24, 0.4), 0 0 24px rgba(212, 175, 55, 0.44);
+    }
+
+    #sapphura-hero .hero-btn-secondary {
+        border: 1px solid rgba(248, 246, 241, 0.42);
+        background: rgba(248, 246, 241, 0.06);
+        color: #f8f6f1;
+    }
+
+    #sapphura-hero .hero-btn-secondary:hover {
+        transform: translateY(-1px) scale(1.01);
+        border-color: rgba(212, 175, 55, 0.7);
+        color: #f8f6f1;
+        box-shadow: inset 0 0 0 1px rgba(212, 175, 55, 0.4), 0 10px 22px rgba(8, 16, 35, 0.33);
+    }
+
+    #sapphura-hero .hero-media {
+        position: relative;
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        background: #081327;
+    }
+
+    #sapphura-hero .hero-media img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: var(--hero-focus, 76% 34%);
+        opacity: 0.95;
+        filter: saturate(1) contrast(1.03) brightness(0.93);
+        transform: scale(1.04);
+        transition: transform 6.8s ease;
+    }
+
+    #sapphura-hero .hero-slide.is-active .hero-media img {
+        transform: scale(1.01);
+    }
+
+    #sapphura-hero .hero-media video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: var(--hero-focus, 76% 34%);
+        opacity: 0.95;
+        filter: saturate(1.02) contrast(1.02) brightness(0.92);
+        transform: scale(1.03);
+        transition: transform 6.8s ease;
+    }
+
+    #sapphura-hero .hero-slide.is-active .hero-media video {
+        transform: scale(1.01);
+    }
+
+    #sapphura-hero .hero-controls {
+        position: absolute;
+        left: 50%;
+        width: min(1240px, calc(100% - 1.5rem));
+        transform: translateX(-50%);
+        bottom: 0.85rem;
+        z-index: 4;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    #sapphura-hero .hero-dots {
+        display: flex;
+        gap: 0.42rem;
+    }
+
+    #sapphura-hero .hero-dot {
+        width: 0.48rem;
+        height: 0.48rem;
+        border-radius: 999px;
+        border: 1px solid rgba(212, 175, 55, 0.72);
+        background: transparent;
+        opacity: 0.75;
+        transition: background-color 0.35s ease, transform 0.35s ease;
+    }
+
+    #sapphura-hero .hero-dot.is-active {
+        background: #d4af37;
+        transform: scale(1.08);
+        opacity: 1;
+    }
+
+    #sapphura-hero .hero-nav {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    #sapphura-hero .hero-nav-btn {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 999px;
+        border: 1px solid rgba(212, 175, 55, 0.62);
+        background: rgba(6, 15, 34, 0.58);
+        color: #f8f6f1;
+        transition: background-color 0.35s ease, border-color 0.35s ease;
+    }
+
+    #sapphura-hero .hero-nav-btn:hover {
+        border-color: rgba(212, 175, 55, 0.85);
+        background: rgba(6, 15, 34, 0.86);
+    }
+
+    @media (max-width: 1023px) {
+        #sapphura-hero .hero-copy {
+            align-items: flex-start;
+            padding: 1.6rem 0.9rem 1.4rem;
+        }
+
+        #sapphura-hero .hero-media img {
+            object-fit: cover;
+            object-position: var(--hero-focus-mobile, 68% 28%);
+            transform: scale(1.02);
+        }
+
+        #sapphura-hero .hero-media video {
+            object-fit: cover;
+            object-position: var(--hero-focus-mobile, 68% 28%);
+            transform: scale(1.02);
+        }
+
+        #sapphura-hero .hero-title {
+            font-size: clamp(2.2rem, 9.2vw, 3.6rem);
+            line-height: 0.9;
+            max-width: 12ch;
+        }
+
+        #sapphura-hero .hero-description {
+            margin-top: 0.95rem;
+            font-size: 0.98rem;
+            line-height: 1.68;
+        }
+    }
+
+    @media (max-width: 640px) {
+        #sapphura-hero .hero-track {
+            min-height: 520px;
+        }
+
+        #sapphura-hero .hero-btn-primary,
+        #sapphura-hero .hero-btn-secondary {
+            width: 100%;
+            max-width: 245px;
+        }
+
+        #sapphura-hero .hero-controls {
+            width: calc(100% - 1rem);
+            bottom: 0.75rem;
+        }
+
+        #sapphura-hero .hero-kicker {
+            letter-spacing: 0.26em;
+        }
+    }
+</style>
+@endpush
+
 @section('content')
 
-<section x-data="{
-    active: 0,
-    slides: [
-        { label: 'New Collection', title: 'The Signature Edit', copy: 'Explore premium women’s fashion and accessories curated for every elegant occasion.', image: '/summer-1.jpeg', href: '/collections' },
-        { label: 'Evening Luxury', title: 'Refined Eveningwear', copy: 'Discover handcrafted silhouettes, statement jewellery and polished beauty essentials.', image: '/neckles-3.jpeg', href: '/collections?search=Evening' },
-        { label: 'Modern Heritage', title: 'Wearable Tradition', copy: 'Elevate your wardrobe with modern tailoring and luxury fabrications.', image: '/clothes-collection.jpeg', href: '/collections?category=Clothing' },
-        { label: 'Bridal Ready', title: 'Bridal & Festive', copy: 'Celebrate special moments with luminous pieces designed for elegant gatherings.', image: '/newcollection-1.jpeg', href: '/collections?search=Bridal' },
-        { label: 'Beauty Edit', title: 'Makeup & Accessories', copy: 'Complete your look with premium makeup, statement jewellery and refined accessories.', image: '/make-up.jpeg', href: '/collections?category=Makeup' }
-    ],
-    timer: null,
-    init() { this.start() },
-    start() { this.pause(); this.timer = setInterval(() => this.active = (this.active + 1) % this.slides.length, 6000); },
-    pause() { if (this.timer) { clearInterval(this.timer); this.timer = null; } },
-    reset() { this.pause(); this.start(); },
-    prev() { this.active = (this.active - 1 + this.slides.length) % this.slides.length; this.reset(); },
-    next() { this.active = (this.active + 1) % this.slides.length; this.reset(); }
-}"
-         x-init="init()"
-         @mouseenter="pause()"
-         @mouseleave="start()"
-         class="relative overflow-hidden min-h-[65vh] sm:min-h-[75vh] lg:min-h-[90vh]">
-    <template x-for="(slide, index) in slides" :key="slide.title">
-        <div x-show="active === index" x-transition.opacity.duration.700 class="absolute inset-0">
-            <img :src="slide.image" :alt="slide.title" class="h-full w-full object-cover object-center" loading="lazy">
-            <div class="absolute inset-0 bg-navy/65"></div>
-            <div class="absolute inset-0 bg-gradient-to-t from-ink/80 via-transparent to-transparent"></div>
-            <div class="relative z-10 flex h-full items-center">
-                <div class="section-shell mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-                    <div class="max-w-2xl text-center">
-                        <p class="text-[10px] uppercase tracking-[0.45em] text-gold/70 mb-4" x-text="slide.label"></p>
-                        <h1 class="text-4xl sm:text-5xl md:text-[4.4rem] leading-tight font-semibold text-cream mb-6" x-text="slide.title"></h1>
-                        <p class="text-sm sm:text-base text-cream/70 mb-8" x-text="slide.copy"></p>
-                        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                            <a :href="slide.href"
-                               class="inline-flex items-center justify-center rounded-full bg-gold px-8 py-3 text-xs sm:text-sm font-semibold uppercase tracking-[0.26em] text-ink transition hover:bg-gold-light">
-                                Shop Now
-                            </a>
+<section id="sapphura-hero" class="relative isolate overflow-hidden border-b border-gold/10">
+    @php
+        $heroSlides = [
+            [
+                'kicker' => 'Sapphura Motion Edit',
+                'title1' => 'Luxury in Motion,',
+                'title2a' => 'Crafted to',
+                'title2b' => 'Captivate',
+                'description' => 'Experience Sapphura through a premium visual story featuring signature styling, detail, and modern elegance.',
+                'video' => '/sapphura video_1.mp4',
+                'alt' => 'Sapphura premium fashion video showcase',
+                'focus' => '66% 36%',
+                'focus_mobile' => '60% 34%',
+                'primary_cta_label' => 'Watch Collection Edit',
+                'primary_cta_href' => '/collections',
+                'secondary_cta_label' => 'Shop Signature Styles',
+                'secondary_cta_href' => '/collections?search=luxury',
+            ],
+            [
+                'kicker' => 'Summer Sale',
+                'title1' => 'Up to 30% OFF',
+                'title2a' => 'On Curated',
+                'title2b' => 'Items',
+                'description' => 'Exclusive seasonal savings on signature jewelry and statement pieces designed for graceful celebrations.',
+                'image' => '/bracelet-1.jpeg',
+                'alt' => 'Purple gemstone bracelet in luxury style',
+                'focus' => '72% 44%',
+                'focus_mobile' => '64% 42%',
+                'primary_cta_label' => 'Shop The Sale',
+                'primary_cta_href' => '/collections?on_sale=1',
+                'secondary_cta_label' => 'Explore New Arrivals',
+                'secondary_cta_href' => '/collections?sort=newest',
+            ],
+            [
+                'kicker' => 'Luxury Pret',
+                'title1' => 'Refined Edit,',
+                'title2a' => 'Designed to',
+                'title2b' => 'Enchant',
+                'description' => 'Modern cuts with couture-inspired finesse for women who choose confident elegance over fleeting trends.',
+                'image' => '/bangals-4.jpeg',
+                'alt' => 'Luxury bangles styled in an editorial product shot',
+                'focus' => '68% 48%',
+                'focus_mobile' => '62% 44%',
+            ],
+            [
+                'kicker' => 'Makeup Edit',
+                'title1' => 'Radiant Beauty,',
+                'title2a' => 'Curated for',
+                'title2b' => 'Lustre',
+                'description' => 'Velvet textures, timeless shades, and elegant finishing touches crafted for a luminous luxury look.',
+                'image' => '/make-up.jpeg',
+                'alt' => 'Luxury makeup collection for elegant women',
+                'focus' => '72% 34%',
+                'focus_mobile' => '66% 34%',
+                'primary_cta_label' => 'Shop Makeup Edit',
+                'primary_cta_href' => '/collections?category=Makeup',
+                'secondary_cta_label' => 'Explore Beauty Picks',
+                'secondary_cta_href' => '/collections?search=makeup',
+            ],
+        ];
+    @endphp
+
+    <div class="hero-carousel" data-hero-carousel>
+            <div class="hero-track">
+                @foreach($heroSlides as $slide)
+                    <article class="hero-slide {{ $loop->first ? 'is-active' : '' }}" data-hero-slide>
+                        <div class="hero-media">
+                            @if(!empty($slide['video']))
+                                <video autoplay muted loop playsinline preload="metadata" style="--hero-focus: {{ $slide['focus'] ?? '74% 22%' }}; --hero-focus-mobile: {{ $slide['focus_mobile'] ?? '66% 20%' }};" aria-label="{{ $slide['alt'] }}">
+                                    <source src="{{ $slide['video'] }}" type="video/mp4">
+                                </video>
+                            @else
+                                <img src="{{ $slide['image'] }}" alt="{{ $slide['alt'] }}" loading="lazy" style="--hero-focus: {{ $slide['focus'] ?? '74% 22%' }}; --hero-focus-mobile: {{ $slide['focus_mobile'] ?? '66% 20%' }};">
+                            @endif
                         </div>
-                    </div>
+                        <div class="hero-copy">
+                            <div class="section-shell w-full">
+                                <div class="hero-copy-inner">
+                                    <p class="hero-kicker text-[10px] uppercase">{{ $slide['kicker'] }}</p>
+                                    <h1 class="hero-title">
+                                        <span>{{ $slide['title1'] }}</span>
+                                        <span>{{ $slide['title2a'] }} <em>{{ $slide['title2b'] }}</em></span>
+                                    </h1>
+                                    <p class="hero-description text-[15px] sm:text-base">{{ $slide['description'] }}</p>
+                                    <div class="hero-actions">
+                                        <a href="{{ $slide['primary_cta_href'] ?? '/collections?search=Luxury' }}" class="hero-btn-primary">{{ $slide['primary_cta_label'] ?? 'Explore Collection' }}</a>
+                                        <a href="{{ $slide['secondary_cta_href'] ?? '/stitching' }}" class="hero-btn-secondary">{{ $slide['secondary_cta_label'] ?? 'Book Stitching' }}</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                @endforeach
+            </div>
+
+            <div class="hero-controls">
+                <div class="hero-dots" role="tablist" aria-label="Hero slides">
+                    @foreach($heroSlides as $slide)
+                        <button type="button" class="hero-dot {{ $loop->first ? 'is-active' : '' }}" data-hero-dot="{{ $loop->index }}" aria-label="Go to slide {{ $loop->iteration }}"></button>
+                    @endforeach
+                </div>
+                <div class="hero-nav">
+                    <button type="button" class="hero-nav-btn" data-hero-prev aria-label="Previous slide">&#10094;</button>
+                    <button type="button" class="hero-nav-btn" data-hero-next aria-label="Next slide">&#10095;</button>
                 </div>
             </div>
-        </div>
-    </template>
-
-    <button type="button" @click="prev()"
-            class="absolute left-4 top-1/2 -translate-y-1/2 rounded-full border border-gold/20 bg-navy/70 p-3 text-cream transition hover:bg-navy hover:text-gold">
-        <span class="sr-only">Previous slide</span>
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-    </button>
-    <button type="button" @click="next()"
-            class="absolute right-4 top-1/2 -translate-y-1/2 rounded-full border border-gold/20 bg-navy/70 p-3 text-cream transition hover:bg-navy hover:text-gold">
-        <span class="sr-only">Next slide</span>
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-    </button>
-
-    <div class="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2">
-        <template x-for="(slide, index) in slides" :key="slide.title + '-dot'">
-            <button type="button" @click="active = index; reset();"
-                    :class="active === index ? 'bg-gold' : 'bg-cream/30'"
-                    class="h-2.5 w-2.5 rounded-full transition"></button>
-        </template>
     </div>
 </section>
 
@@ -379,3 +720,63 @@
 </section>
 
 @endsection
+
+@push('scripts')
+<script>
+    (function () {
+        const root = document.querySelector('[data-hero-carousel]');
+        if (!root) return;
+
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        const slides = Array.from(root.querySelectorAll('[data-hero-slide]'));
+        const dots = Array.from(root.querySelectorAll('[data-hero-dot]'));
+        const prevBtn = root.querySelector('[data-hero-prev]');
+        const nextBtn = root.querySelector('[data-hero-next]');
+        let index = 0;
+        let timerId = null;
+
+        const activate = (nextIndex) => {
+            index = (nextIndex + slides.length) % slides.length;
+            slides.forEach((slide, i) => slide.classList.toggle('is-active', i === index));
+            dots.forEach((dot, i) => dot.classList.toggle('is-active', i === index));
+        };
+
+        const start = () => {
+            if (prefersReducedMotion) return;
+            stop();
+            timerId = window.setInterval(() => activate(index + 1), 6400);
+        };
+
+        const stop = () => {
+            if (timerId) {
+                window.clearInterval(timerId);
+                timerId = null;
+            }
+        };
+
+        prevBtn?.addEventListener('click', () => {
+            activate(index - 1);
+            start();
+        });
+
+        nextBtn?.addEventListener('click', () => {
+            activate(index + 1);
+            start();
+        });
+
+        dots.forEach((dot, i) => {
+            dot.addEventListener('click', () => {
+                activate(i);
+                start();
+            });
+        });
+
+        root.addEventListener('mouseenter', stop);
+        root.addEventListener('mouseleave', start);
+
+        activate(0);
+        start();
+    })();
+</script>
+@endpush
