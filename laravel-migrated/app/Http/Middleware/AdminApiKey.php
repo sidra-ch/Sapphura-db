@@ -15,9 +15,14 @@ class AdminApiKey
     public function handle(Request $request, Closure $next): Response
     {
         $configuredKey = env('ADMIN_API_KEY');
+        $allowedIps = array_values(array_filter(array_map('trim', explode(',', (string) env('ADMIN_API_ALLOWED_IPS', '')))));
 
         if (!$configuredKey) {
             return response()->json(['error' => 'ADMIN_API_KEY is not configured on server'], 500);
+        }
+
+        if (!empty($allowedIps) && !in_array((string) $request->ip(), $allowedIps, true)) {
+            return response()->json(['error' => 'Forbidden – IP address not allowed'], 403);
         }
 
         $header = $request->header('Authorization', '');

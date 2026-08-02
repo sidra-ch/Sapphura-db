@@ -61,7 +61,7 @@ Route::get('/payments/status', [LegacyBridgeController::class, 'paymentStatus'])
 
 // ---------- Admin routes (require ADMIN_API_KEY) ----------
 
-Route::middleware(AdminApiKey::class)->group(function () {
+Route::middleware([AdminApiKey::class, 'throttle:60,1'])->group(function () {
     Route::get('/users', [LegacyBridgeController::class, 'usersIndex']);
     Route::post('/users', [LegacyBridgeController::class, 'usersStore']);
 

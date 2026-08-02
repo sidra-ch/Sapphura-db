@@ -259,6 +259,47 @@
         </template>
     </aside>
     </div>
+
+    <div x-show="otp.open" x-cloak class="fixed inset-0 z-[130] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" style="display:none;">
+        <div class="w-full max-w-md glass rounded-2xl p-6 border border-gold/20">
+            <div class="flex items-start justify-between gap-4 mb-4">
+                <div>
+                    <h3 class="text-lg font-bold">Verify OTP</h3>
+                    <p class="text-sm text-cream/50 mt-1">Email verification is required before placing your order.</p>
+                </div>
+                <button type="button" @click="closeOtpModal()" class="text-cream/50 hover:text-gold transition">Close</button>
+            </div>
+
+            <div class="space-y-4">
+                <div class="rounded-lg bg-white/5 border border-gold/10 px-4 py-3 text-sm text-cream/70">
+                    OTP will be sent to <span class="text-gold" x-text="form.email"></span>
+                </div>
+
+                <template x-if="!otp.sent">
+                    <button type="button" @click="sendOtp()" :disabled="otp.sending" class="w-full py-3 bg-gradient-to-r from-gold to-gold-light text-ink font-bold rounded-lg text-sm tracking-wider uppercase disabled:opacity-50">
+                        <span x-show="!otp.sending">Send OTP</span>
+                        <span x-show="otp.sending">Sending...</span>
+                    </button>
+                </template>
+
+                <template x-if="otp.sent">
+                    <div class="space-y-3">
+                        <input x-model="otp.code" type="text" inputmode="numeric" maxlength="6" placeholder="Enter 6-digit OTP"
+                            class="w-full px-4 py-3 rounded-lg bg-navy border border-gold/20 text-cream placeholder-cream/30 focus:outline-none focus:border-gold text-sm tracking-[0.35em] text-center">
+                        <div class="flex gap-3">
+                            <button type="button" @click="verifyOtpAndPlaceOrder()" :disabled="otp.verifying || !otp.code" class="flex-1 py-3 bg-gradient-to-r from-gold to-gold-light text-ink font-bold rounded-lg text-sm tracking-wider uppercase disabled:opacity-50">
+                                <span x-show="!otp.verifying">Verify & Place Order</span>
+                                <span x-show="otp.verifying">Verifying...</span>
+                            </button>
+                            <button type="button" @click="sendOtp(true)" :disabled="otp.sending" class="px-4 py-3 border border-gold/30 text-gold rounded-lg text-sm disabled:opacity-50">Resend</button>
+                        </div>
+                    </div>
+                </template>
+
+                <p x-show="otp.message" class="text-xs text-cream/60" x-text="otp.message"></p>
+            </div>
+        </div>
+    </div>
 </div>
 
 @push('scripts')
@@ -269,6 +310,15 @@ function checkoutForm() {
         submitting: false,
         errors: {},
         toast: { show: false, type: 'error', message: '' },
+        otp: {
+            open: false,
+            sent: false,
+            sending: false,
+            verifying: false,
+            code: '',
+            message: '',
+            verificationToken: '',
+        },
         form: {
             email: '', name: '', phone: '', address: '', city: '', postalCode: '', country: 'Pakistan',
             shipping: 'standard', shippingCost: 200, payment: 'cod',
@@ -342,6 +392,127 @@ function checkoutForm() {
             this.form.discountLabel = '';
             this.couponError = '';
         },
+        openOtpModal() {
+            this.otp.open = true;
+            this.otp.message = '';
+        },
+        closeOtpModal() {
+            if (this.otp.verifying || this.otp.sending) return;
+            this.otp.open = false;
+        },
+        buildOrderItems() {
+            return Alpine.store('cart').items.map(i => ({
+                id: i.productId || i.id, quantity: i.quantity, price: i.price, variant: i.variant || null
+            }));
+        },
+        buildOrderPayload(items) {
+            return {
+                email: this.form.email, name: this.form.name, phone: this.form.phone,
+                firstName: this.form.name.split(' ')[0] || this.form.name,
+                lastName: this.form.name.split(' ').slice(1).join(' ') || '',
+                address: this.form.address,
+                city: this.form.city,
+                postalCode: this.form.postalCode,
+                country: this.form.country,
+                shippingName: this.form.name, shippingPhone: this.form.phone,
+                shippingCost: this.form.shippingCost, paymentMethod: this.form.payment,
+                total: Alpine.store('cart').totalPrice + this.form.shippingCost - (this.form.discountAmount || 0),
+                discount: this.form.discountAmount || 0,
+                discountCode: this.form.discountCode || '',
+                items: items,
+                paymentVerification: {
+                    verificationToken: this.otp.verificationToken || '',
+                },
+                verificationToken: this.otp.verificationToken || '',
+            };
+        },
+        async sendOtp(forceResend = false) {
+            this.otp.sending = true;
+            this.otp.message = '';
+            try {
+                const res = await fetch('/api/otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                    body: JSON.stringify({
+                        action: 'send',
+                        purpose: 'payment',
+                        email: this.form.email,
+                        phone: this.form.phone,
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || data.message || 'OTP could not be sent.');
+                }
+                this.otp.sent = true;
+                this.otp.code = '';
+                this.otp.message = forceResend ? 'OTP resent successfully.' : 'OTP sent successfully. Please check your email.';
+                this.showToast(this.otp.message, 'success');
+            } catch (e) {
+                this.otp.message = e.message || 'OTP could not be sent.';
+                this.showToast(this.otp.message);
+            }
+            this.otp.sending = false;
+        },
+        async verifyOtpAndPlaceOrder() {
+            if (!this.otp.code) {
+                this.showToast('Enter OTP first.');
+                return;
+            }
+            this.otp.verifying = true;
+            this.otp.message = '';
+            try {
+                const verifyRes = await fetch('/api/otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                    body: JSON.stringify({
+                        action: 'verify',
+                        purpose: 'payment',
+                        email: this.form.email,
+                        phone: this.form.phone,
+                        otp: this.otp.code,
+                    })
+                });
+                const verifyData = await verifyRes.json();
+                if (!verifyRes.ok || !verifyData.success || !verifyData.verificationToken) {
+                    throw new Error(verifyData.error || verifyData.message || 'OTP verification failed.');
+                }
+
+                this.otp.verificationToken = verifyData.verificationToken;
+                this.otp.open = false;
+                this.showToast('OTP verified.', 'success');
+                await this.submitOrder(this.buildOrderItems());
+            } catch (e) {
+                this.otp.message = e.message || 'OTP verification failed.';
+                this.showToast(this.otp.message);
+            }
+            this.otp.verifying = false;
+        },
+        async submitOrder(items) {
+            const res = await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                body: JSON.stringify(this.buildOrderPayload(items))
+            });
+            const data = await res.json();
+
+            if (res.status === 428 || data.needsOtp) {
+                this.openOtpModal();
+                if (!this.otp.sent) {
+                    await this.sendOtp();
+                }
+                return false;
+            }
+
+            if (data.success) {
+                Alpine.store('cart').clear();
+                window.location.href = '/order-confirmation?order=' + (data.order?.id || '');
+                return true;
+            }
+
+            this.showToast(data.error || 'Order failed. Please try again.');
+            return false;
+        },
         async placeOrder() {
             this.validateInfoStep();
             if (this.step !== 1 && Object.keys(this.errors).length > 0) {
@@ -355,36 +526,8 @@ function checkoutForm() {
 
             this.submitting = true;
             try {
-                const items = Alpine.store('cart').items.map(i => ({
-                    id: i.productId || i.id, quantity: i.quantity, price: i.price, variant: i.variant || null
-                }));
-                const res = await fetch('/api/orders', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-                    body: JSON.stringify({
-                        email: this.form.email, name: this.form.name, phone: this.form.phone,
-                        firstName: this.form.name.split(' ')[0] || this.form.name,
-                        lastName: this.form.name.split(' ').slice(1).join(' ') || '',
-                        address: this.form.address,
-                        city: this.form.city,
-                        postalCode: this.form.postalCode,
-                        country: this.form.country,
-                        shippingName: this.form.name, shippingPhone: this.form.phone,
-                        shippingCost: this.form.shippingCost, paymentMethod: this.form.payment,
-                        total: Alpine.store('cart').totalPrice + this.form.shippingCost - (this.form.discountAmount || 0),
-                        discount: this.form.discountAmount || 0,
-                        discountCode: this.form.discountCode || '',
-                        items: items,
-                        paymentVerification: {},
-                    })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    Alpine.store('cart').clear();
-                    window.location.href = '/order-confirmation?order=' + (data.order?.id || '');
-                } else {
-                    this.showToast(data.error || 'Order failed. Please try again.');
-                }
+                const items = this.buildOrderItems();
+                await this.submitOrder(items);
             } catch (e) {
                 this.showToast('Something went wrong. Please try again.');
             }

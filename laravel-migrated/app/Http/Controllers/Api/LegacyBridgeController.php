@@ -89,6 +89,30 @@ class LegacyBridgeController extends Controller
         return $decoded;
     }
 
+    private function hasValidOtpProof(Request $request, string $identity, string $purposeKey): bool
+    {
+        $token = trim((string) $request->input('verificationToken', ''));
+
+        if ($token === '') {
+            $verification = $request->input('paymentVerification', []);
+            if (is_array($verification)) {
+                $token = trim((string) ($verification['verificationToken'] ?? ''));
+            }
+        }
+
+        if ($token === '') {
+            return false;
+        }
+
+        $payload = $this->verifyOtpProofToken($token);
+        if (!$payload) {
+            return false;
+        }
+
+        return ($payload['email'] ?? '') === $identity
+            && ($payload['purpose'] ?? '') === $purposeKey;
+    }
+
     public function authDeprecated(): JsonResponse
     {
         return response()->json([
@@ -857,7 +881,15 @@ class LegacyBridgeController extends Controller
         $email = $this->normalizeEmail((string) $request->input('email', ''));
         $phone = (string) $request->input('phone', '');
         $identity = $email !== '' ? $email : ('phone-'.preg_replace('/\D+/', '', $phone).'@otp.local');
-        // OTP verification bypassed — direct order placement enabled
+        $purposeKey = 'payment:payment';
+
+        if (!$this->hasValidOtpProof($request, $identity, $purposeKey)) {
+            return response()->json([
+                'error' => 'OTP verification is required before placing the order.',
+                'needsOtp' => true,
+                'otpPurpose' => 'payment',
+            ], 428);
+        }
 
         $items = $this->normalizeOrderItems($request);
 
