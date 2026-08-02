@@ -15,13 +15,13 @@
     <form method="GET" action="/admin/products" class="flex flex-wrap gap-3">
         <input type="text" name="search" value="{{ request('search') }}" placeholder="Search products..."
             class="flex-1 min-w-[200px] px-4 py-2 bg-white/5 border border-gold/20 rounded-lg text-cream text-sm focus:border-gold outline-none transition">
-        <select name="category" class="px-4 py-2 bg-white/5 border border-gold/20 rounded-lg text-cream text-sm focus:border-gold outline-none transition">
+        <select name="category" onchange="this.form.submit()" class="px-4 py-2 bg-white/5 border border-gold/20 rounded-lg text-cream text-sm focus:border-gold outline-none transition">
             <option value="" class="bg-ink">All Categories</option>
             @foreach($categories as $cat)
                 <option value="{{ $cat->id }}" {{ request('category') == $cat->id ? 'selected' : '' }} class="bg-ink">{{ $cat->name }}</option>
             @endforeach
         </select>
-        <select name="stock" class="px-4 py-2 bg-white/5 border border-gold/20 rounded-lg text-cream text-sm focus:border-gold outline-none transition">
+        <select name="stock" onchange="this.form.submit()" class="px-4 py-2 bg-white/5 border border-gold/20 rounded-lg text-cream text-sm focus:border-gold outline-none transition">
             <option value="" class="bg-ink">All Stock</option>
             <option value="low" {{ request('stock') === 'low' ? 'selected' : '' }} class="bg-ink">Low Stock (&lt; 5)</option>
             <option value="out" {{ request('stock') === 'out' ? 'selected' : '' }} class="bg-ink">Out of Stock</option>

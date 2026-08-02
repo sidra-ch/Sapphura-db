@@ -96,13 +96,13 @@ If you have no SSH access, follow these steps:
    ```
    ln -s /home/USER/laravel-migrated/public /home/USER/public_html
    ```
-5. **Option B – .htaccess redirect:**
+5. **Option B – Bridge via `index.php` (recommended when symlink is unavailable):**
    Upload Laravel project to `/home/USER/laravel-migrated/`.
-   In `/home/USER/public_html/`, create `.htaccess`:
-   ```apache
-   RewriteEngine On
-   RewriteRule ^(.*)$ /home/USER/laravel-migrated/public/$1 [L]
-   ```
+   In `/home/USER/public_html/`:
+   - Keep/copy Laravel public assets (CSS/JS/images + `build/`).
+   - Use bridge `index.php` (see `public_html_index.php` in this repo).
+   - Use Laravel-style `.htaccess` (see `public_html_htaccess` in this repo).
+   - Do **not** use filesystem-path rewrites like `/home/USER/...` in `RewriteRule`; they often cause redirect loops or bad requests.
 6. **Option C – Copy public folder:**
    Copy contents of `laravel-migrated/public/` into `public_html/`.
    Edit `public_html/index.php` and update path references:
@@ -112,6 +112,21 @@ If you have no SSH access, follow these steps:
    ```
 7. **Database:** Use cPanel → MySQL Databases to create DB and user, then update `.env`.
 8. **Migrations:** Use cPanel → Terminal (if available) or import SQL directly via phpMyAdmin.
+
+## 11) Redirect Loop / Bad Request Quick Fix
+
+If browser shows `ERR_TOO_MANY_REDIRECTS` or `400 Bad Request`:
+
+1. Verify `.env` on server:
+   - `APP_ENV=production`
+   - `APP_DEBUG=false`
+   - `APP_URL=https://your-domain.com`
+2. Ensure only one HTTPS-enforcement layer is active (CDN/proxy + `.htaccess` can conflict).
+3. Use the provided `public_html_htaccess` template (proxy-aware HTTPS checks included).
+4. Run caches reset from project root:
+   - `php artisan optimize:clear`
+   - `php artisan config:cache`
+5. Clear browser cookies for your domain (old redirect cookies can keep loop alive).
 
 ## 10) Stripe SDK
 

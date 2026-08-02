@@ -1,17 +1,10 @@
 {{-- Enhanced Product Card Partial --}}
 @php
-    $rawImages = json_decode($product->images ?: '[]', true);
+    $mediaItems = $product->mediaItems();
     $variants = $product->variants ?? collect();
-    $images = collect(is_array($rawImages) ? $rawImages : [])
-        ->map(fn ($img) => is_string($img) ? trim($img) : '')
-        ->filter()
-        ->map(function ($img) {
-            if (\Illuminate\Support\Str::startsWith($img, ['http://', 'https://', '//', 'data:', '/'])) {
-                return $img;
-            }
-
-            return '/' . ltrim($img, '/');
-        })
+    $images = collect($mediaItems)
+        ->filter(fn ($item) => ($item['type'] ?? 'image') === 'image')
+        ->pluck('url')
         ->values()
         ->all();
 
@@ -34,11 +27,11 @@
 @endphp
 <div x-data="{
     showQuickView: false,
-    selectedQuickImage: 0,
+    selectedQuickMedia: 0,
     selectedVariantId: null,
     currentQuickImage: null,
     qty: 1,
-    quickViewImages: @js($images),
+    quickViewMedia: @js($mediaItems),
     quickViewVariants: @js($variantOptions),
     basePrice: {{ $product->sale_price ?: $product->price }},
     lockBodyScroll() {
@@ -60,7 +53,7 @@
     openQuickView() {
         if (this.showQuickView) return;
         this.showQuickView = true;
-        this.selectedQuickImage = 0;
+        this.selectedQuickMedia = 0;
         this.selectedVariantId = null;
         this.currentQuickImage = null;
         this.qty = 1;
@@ -73,14 +66,14 @@
         this.unlockBodyScroll();
     },
     prevQuickImage() {
-        if (!this.quickViewImages.length) return;
+        if (!this.quickViewMedia.length) return;
         this.currentQuickImage = null;
-        this.selectedQuickImage = (this.selectedQuickImage - 1 + this.quickViewImages.length) % this.quickViewImages.length;
+        this.selectedQuickMedia = (this.selectedQuickMedia - 1 + this.quickViewMedia.length) % this.quickViewMedia.length;
     },
     nextQuickImage() {
-        if (!this.quickViewImages.length) return;
+        if (!this.quickViewMedia.length) return;
         this.currentQuickImage = null;
-        this.selectedQuickImage = (this.selectedQuickImage + 1) % this.quickViewImages.length;
+        this.selectedQuickMedia = (this.selectedQuickMedia + 1) % this.quickViewMedia.length;
     },
     selectVariant(id) {
         this.selectedVariantId = this.selectedVariantId === id ? null : id;
@@ -100,8 +93,17 @@
     get selectedVariantLabel() {
         return this.selectedVariant ? this.selectedVariant.label : '';
     },
+    get activeQuickMedia() {
+        if (this.currentQuickImage) {
+            return { url: this.currentQuickImage, type: 'image' };
+        }
+        return this.quickViewMedia[this.selectedQuickMedia] || { url: '{{ $primaryImage }}', type: 'image' };
+    },
     get activeQuickImage() {
-        return this.currentQuickImage || this.quickViewImages[this.selectedQuickImage] || '{{ $primaryImage }}';
+        return this.activeQuickMedia.url;
+    },
+    get activeQuickMediaType() {
+        return this.activeQuickMedia.type || 'image';
     }
 }" class="group luxury-card rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 flex flex-col h-full">
     {{-- Image Section (Strict Aspect Ratio 3/4) --}}
@@ -156,7 +158,7 @@
                         price: {{ $product->sale_price ?: $product->price }}
                     })"
                     :class="$store.wishlist.has('{{ $product->public_id ?: $product->id }}') ? 'bg-red-500 text-white' : 'bg-navy/70 text-cream/70 hover:bg-red-500 hover:text-white'"
-                    class="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 backdrop-blur pointer-events-auto shadow-md"
+                    class="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 backdrop-blur pointer-events-auto shadow-md"
                     title="Toggle Wishlist">
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
@@ -168,7 +170,7 @@
     {{-- Info Section (Flex Grow to align buttons at bottom) --}}
     <div class="p-3.5 sm:p-4 flex flex-col flex-1 justify-between">
         <div>
-            <p class="text-[9px] text-gold/70 uppercase tracking-[0.2em] font-medium mb-1 truncate">{{ $product->category->name ?? 'Collection' }}</p>
+            <p class="hidden text-[9px] text-gold/70 uppercase tracking-[0.2em] font-medium mb-1 truncate sm:block">{{ $product->category->name ?? 'Collection' }}</p>
             
             <a href="/product/{{ $product->slug }}" class="block mb-2 group/title">
                 <h3 class="font-medium text-xs sm:text-sm line-clamp-2 min-h-[2.25rem] text-cream group-hover/title:text-gold transition-colors leading-snug">{{ $product->name }}</h3>
@@ -214,12 +216,14 @@
                     quantity: 1,
                     variant: ''
                 })"
-                class="flex-1 py-2 bg-gold text-ink font-bold text-[10px] sm:text-xs rounded-lg hover:bg-gold-light transition-all uppercase tracking-wider text-center">
-                    + Add
+                class="flex-1 min-h-[42px] py-2.5 bg-gold text-ink font-bold text-[10px] sm:text-xs rounded-lg hover:bg-gold-light transition-all uppercase tracking-wider text-center">
+                    <span class="sm:hidden">Add</span>
+                    <span class="hidden sm:inline">+ Add</span>
                 </button>
                 <button @click="openQuickView()"
-                class="flex-1 py-2 border border-gold/30 text-gold hover:bg-gold/10 font-bold text-[10px] sm:text-xs rounded-lg transition-all uppercase tracking-wider text-center">
-                    Quick View
+                class="flex-1 min-h-[42px] py-2.5 border border-gold/30 text-gold hover:bg-gold/10 font-bold text-[10px] sm:text-xs rounded-lg transition-all uppercase tracking-wider text-center">
+                    <span class="sm:hidden">View</span>
+                    <span class="hidden sm:inline">Quick View</span>
                 </button>
             </div>
         </div>
@@ -249,10 +253,15 @@
                 <div class="flex flex-col md:flex-row">
                     {{-- Image --}}
                     <div class="md:w-1/2 aspect-[3/4] md:aspect-auto bg-navy-soft flex-shrink-0 min-h-[320px]">
-                        @if(!empty($images))
+                        @if(!empty($mediaItems))
                             <div class="relative h-full">
-                                <img :src="activeQuickImage" alt="{{ $product->name }}" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='{{ asset('/logo-1.png') }}';">
-                                @if(count($images) > 1)
+                                <template x-if="activeQuickMediaType === 'video'">
+                                    <video :src="activeQuickImage" class="w-full h-full object-cover bg-black" controls preload="metadata"></video>
+                                </template>
+                                <template x-if="activeQuickMediaType !== 'video'">
+                                    <img :src="activeQuickImage" alt="{{ $product->name }}" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='{{ asset('/logo-1.png') }}';">
+                                </template>
+                                @if(count($mediaItems) > 1)
                                     <button type="button" @click="prevQuickImage()" class="absolute left-3 top-1/2 -translate-y-1/2 rounded-full border border-gold/20 bg-navy/75 p-2 text-cream transition hover:text-gold hover:bg-navy">
                                         <span class="sr-only">Previous image</span>
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
@@ -283,13 +292,20 @@
                         @if($product->description)
                             <p class="text-sm md:text-base text-cream/50 mb-4 line-clamp-4">{{ $product->description }}</p>
                         @endif
-                        @if(count($images) > 1)
+                        @if(count($mediaItems) > 1)
                             <div class="mb-5 flex gap-2 overflow-x-auto pb-1">
-                                @foreach($images as $idx => $img)
-                                    <button type="button" @click="currentQuickImage = null; selectedQuickImage = {{ $idx }}"
-                                            :class="selectedQuickImage === {{ $idx }} ? 'border-gold' : 'border-gold/20'"
+                                @foreach($mediaItems as $idx => $item)
+                                    <button type="button" @click="currentQuickImage = null; selectedQuickMedia = {{ $idx }}"
+                                            :class="selectedQuickMedia === {{ $idx }} ? 'border-gold' : 'border-gold/20'"
                                             class="h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 transition">
-                                        <img src="{{ $img }}" alt="" class="h-full w-full object-cover">
+                                        @if(($item['type'] ?? 'image') === 'video')
+                                            <div class="relative h-full w-full bg-black">
+                                                <video src="{{ $item['url'] }}" class="h-full w-full object-cover" muted preload="metadata"></video>
+                                                <div class="absolute inset-0 flex items-center justify-center bg-black/25 text-white text-[10px]">Play</div>
+                                            </div>
+                                        @else
+                                            <img src="{{ $item['url'] }}" alt="" class="h-full w-full object-cover">
+                                        @endif
                                     </button>
                                 @endforeach
                             </div>

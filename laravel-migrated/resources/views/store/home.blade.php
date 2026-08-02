@@ -4,8 +4,6 @@
 
 @push('styles')
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap');
-
     #sapphura-hero {
         overflow-x: clip;
         background:
@@ -117,39 +115,63 @@
         align-items: center;
         justify-content: center;
         gap: 0.55rem;
-        border-radius: 0.45rem;
-        padding: 0.82rem 1.55rem;
+        position: relative;
+        overflow: hidden;
+        border-radius: 0.62rem;
+        padding: 0.88rem 1.65rem;
+        min-height: 3rem;
         font-size: 0.67rem;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.2em;
+        letter-spacing: 0.19em;
         font-family: "Manrope", sans-serif;
-        transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease, color 0.4s ease;
+        transition: transform 0.34s ease, box-shadow 0.34s ease, border-color 0.34s ease, color 0.34s ease, background 0.34s ease;
+    }
+
+    #sapphura-hero .hero-btn-primary::before,
+    #sapphura-hero .hero-btn-secondary::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(118deg, rgba(248, 246, 241, 0.2) 0%, rgba(248, 246, 241, 0) 38%);
+        opacity: 0;
+        transition: opacity 0.34s ease;
+        pointer-events: none;
     }
 
     #sapphura-hero .hero-btn-primary {
-        border: 1px solid rgba(212, 175, 55, 0.9);
-        background: linear-gradient(135deg, #d4af37 0%, #bc9528 100%);
+        border: 1px solid rgba(212, 175, 55, 0.92);
+        background: linear-gradient(138deg, #e1be48 0%, #c79f2f 45%, #b98f23 100%);
         color: #0a1630;
-        box-shadow: 0 12px 24px rgba(4, 10, 24, 0.33), inset 0 0 0 1px rgba(248, 246, 241, 0.2);
+        box-shadow: 0 14px 30px rgba(4, 10, 24, 0.38), inset 0 0 0 1px rgba(248, 246, 241, 0.24);
     }
 
     #sapphura-hero .hero-btn-primary:hover {
-        transform: translateY(-1px) scale(1.01);
-        box-shadow: 0 16px 30px rgba(4, 10, 24, 0.4), 0 0 24px rgba(212, 175, 55, 0.44);
+        transform: translateY(-2px);
+        box-shadow: 0 20px 34px rgba(4, 10, 24, 0.44), 0 0 22px rgba(212, 175, 55, 0.34);
+    }
+
+    #sapphura-hero .hero-btn-primary:hover::before {
+        opacity: 1;
     }
 
     #sapphura-hero .hero-btn-secondary {
-        border: 1px solid rgba(248, 246, 241, 0.42);
-        background: rgba(248, 246, 241, 0.06);
+        border: 1px solid rgba(212, 175, 55, 0.46);
+        background: linear-gradient(160deg, rgba(14, 28, 54, 0.78) 0%, rgba(9, 20, 40, 0.58) 100%);
+        backdrop-filter: blur(6px);
         color: #f8f6f1;
+        box-shadow: inset 0 0 0 1px rgba(248, 246, 241, 0.1), 0 10px 24px rgba(6, 12, 28, 0.34);
     }
 
     #sapphura-hero .hero-btn-secondary:hover {
-        transform: translateY(-1px) scale(1.01);
-        border-color: rgba(212, 175, 55, 0.7);
+        transform: translateY(-2px);
+        border-color: rgba(212, 175, 55, 0.8);
         color: #f8f6f1;
-        box-shadow: inset 0 0 0 1px rgba(212, 175, 55, 0.4), 0 10px 22px rgba(8, 16, 35, 0.33);
+        box-shadow: inset 0 0 0 1px rgba(212, 175, 55, 0.36), 0 16px 30px rgba(8, 16, 35, 0.34);
+    }
+
+    #sapphura-hero .hero-btn-secondary:hover::before {
+        opacity: 1;
     }
 
     #sapphura-hero .hero-media {
@@ -208,19 +230,38 @@
     }
 
     #sapphura-hero .hero-dot {
-        width: 0.48rem;
-        height: 0.48rem;
+        position: relative;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 999px;
+        background: transparent;
+        border: 0;
+        opacity: 0.9;
+        transition: transform 0.35s ease;
+    }
+
+    #sapphura-hero .hero-dot::before {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 0.7rem;
+        height: 0.7rem;
+        transform: translate(-50%, -50%);
         border-radius: 999px;
         border: 1px solid rgba(212, 175, 55, 0.72);
         background: transparent;
-        opacity: 0.75;
         transition: background-color 0.35s ease, transform 0.35s ease;
     }
 
     #sapphura-hero .hero-dot.is-active {
-        background: #d4af37;
-        transform: scale(1.08);
+        transform: scale(1.04);
         opacity: 1;
+    }
+
+    #sapphura-hero .hero-dot.is-active::before {
+        background: #d4af37;
+        transform: translate(-50%, -50%) scale(1.06);
     }
 
     #sapphura-hero .hero-nav {
@@ -230,8 +271,8 @@
     }
 
     #sapphura-hero .hero-nav-btn {
-        width: 2rem;
-        height: 2rem;
+        width: 2.5rem;
+        height: 2.5rem;
         border-radius: 999px;
         border: 1px solid rgba(212, 175, 55, 0.62);
         background: rgba(6, 15, 34, 0.58);
@@ -277,13 +318,119 @@
 
     @media (max-width: 640px) {
         #sapphura-hero .hero-track {
-            min-height: 520px;
+            min-height: 540px;
+        }
+
+        #sapphura-hero .hero-slide::before {
+            background:
+                linear-gradient(92deg, rgba(5, 12, 27, 0.94) 0%, rgba(5, 12, 27, 0.78) 40%, rgba(5, 12, 27, 0.52) 66%, rgba(5, 12, 27, 0.28) 100%),
+                linear-gradient(180deg, rgba(5, 12, 27, 0.2) 0%, rgba(5, 12, 27, 0.58) 100%);
+        }
+
+        #sapphura-hero .hero-copy {
+            align-items: center;
+            padding: 2.2rem 1rem 1.9rem;
+        }
+
+        #sapphura-hero .hero-copy-inner {
+            max-width: min(332px, 100%);
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            backdrop-filter: none;
+            padding: 0;
+            box-shadow: none;
+            text-align: center;
+        }
+
+        #sapphura-hero .hero-kicker {
+            margin-bottom: 0.42rem;
+        }
+
+        #sapphura-hero .hero-title {
+            font-size: clamp(2.05rem, 8.6vw, 3.05rem);
+            line-height: 1.01;
+            letter-spacing: 0.01em;
+        }
+
+        #sapphura-hero .hero-title span {
+            display: block;
+        }
+
+        #sapphura-hero .hero-title span + span {
+            margin-top: 0.18rem;
+        }
+
+        #sapphura-hero .hero-description {
+            margin-top: 0.72rem;
+            font-size: 0.88rem;
+            line-height: 1.5;
+            max-width: 31ch;
+            color: rgba(248, 246, 241, 0.84);
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-shadow: 0 1px 8px rgba(5, 12, 27, 0.45);
+            margin-left: auto;
+            margin-right: auto;
         }
 
         #sapphura-hero .hero-btn-primary,
         #sapphura-hero .hero-btn-secondary {
-            width: 100%;
-            max-width: 245px;
+            width: auto;
+            max-width: none;
+            min-height: 44px;
+            border-radius: 0.6rem;
+            letter-spacing: 0.15em;
+        }
+
+        #sapphura-hero .hero-actions {
+            margin-top: 1.08rem;
+            gap: 0.8rem;
+            align-items: center;
+            justify-content: center;
+            transform: translateY(10px);
+        }
+
+        #sapphura-hero .hero-btn-primary {
+            padding: 0.76rem 1.2rem;
+            font-size: 0.62rem;
+        }
+
+        #sapphura-hero .hero-btn-secondary {
+            min-height: auto;
+            border: 0;
+            padding: 0;
+            border-radius: 0;
+            font-size: 0.65rem;
+            letter-spacing: 0.17em;
+            background: transparent;
+            color: rgba(248, 246, 241, 0.88);
+            text-transform: uppercase;
+            text-decoration: underline;
+            text-underline-offset: 0.3rem;
+            text-decoration-color: rgba(212, 175, 55, 0.55);
+            box-shadow: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        #sapphura-hero .hero-btn-secondary::before,
+        #sapphura-hero .hero-btn-primary::before {
+            display: none;
+        }
+
+        #sapphura-hero .hero-btn-secondary:hover {
+            color: #d4af37;
+            border: 0;
+            box-shadow: none;
+        }
+
+        #sapphura-hero .hero-btn-secondary svg {
+            width: 0.78rem;
+            height: 0.78rem;
         }
 
         #sapphura-hero .hero-controls {
@@ -309,13 +456,16 @@
                 'title2a' => 'Crafted to',
                 'title2b' => 'Captivate',
                 'description' => 'Experience Sapphura through a premium visual story featuring signature styling, detail, and modern elegance.',
-                'video' => '/sapphura video_1.mp4',
+                'mobile_description' => 'Signature luxury, now in motion.',
+                'video' => '/sapphura%20video_1.mp4',
                 'alt' => 'Sapphura premium fashion video showcase',
                 'focus' => '66% 36%',
                 'focus_mobile' => '60% 34%',
                 'primary_cta_label' => 'Watch Collection Edit',
+                'primary_cta_mobile_label' => 'Watch Edit',
                 'primary_cta_href' => '/collections',
                 'secondary_cta_label' => 'Shop Signature Styles',
+                'secondary_cta_mobile_label' => 'Shop Styles',
                 'secondary_cta_href' => '/collections?search=luxury',
             ],
             [
@@ -324,13 +474,16 @@
                 'title2a' => 'On Curated',
                 'title2b' => 'Items',
                 'description' => 'Exclusive seasonal savings on signature jewelry and statement pieces designed for graceful celebrations.',
+                'mobile_description' => 'Curated luxury, now on sale.',
                 'image' => '/bracelet-1.jpeg',
                 'alt' => 'Purple gemstone bracelet in luxury style',
                 'focus' => '72% 44%',
                 'focus_mobile' => '64% 42%',
                 'primary_cta_label' => 'Shop The Sale',
+                'primary_cta_mobile_label' => 'Shop Sale',
                 'primary_cta_href' => '/collections?on_sale=1',
                 'secondary_cta_label' => 'Explore New Arrivals',
+                'secondary_cta_mobile_label' => 'New Arrivals',
                 'secondary_cta_href' => '/collections?sort=newest',
             ],
             [
@@ -339,6 +492,7 @@
                 'title2a' => 'Designed to',
                 'title2b' => 'Enchant',
                 'description' => 'Modern cuts with couture-inspired finesse for women who choose confident elegance over fleeting trends.',
+                'mobile_description' => 'Modern pret with couture polish.',
                 'image' => '/bangals-4.jpeg',
                 'alt' => 'Luxury bangles styled in an editorial product shot',
                 'focus' => '68% 48%',
@@ -350,13 +504,16 @@
                 'title2a' => 'Curated for',
                 'title2b' => 'Lustre',
                 'description' => 'Velvet textures, timeless shades, and elegant finishing touches crafted for a luminous luxury look.',
+                'mobile_description' => 'Timeless beauty with a luxe finish.',
                 'image' => '/make-up.jpeg',
                 'alt' => 'Luxury makeup collection for elegant women',
                 'focus' => '72% 34%',
                 'focus_mobile' => '66% 34%',
                 'primary_cta_label' => 'Shop Makeup Edit',
+                'primary_cta_mobile_label' => 'Shop Makeup',
                 'primary_cta_href' => '/collections?category=Makeup',
                 'secondary_cta_label' => 'Explore Beauty Picks',
+                'secondary_cta_mobile_label' => 'Beauty Picks',
                 'secondary_cta_href' => '/collections?search=makeup',
             ],
         ];
@@ -383,10 +540,20 @@
                                         <span>{{ $slide['title1'] }}</span>
                                         <span>{{ $slide['title2a'] }} <em>{{ $slide['title2b'] }}</em></span>
                                     </h1>
-                                    <p class="hero-description text-[15px] sm:text-base">{{ $slide['description'] }}</p>
+                                    <p class="hero-description text-[15px] sm:text-base">
+                                        <span class="sm:hidden">{{ $slide['mobile_description'] ?? $slide['description'] }}</span>
+                                        <span class="hidden sm:inline">{{ $slide['description'] }}</span>
+                                    </p>
                                     <div class="hero-actions">
-                                        <a href="{{ $slide['primary_cta_href'] ?? '/collections?search=Luxury' }}" class="hero-btn-primary">{{ $slide['primary_cta_label'] ?? 'Explore Collection' }}</a>
-                                        <a href="{{ $slide['secondary_cta_href'] ?? '/stitching' }}" class="hero-btn-secondary">{{ $slide['secondary_cta_label'] ?? 'Book Stitching' }}</a>
+                                        <a href="{{ $slide['primary_cta_href'] ?? '/collections?search=Luxury' }}" class="hero-btn-primary sm:whitespace-nowrap">
+                                            <span class="sm:hidden">{{ $slide['primary_cta_mobile_label'] ?? $slide['primary_cta_label'] ?? 'Explore' }}</span>
+                                            <span class="hidden sm:inline">{{ $slide['primary_cta_label'] ?? 'Explore Collection' }}</span>
+                                        </a>
+                                        <a href="{{ $slide['secondary_cta_href'] ?? '/stitching' }}" class="hero-btn-secondary sm:whitespace-nowrap">
+                                            <span class="sm:hidden">{{ $slide['secondary_cta_mobile_label'] ?? $slide['secondary_cta_label'] ?? 'Stitching' }}</span>
+                                            <span class="hidden sm:inline">{{ $slide['secondary_cta_label'] ?? 'Book Stitching' }}</span>
+                                            <svg class="sm:hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m-5-5 5 5-5 5"/></svg>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -422,7 +589,7 @@
                 </div>
                 <div class="absolute inset-0 bg-gradient-to-t from-ink/95 via-ink/20 to-transparent"></div>
                 <div class="absolute bottom-0 left-0 right-0 p-6">
-                    <p class="text-[9px] uppercase tracking-[0.3em] text-gold/60">Necklaces · Earrings · Bracelets</p>
+                    <p class="hidden text-[9px] uppercase tracking-[0.3em] text-gold/60 sm:block">Necklaces · Earrings · Bracelets</p>
                     <h3 class="mt-3 text-xl font-semibold text-cream group-hover:text-gold transition-colors duration-300">Jewellery</h3>
                 </div>
             </a>
@@ -432,7 +599,7 @@
                 </div>
                 <div class="absolute inset-0 bg-gradient-to-t from-ink/95 via-ink/20 to-transparent"></div>
                 <div class="absolute bottom-0 left-0 right-0 p-6">
-                    <p class="text-[9px] uppercase tracking-[0.3em] text-gold/60">Suits · Dresses · Sets</p>
+                    <p class="hidden text-[9px] uppercase tracking-[0.3em] text-gold/60 sm:block">Suits · Dresses · Sets</p>
                     <h3 class="mt-3 text-xl font-semibold text-cream group-hover:text-gold transition-colors duration-300">Ready To Wear</h3>
                 </div>
             </a>
@@ -442,7 +609,7 @@
                 </div>
                 <div class="absolute inset-0 bg-gradient-to-t from-ink/95 via-ink/20 to-transparent"></div>
                 <div class="absolute bottom-0 left-0 right-0 p-6">
-                    <p class="text-[9px] uppercase tracking-[0.3em] text-gold/60">Lawn · Silk · Chiffon</p>
+                    <p class="hidden text-[9px] uppercase tracking-[0.3em] text-gold/60 sm:block">Lawn · Silk · Chiffon</p>
                     <h3 class="mt-3 text-xl font-semibold text-cream group-hover:text-gold transition-colors duration-300">Unstitched</h3>
                 </div>
             </a>
@@ -452,7 +619,7 @@
                 </div>
                 <div class="absolute inset-0 bg-gradient-to-t from-ink/95 via-ink/20 to-transparent"></div>
                 <div class="absolute bottom-0 left-0 right-0 p-6">
-                    <p class="text-[9px] uppercase tracking-[0.3em] text-gold/60">Beauty · Lipsticks · Fragrance</p>
+                    <p class="hidden text-[9px] uppercase tracking-[0.3em] text-gold/60 sm:block">Beauty · Lipsticks · Fragrance</p>
                     <h3 class="mt-3 text-xl font-semibold text-cream group-hover:text-gold transition-colors duration-300">Makeup</h3>
                 </div>
             </a>
@@ -543,7 +710,7 @@
                 </div>
                 <div class="absolute inset-0 bg-gradient-to-t from-ink/90 via-transparent to-transparent"></div>
                 <div class="absolute bottom-0 left-0 right-0 p-6">
-                    <p class="text-[9px] uppercase tracking-[0.3em] text-gold/60">Everyday Luxe</p>
+                    <p class="hidden text-[9px] uppercase tracking-[0.3em] text-gold/60 sm:block">Everyday Luxe</p>
                     <h3 class="mt-3 text-xl font-semibold text-cream group-hover:text-gold transition-colors duration-300">Ready To Wear</h3>
                 </div>
             </a>
@@ -553,7 +720,7 @@
                 </div>
                 <div class="absolute inset-0 bg-gradient-to-t from-ink/90 via-transparent to-transparent"></div>
                 <div class="absolute bottom-0 left-0 right-0 p-6">
-                    <p class="text-[9px] uppercase tracking-[0.3em] text-gold/60">Premium Craft</p>
+                    <p class="hidden text-[9px] uppercase tracking-[0.3em] text-gold/60 sm:block">Premium Craft</p>
                     <h3 class="mt-3 text-xl font-semibold text-cream group-hover:text-gold transition-colors duration-300">Luxury Collection</h3>
                 </div>
             </a>
@@ -563,7 +730,7 @@
                 </div>
                 <div class="absolute inset-0 bg-gradient-to-t from-ink/90 via-transparent to-transparent"></div>
                 <div class="absolute bottom-0 left-0 right-0 p-6">
-                    <p class="text-[9px] uppercase tracking-[0.3em] text-gold/60">Statement Pieces</p>
+                    <p class="hidden text-[9px] uppercase tracking-[0.3em] text-gold/60 sm:block">Statement Pieces</p>
                     <h3 class="mt-3 text-xl font-semibold text-cream group-hover:text-gold transition-colors duration-300">Jewellery</h3>
                 </div>
             </a>
@@ -573,7 +740,7 @@
                 </div>
                 <div class="absolute inset-0 bg-gradient-to-t from-ink/90 via-transparent to-transparent"></div>
                 <div class="absolute bottom-0 left-0 right-0 p-6">
-                    <p class="text-[9px] uppercase tracking-[0.3em] text-gold/60">Beauty Essentials</p>
+                    <p class="hidden text-[9px] uppercase tracking-[0.3em] text-gold/60 sm:block">Beauty Essentials</p>
                     <h3 class="mt-3 text-xl font-semibold text-cream group-hover:text-gold transition-colors duration-300">Makeup</h3>
                 </div>
             </a>

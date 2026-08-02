@@ -34,17 +34,42 @@
         font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
         background: #0a1630;
         color: #fff7ef;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
     }
     h1, h2, h3, .font-serif {
         font-family: 'Cormorant Garamond', Georgia, serif;
+    }
+    ::selection {
+        background: rgba(212, 175, 55, 0.28);
+        color: #fff7ef;
+    }
+
+    a,
+    button,
+    input,
+    select,
+    textarea {
+        outline: none;
+    }
+
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible {
+        box-shadow: 0 0 0 2px rgba(9, 17, 31, 0.88), 0 0 0 4px rgba(212, 175, 55, 0.62);
+        border-radius: 0.55rem;
     }
 }
 
 @layer utilities {
     .glass {
-        background: rgba(19, 33, 63, 0.75);
-        backdrop-filter: blur(18px);
-        border: 1px solid rgba(212, 175, 55, 0.18);
+        background: linear-gradient(165deg, rgba(19, 33, 63, 0.82) 0%, rgba(12, 24, 47, 0.65) 100%);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(212, 175, 55, 0.2);
+        box-shadow: inset 0 1px 0 rgba(248, 246, 241, 0.05), 0 14px 38px rgba(2, 7, 18, 0.35);
     }
     .gold-glow {
         box-shadow: 0 0 20px rgba(212, 175, 55, 0.15);
@@ -57,10 +82,11 @@
         padding-right: 1.25rem;
     }
     .luxury-card {
-        background: linear-gradient(180deg, rgba(19, 33, 63, 0.65), rgba(9, 17, 31, 0.5));
-        border: 1px solid rgba(212, 175, 55, 0.14);
+        background: linear-gradient(180deg, rgba(21, 36, 68, 0.62) 0%, rgba(10, 20, 38, 0.52) 100%);
+        border: 1px solid rgba(212, 175, 55, 0.16);
         position: relative;
         overflow: hidden;
+        transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.38s ease, border-color 0.32s ease;
     }
     .line-clamp-2 {
         display: -webkit-box;
@@ -82,17 +108,37 @@
         content: '';
         position: absolute;
         inset: 0;
-        background: linear-gradient(180deg, rgba(212, 175, 55, 0.05), transparent 50%);
+        background: linear-gradient(180deg, rgba(212, 175, 55, 0.08), transparent 52%);
         opacity: 0;
-        transition: opacity 0.3s;
+        transition: opacity 0.35s ease;
         pointer-events: none;
     }
+
+    .luxury-card::after {
+        content: '';
+        position: absolute;
+        inset: -35% -45% auto auto;
+        width: 14rem;
+        height: 14rem;
+        background: radial-gradient(circle, rgba(232, 201, 103, 0.17) 0%, rgba(232, 201, 103, 0) 70%);
+        opacity: 0;
+        transform: translate3d(10%, -10%, 0) scale(0.92);
+        transition: opacity 0.42s ease, transform 0.42s ease;
+        pointer-events: none;
+    }
+
     .luxury-card:hover::before {
         opacity: 1;
     }
+
+    .luxury-card:hover::after {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+
     .luxury-card:hover {
-        border-color: rgba(212, 175, 55, 0.32);
-        box-shadow: 0 10px 35px rgba(3, 8, 20, 0.5);
+        border-color: rgba(212, 175, 55, 0.36);
+        box-shadow: 0 16px 46px rgba(3, 8, 20, 0.5);
     }
 }
 
@@ -132,5 +178,15 @@
     .section-shell {
         padding-left: 2rem;
         padding-right: 2rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation: none !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
     }
 }

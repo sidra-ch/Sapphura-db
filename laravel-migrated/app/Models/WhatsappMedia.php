@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class WhatsappMedia extends Model
 {
@@ -15,10 +16,16 @@ class WhatsappMedia extends Model
         'cloudinary_public_id',
         'type',
         'caption',
+        'category_id',
         'uploaded_to_cloudinary',
     ];
 
     protected $casts = [
         'uploaded_to_cloudinary' => 'boolean',
     ];
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
 }

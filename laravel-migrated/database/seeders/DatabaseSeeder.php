@@ -13,12 +13,17 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $seedAdminPassword = env('ADMIN_DEFAULT_PASSWORD');
+        if (!is_string($seedAdminPassword) || trim($seedAdminPassword) === '') {
+            $seedAdminPassword = Str::random(32);
+        }
+
         // 1. Admin user
         User::updateOrCreate(
             ['email' => env('ADMIN_DEFAULT_EMAIL', 'admin@sapphura.com')],
             [
                 'public_id' => (string) Str::uuid(),
-                'password' => Hash::make(env('ADMIN_DEFAULT_PASSWORD', 'admin@123')),
+                'password' => Hash::make($seedAdminPassword),
                 'name' => env('ADMIN_DEFAULT_NAME', 'Admin User'),
                 'phone' => env('ADMIN_DEFAULT_PHONE', '+923001234567'),
                 'role' => 'admin',

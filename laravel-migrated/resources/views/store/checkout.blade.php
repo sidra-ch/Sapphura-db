@@ -3,9 +3,16 @@
 @section('description', 'Secure checkout at Sapphura - complete your order with EasyPaisa, JazzCash, Stripe, or cash on delivery.')
 
 @section('content')
-<div class="max-w-3xl mx-auto px-4 sm:px-6 py-10" x-data="checkoutForm()">
+<div class="max-w-6xl mx-auto px-4 sm:px-6 py-10" x-data="checkoutForm()">
+    <div x-show="toast.show" x-cloak class="fixed top-4 right-4 z-[120] max-w-sm px-4 py-3 rounded-lg border text-sm shadow-xl" :class="toast.type === 'success' ? 'bg-green-900/90 border-green-500/40 text-green-100' : 'bg-red-900/90 border-red-500/40 text-red-100'" style="display:none;">
+        <p x-text="toast.message"></p>
+    </div>
+
     <h1 class="text-3xl font-bold text-center mb-2">Checkout</h1>
     <p class="text-center text-cream/50 text-sm mb-10">Complete your order</p>
+
+    <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-8 items-start">
+    <div>
 
     {{-- Steps --}}
     <div class="flex justify-center gap-2 mb-10">
@@ -22,18 +29,19 @@
     {{-- Step 1: Info --}}
     <div x-show="step === 0" class="glass rounded-xl p-6 space-y-4">
         <h2 class="text-lg font-bold mb-4">Customer Information</h2>
-        <input x-model="form.email" type="email" placeholder="Email *" required class="w-full px-4 py-3 rounded-lg bg-navy border border-gold/20 text-cream placeholder-cream/30 focus:outline-none focus:border-gold text-sm">
+        <input x-model="form.email" @input="clearFieldError('email')" type="email" placeholder="Email *" required class="w-full px-4 py-3 rounded-lg bg-navy border text-cream placeholder-cream/30 focus:outline-none focus:border-gold text-sm" :class="errors.email ? 'border-red-500' : 'border-gold/20'">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <input x-model="form.name" type="text" placeholder="Full Name *" required class="px-4 py-3 rounded-lg bg-navy border border-gold/20 text-cream placeholder-cream/30 focus:outline-none focus:border-gold text-sm">
-            <input x-model="form.phone" type="tel" placeholder="Phone *" required class="px-4 py-3 rounded-lg bg-navy border border-gold/20 text-cream placeholder-cream/30 focus:outline-none focus:border-gold text-sm">
+            <input x-model="form.name" @input="clearFieldError('name')" type="text" placeholder="Full Name *" required class="px-4 py-3 rounded-lg bg-navy border text-cream placeholder-cream/30 focus:outline-none focus:border-gold text-sm" :class="errors.name ? 'border-red-500' : 'border-gold/20'">
+            <input x-model="form.phone" @input="clearFieldError('phone')" type="tel" placeholder="Phone *" required class="px-4 py-3 rounded-lg bg-navy border text-cream placeholder-cream/30 focus:outline-none focus:border-gold text-sm" :class="errors.phone ? 'border-red-500' : 'border-gold/20'">
         </div>
-        <input x-model="form.address" type="text" placeholder="Shipping Address *" required class="w-full px-4 py-3 rounded-lg bg-navy border border-gold/20 text-cream placeholder-cream/30 focus:outline-none focus:border-gold text-sm">
+        <input x-model="form.address" @input="clearFieldError('address')" type="text" placeholder="Shipping Address *" required class="w-full px-4 py-3 rounded-lg bg-navy border text-cream placeholder-cream/30 focus:outline-none focus:border-gold text-sm" :class="errors.address ? 'border-red-500' : 'border-gold/20'">
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <input x-model="form.city" type="text" placeholder="City *" required class="px-4 py-3 rounded-lg bg-navy border border-gold/20 text-cream placeholder-cream/30 focus:outline-none focus:border-gold text-sm">
+            <input x-model="form.city" @input="clearFieldError('city')" type="text" placeholder="City *" required class="px-4 py-3 rounded-lg bg-navy border text-cream placeholder-cream/30 focus:outline-none focus:border-gold text-sm" :class="errors.city ? 'border-red-500' : 'border-gold/20'">
             <input x-model="form.postalCode" type="text" placeholder="Postal Code" class="px-4 py-3 rounded-lg bg-navy border border-gold/20 text-cream placeholder-cream/30 focus:outline-none focus:border-gold text-sm">
             <input x-model="form.country" type="text" placeholder="Country" value="Pakistan" class="px-4 py-3 rounded-lg bg-navy border border-gold/20 text-cream placeholder-cream/30 focus:outline-none focus:border-gold text-sm">
         </div>
-        <button @click="if(form.email && form.name && form.phone && form.address && form.city) step = 1" class="w-full py-3 bg-gradient-to-r from-gold to-gold-light text-ink font-bold rounded-lg text-sm tracking-wider uppercase mt-4">Continue to Shipping</button>
+        <p x-show="errors.form" class="text-red-400 text-xs" x-text="errors.form"></p>
+        <button @click="validateInfoStep()" class="w-full py-3 bg-gradient-to-r from-gold to-gold-light text-ink font-bold rounded-lg text-sm tracking-wider uppercase mt-4">Continue to Shipping</button>
     </div>
 
     {{-- Step 2: Shipping --}}
@@ -51,7 +59,7 @@
         </label>
         <div class="flex gap-3 mt-4">
             <button @click="step = 0" class="px-6 py-3 border border-gold/30 text-gold rounded-lg text-sm">Back</button>
-            <button @click="step = 2" class="flex-1 py-3 bg-gradient-to-r from-gold to-gold-light text-ink font-bold rounded-lg text-sm tracking-wider uppercase">Continue to Payment</button>
+            <button @click="validateShippingStep()" class="flex-1 py-3 bg-gradient-to-r from-gold to-gold-light text-ink font-bold rounded-lg text-sm tracking-wider uppercase">Continue to Payment</button>
         </div>
     </div>
 
@@ -110,17 +118,17 @@
 
         {{-- Credit/Debit Card --}}
         <label class="flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200"
-               :class="form.payment === 'stripe' ? 'border-blue-400 bg-blue-400/5' : 'border-gold/15 hover:border-blue-400/40'"
-               @click="form.payment = 'stripe'">
-            <input type="radio" name="payment" value="stripe" x-model="form.payment" class="sr-only">
+                    :class="form.payment === 'card' ? 'border-blue-400 bg-blue-400/5' : 'border-gold/15 hover:border-blue-400/40'"
+                    @click="form.payment = 'card'">
+                <input type="radio" name="payment" value="card" x-model="form.payment" class="sr-only">
             <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-xl">&#x1F4B3;</div>
             <div class="flex-1">
                 <p class="font-semibold text-sm text-cream">Debit / Credit Card</p>
                 <p class="text-xs text-cream/45">Visa &middot; Mastercard &middot; SSL encrypted</p>
             </div>
             <div class="ml-auto flex-shrink-0 h-5 w-5 rounded-full border-2 transition-all duration-200 flex items-center justify-center"
-                 :class="form.payment === 'stripe' ? 'border-blue-400 bg-blue-400' : 'border-cream/20'">
-                <div class="h-2 w-2 rounded-full bg-white" x-show="form.payment === 'stripe'"></div>
+                 :class="form.payment === 'card' ? 'border-blue-400 bg-blue-400' : 'border-cream/20'">
+                <div class="h-2 w-2 rounded-full bg-white" x-show="form.payment === 'card'"></div>
             </div>
         </label>
 
@@ -142,7 +150,7 @@
 
         <div class="flex gap-3 mt-4">
             <button @click="step = 1" class="px-6 py-3 border border-gold/30 text-gold rounded-xl text-sm transition hover:bg-gold/10">Back</button>
-            <button @click="if(form.payment) step = 3" class="flex-1 py-3 bg-gradient-to-r from-gold to-gold-light text-ink font-bold rounded-xl text-sm tracking-wider uppercase">Review Order</button>
+            <button @click="validatePaymentStep()" class="flex-1 py-3 bg-gradient-to-r from-gold to-gold-light text-ink font-bold rounded-xl text-sm tracking-wider uppercase">Review Order</button>
         </div>
     </div>
 
@@ -191,7 +199,7 @@
             <p><span class="text-cream/50">Email:</span> <span x-text="form.email"></span></p>
             <p><span class="text-cream/50">Phone:</span> <span x-text="form.phone"></span></p>
             <p><span class="text-cream/50">Address:</span> <span x-text="form.address + ', ' + form.city + (form.postalCode ? ' ' + form.postalCode : '') + ', ' + form.country"></span></p>
-            <p><span class="text-cream/50">Payment:</span> <span x-text="form.payment.toUpperCase()"></span></p>
+            <p><span class="text-cream/50">Payment:</span> <span x-text="form.payment === 'card' ? 'CARD' : form.payment.toUpperCase()"></span></p>
         </div>
 
         <div class="flex gap-3 mt-4">
@@ -203,6 +211,54 @@
             </button>
         </div>
     </div>
+    </div>
+
+    <aside class="glass rounded-xl p-5 lg:sticky lg:top-28">
+        <h3 class="text-sm uppercase tracking-[0.2em] text-gold mb-4">Order Snapshot</h3>
+
+        <template x-if="$store.cart.items.length === 0">
+            <p class="text-sm text-cream/50">Your cart is currently empty.</p>
+        </template>
+
+        <template x-if="$store.cart.items.length > 0">
+            <div class="space-y-3">
+                <template x-for="item in $store.cart.items.slice(0, 4)" :key="item.id">
+                    <div class="flex items-center gap-3 text-xs">
+                        <img :src="item.image" alt="" class="w-10 h-10 rounded object-cover">
+                        <div class="flex-1 min-w-0">
+                            <p class="truncate" x-text="item.name"></p>
+                            <p class="text-cream/40" x-text="'x' + item.quantity"></p>
+                        </div>
+                        <p class="text-gold" x-text="'Rs. ' + (item.price * item.quantity).toLocaleString()"></p>
+                    </div>
+                </template>
+
+                <template x-if="$store.cart.items.length > 4">
+                    <p class="text-xs text-cream/40" x-text="'+' + ($store.cart.items.length - 4) + ' more items'"></p>
+                </template>
+
+                <div class="pt-3 border-t border-gold/15 space-y-1 text-sm">
+                    <div class="flex justify-between"><span class="text-cream/50">Items</span><span x-text="$store.cart.totalItems"></span></div>
+                    <div class="flex justify-between"><span class="text-cream/50">Subtotal</span><span class="text-gold" x-text="'Rs. ' + $store.cart.totalPrice.toLocaleString()"></span></div>
+                    <div class="flex justify-between"><span class="text-cream/50">Shipping</span><span x-text="'Rs. ' + form.shippingCost.toLocaleString()"></span></div>
+                    <template x-if="form.discountAmount > 0">
+                        <div class="flex justify-between text-green-400"><span>Discount</span><span x-text="'-Rs. ' + form.discountAmount.toLocaleString()"></span></div>
+                    </template>
+                    <div class="flex justify-between pt-2 border-t border-gold/10 font-bold">
+                        <span>Total</span>
+                        <span class="text-gold" x-text="'Rs. ' + ($store.cart.totalPrice + form.shippingCost - form.discountAmount).toLocaleString()"></span>
+                    </div>
+                </div>
+
+                <div class="pt-3 border-t border-gold/15 text-[11px] space-y-1 text-cream/50">
+                    <p>* SSL encrypted checkout</p>
+                    <p>* Easy exchange support</p>
+                    <p>* Dispatch updates via email</p>
+                </div>
+            </div>
+        </template>
+    </aside>
+    </div>
 </div>
 
 @push('scripts')
@@ -211,6 +267,8 @@ function checkoutForm() {
     return {
         step: 0,
         submitting: false,
+        errors: {},
+        toast: { show: false, type: 'error', message: '' },
         form: {
             email: '', name: '', phone: '', address: '', city: '', postalCode: '', country: 'Pakistan',
             shipping: 'standard', shippingCost: 200, payment: 'cod',
@@ -218,6 +276,43 @@ function checkoutForm() {
         },
         couponError: '',
         couponLoading: false,
+        showToast(message, type = 'error') {
+            this.toast = { show: true, type, message };
+            setTimeout(() => { this.toast.show = false; }, 2600);
+        },
+        clearFieldError(field) {
+            if (this.errors[field]) delete this.errors[field];
+            if (this.errors.form) delete this.errors.form;
+        },
+        validateInfoStep() {
+            this.errors = {};
+            if (!this.form.email || !/^\S+@\S+\.\S+$/.test(this.form.email)) this.errors.email = true;
+            if (!this.form.name) this.errors.name = true;
+            if (!this.form.phone) this.errors.phone = true;
+            if (!this.form.address) this.errors.address = true;
+            if (!this.form.city) this.errors.city = true;
+
+            if (Object.keys(this.errors).length > 0) {
+                this.errors.form = 'Please complete required fields correctly.';
+                this.showToast('Please fill required fields first.');
+                return;
+            }
+            this.step = 1;
+        },
+        validateShippingStep() {
+            if (!this.form.shipping) {
+                this.showToast('Please select a shipping method.');
+                return;
+            }
+            this.step = 2;
+        },
+        validatePaymentStep() {
+            if (!this.form.payment) {
+                this.showToast('Please select a payment method.');
+                return;
+            }
+            this.step = 3;
+        },
         async applyCoupon() {
             if (!this.form.discountCode) return;
             this.couponLoading = true;
@@ -232,6 +327,7 @@ function checkoutForm() {
                 if (data.valid) {
                     this.form.discountAmount = data.discount;
                     this.form.discountLabel = data.label;
+                    this.showToast('Coupon applied successfully.', 'success');
                 } else {
                     this.couponError = data.error || 'Invalid coupon';
                     this.form.discountAmount = 0;
@@ -247,6 +343,16 @@ function checkoutForm() {
             this.couponError = '';
         },
         async placeOrder() {
+            this.validateInfoStep();
+            if (this.step !== 1 && Object.keys(this.errors).length > 0) {
+                this.step = 0;
+                return;
+            }
+            if (!Alpine.store('cart').items.length) {
+                this.showToast('Your cart is empty.');
+                return;
+            }
+
             this.submitting = true;
             try {
                 const items = Alpine.store('cart').items.map(i => ({
@@ -277,10 +383,10 @@ function checkoutForm() {
                     Alpine.store('cart').clear();
                     window.location.href = '/order-confirmation?order=' + (data.order?.id || '');
                 } else {
-                    alert(data.error || 'Order failed. Please try again.');
+                    this.showToast(data.error || 'Order failed. Please try again.');
                 }
             } catch (e) {
-                alert('Something went wrong. Please try again.');
+                this.showToast('Something went wrong. Please try again.');
             }
             this.submitting = false;
         }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Review;
+use App\Models\WhatsappMedia;
 use Illuminate\Http\Request;
 
 class StoreController extends Controller
@@ -12,28 +13,44 @@ class StoreController extends Controller
     public function home()
     {
         $categories = Category::withCount(['products' => fn ($q) => $q->where('status', '=', 'active', 'and')])->orderBy('name', 'asc')->get();
-        $featured = Product::where('status', '=', 'active', 'and')->where('is_featured', '=', true, 'and')->with(['category','variants'])->latest()->take(8)->get();
-        $latest = Product::where('status', '=', 'active', 'and')->with(['category','variants'])->latest()->take(8)->get();
+        $featured = Product::where('status', '=', 'active', 'and')->where('is_featured', '=', true, 'and')->with(['category','variants'])->latest('created_at')->take(8)->get();
+        $latest = Product::where('status', '=', 'active', 'and')->with(['category','variants'])->latest('created_at')->take(8)->get();
         return view('store.home', compact('categories', 'featured', 'latest'));
     }
 
     public function collections(Request $request)
     {
         $query = Product::where('status', '=', 'active', 'and')->with(['category','variants']);
+        $selectedCategory = null;
+        $categoryMedia = collect();
+        $category = $request->input('category');
+        $minPrice = $request->input('min_price');
+        $maxPrice = $request->input('max_price');
 
         if ($request->filled('category')) {
-            $query->whereHas('category', fn ($q) => $q->where('name', '=', $request->category, 'and'));
+            $query->whereHas('category', fn ($q) => $q->where('name', '=', (string) $category, 'and'));
+            $selectedCategory = Category::query()->where('name', '=', (string) $category, 'and')->first();
+
+            if ($selectedCategory) {
+                $categoryMedia = WhatsappMedia::query()
+                    ->where('category_id', '=', $selectedCategory->id, 'and')
+                    ->whereIn('type', ['image', 'video'], 'and', false)
+                    ->latest('created_at')
+                    ->limit(10)
+                    ->get();
+            }
         }
         if ($request->filled('min_price')) {
-            $query->where('price', '>=', $request->min_price);
+            $query->where('price', '>=', $minPrice);
         }
         if ($request->filled('max_price')) {
-            $query->where('price', '<=', $request->max_price);
+            $query->where('price', '<=', $maxPrice);
         }
         if ($request->filled('search')) {
             $query->where(function ($query) use ($request) {
-                $query->where('name', 'like', '%' . $request->search . '%')
-                      ->orWhere('description', 'like', '%' . $request->search . '%');
+                $searchTerm = (string) $request->input('search');
+                $query->where('name', 'like', '%' . $searchTerm . '%')
+                      ->orWhere('description', 'like', '%' . $searchTerm . '%');
             });
         }
 
@@ -41,7 +58,7 @@ class StoreController extends Controller
             $query->whereNotNull('sale_price')->whereColumn('sale_price', '<', 'price');
         }
 
-        $sort = $request->get('sort', 'newest');
+        $sort = $request->input('sort', 'newest');
         match ($sort) {
             'price_asc' => $query->orderBy('price', 'asc'),
             'price_desc' => $query->orderBy('price', 'desc'),
@@ -52,7 +69,7 @@ class StoreController extends Controller
         $products = $query->paginate(12)->withQueryString();
         $categories = Category::orderBy('name', 'asc')->get();
 
-        return view('store.collections', compact('products', 'categories'));
+        return view('store.collections', compact('products', 'categories', 'selectedCategory', 'categoryMedia'));
     }
 
     public function product(string $slug)
@@ -65,7 +82,7 @@ class StoreController extends Controller
 
     public function search(Request $request)
     {
-        $q = $request->get('q', '');
+        $q = $request->input('q', '');
         $products = collect();
         if (strlen($q) >= 2) {
             $products = Product::where('status', '=', 'active', 'and')

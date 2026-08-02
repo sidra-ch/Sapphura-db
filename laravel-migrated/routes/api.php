@@ -54,10 +54,10 @@ Route::post('/coupons/validate', [LegacyBridgeController::class, 'couponValidate
 // ---------- Protected routes (server/cron) ----------
 
 // Payment reconciliation (requires x-reconcile-key header – checked inside controller)
-Route::post('/payments/reconcile', [LegacyBridgeController::class, 'paymentReconcile']);
+Route::post('/payments/reconcile', [LegacyBridgeController::class, 'paymentReconcile'])->middleware('header.secret:PAYMENT_RECONCILE_KEY,x-reconcile-key');
 
 // Payment debug (requires x-payment-debug-key header – checked inside controller)
-Route::get('/payments/status', [LegacyBridgeController::class, 'paymentStatus']);
+Route::get('/payments/status', [LegacyBridgeController::class, 'paymentStatus'])->middleware('header.secret:PAYMENT_DEBUG_KEY|PAYMENT_RECONCILE_KEY,x-payment-debug-key');
 
 // ---------- Admin routes (require ADMIN_API_KEY) ----------
 

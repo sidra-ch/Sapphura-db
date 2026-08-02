@@ -30,17 +30,17 @@ class AdminController extends Controller
 {
     private function resolveProduct(string $identifier): Product
     {
-        return Product::where('public_id', $identifier)->orWhere('id', $identifier)->firstOrFail();
+        return Product::query()->where('public_id', $identifier)->orWhere('id', $identifier)->firstOrFail();
     }
 
     private function resolveOrder(string $identifier): Order
     {
-        return Order::where('public_id', $identifier)->orWhere('id', $identifier)->firstOrFail();
+        return Order::query()->where('public_id', $identifier)->orWhere('id', $identifier)->firstOrFail();
     }
 
     private function resolveCustomer(string $identifier): User
     {
-        return User::where('public_id', $identifier)->orWhere('id', $identifier)->firstOrFail();
+        return User::query()->where('public_id', $identifier)->orWhere('id', $identifier)->firstOrFail();
     }
 
     // ─── Helper: log activity ───
@@ -59,7 +59,7 @@ class AdminController extends Controller
     // ─── Helper: create notification ───
     private function notify(string $type, string $title, string $message, ?string $link = null): void
     {
-        $adminIds = User::where('role', 'admin')->pluck('id');
+        $adminIds = User::query()->where('role', 'admin')->pluck('id');
         foreach ($adminIds as $id) {
             AdminNotification::create([
                 'type' => $type, 'title' => $title, 'message' => $message,
@@ -75,23 +75,23 @@ class AdminController extends Controller
         $lowStockThreshold = (int) Setting::get('low_stock_threshold', 5);
 
         $stats = [
-            'revenue' => Order::whereIn('status', ['delivered','completed'])->sum('total'),
-            'products' => Product::count(),
-            'featured' => Product::where('is_featured', true)->count(),
-            'orders' => Order::count(),
-            'pending' => Order::where('status', 'pending')->count(),
-            'confirmed' => Order::where('status', 'confirmed')->count(),
-            'processing' => Order::where('status', 'processing')->count(),
-            'shipped' => Order::where('status', 'shipped')->count(),
-            'delivered' => Order::where('status', 'delivered')->count(),
-            'cancelled' => Order::where('status', 'cancelled')->count(),
-            'customers' => User::where('role', 'customer')->count(),
-            'companies' => Company::count(),
-            'reviews' => Review::count(),
-            'lowStock' => Product::where('stock', '<', $lowStockThreshold)->where('stock', '>', 0)->where('status', 'active')->count(),
-            'outOfStock' => Product::where('stock', 0)->where('status', 'active')->count(),
-            'todayOrders' => Order::whereDate('created_at', today())->count(),
-            'todayRevenue' => Order::whereDate('created_at', today())->whereIn('status', ['delivered','completed'])->sum('total'),
+            'revenue' => Order::query()->whereIn('status', ['delivered','completed'], 'and', false)->sum('total'),
+            'products' => Product::query()->count('*'),
+            'featured' => Product::query()->where('is_featured', true)->count(),
+            'orders' => Order::query()->count('*'),
+            'pending' => Order::query()->where('status', 'pending')->count(),
+            'confirmed' => Order::query()->where('status', 'confirmed')->count(),
+            'processing' => Order::query()->where('status', 'processing')->count(),
+            'shipped' => Order::query()->where('status', 'shipped')->count(),
+            'delivered' => Order::query()->where('status', 'delivered')->count(),
+            'cancelled' => Order::query()->where('status', 'cancelled')->count(),
+            'customers' => User::query()->where('role', 'customer')->count(),
+            'companies' => Company::query()->count('*'),
+            'reviews' => Review::query()->count('*'),
+            'lowStock' => Product::query()->where('stock', '<', $lowStockThreshold)->where('stock', '>', 0)->where('status', 'active')->count(),
+            'outOfStock' => Product::query()->where('stock', 0)->where('status', 'active')->count(),
+            'todayOrders' => Order::query()->whereDate('created_at', '=', today(), 'and')->count('*'),
+            'todayRevenue' => Order::query()->whereDate('created_at', '=', today(), 'and')->whereIn('status', ['delivered','completed'], 'and', false)->sum('total'),
         ];
 
         $revenueChart = [];
@@ -99,8 +99,8 @@ class AdminController extends Controller
             $date = now()->subDays($i);
             $revenueChart[] = [
                 'date' => $date->format('d M'),
-                'revenue' => Order::whereDate('created_at', $date)->whereIn('status', ['delivered','completed','processing','shipped'])->sum('total'),
-                'orders' => Order::whereDate('created_at', $date)->count(),
+                'revenue' => Order::query()->whereDate('created_at', '=', $date, 'and')->whereIn('status', ['delivered','completed','processing','shipped'], 'and', false)->sum('total'),
+                'orders' => Order::query()->whereDate('created_at', '=', $date, 'and')->count('*'),
             ];
         }
 
@@ -115,9 +115,9 @@ class AdminController extends Controller
             ->groupBy('products.id', 'products.name', 'products.images')
             ->orderByDesc('total_sold')->limit(5)->get();
 
-        $lowStockProducts = Product::where('stock', '<', $lowStockThreshold)->where('status', 'active')->orderBy('stock')->limit(5)->get();
+        $lowStockProducts = Product::query()->where('stock', '<', $lowStockThreshold)->where('status', 'active')->orderBy('stock')->limit(5)->get();
         $recentOrders = Order::with('user')->latest()->take(10)->get();
-        $unreadNotifications = AdminNotification::where('user_id', Auth::id())->unread()->count();
+        $unreadNotifications = AdminNotification::query()->where('user_id', Auth::id())->unread()->count();
 
         return view('admin.dashboard', compact(
             'stats', 'recentOrders', 'revenueChart', 'statusDistribution',
@@ -143,13 +143,13 @@ class AdminController extends Controller
             elseif ($request->input('stock') === 'out') $query->where('stock', 0);
         }
         $products = $query->latest()->paginate(15)->withQueryString();
-        $categories = Category::orderBy('name')->get();
+        $categories = Category::query()->orderBy('name', 'asc')->get();
         return view('admin.products', compact('products', 'categories'));
     }
 
     public function createProduct()
     {
-        $categories = Category::orderBy('name')->get();
+        $categories = Category::query()->orderBy('name', 'asc')->get();
         return view('admin.product-form', ['product' => null, 'categories' => $categories]);
     }
 
@@ -162,8 +162,10 @@ class AdminController extends Controller
             'description' => 'required|string',
         ]);
 
-        $images = $request->input('images', '[]');
-        if (is_string($images) && !str_starts_with(trim($images), '[')) {
+        $images = $request->input('images');
+        if (!is_string($images) || trim($images) === '') {
+            $images = '[]';
+        } elseif (!str_starts_with(trim($images), '[')) {
             $images = json_encode(array_filter(array_map('trim', explode("\n", $images))));
         }
 
@@ -188,7 +190,7 @@ class AdminController extends Controller
     public function editProduct(string $id)
     {
         $product = $this->resolveProduct($id);
-        $categories = Category::orderBy('name')->get();
+        $categories = Category::query()->orderBy('name', 'asc')->get();
         return view('admin.product-form', compact('product', 'categories'));
     }
 
@@ -202,7 +204,9 @@ class AdminController extends Controller
         ]);
 
         $images = $request->input('images', $product->images);
-        if (is_string($images) && !str_starts_with(trim($images), '[')) {
+        if (!is_string($images) || trim($images) === '') {
+            $images = '[]';
+        } elseif (!str_starts_with(trim($images), '[')) {
             $images = json_encode(array_filter(array_map('trim', explode("\n", $images))));
         }
 
@@ -225,7 +229,7 @@ class AdminController extends Controller
 
     public function deleteProduct(string $id)
     {
-        $this->resolveProduct($id)->delete();
+        $this->resolveProduct($id)->delete([]);
         return redirect('/admin/products')->with('success', 'Product deleted.');
     }
 
@@ -353,7 +357,7 @@ class AdminController extends Controller
     public function showCustomer(string $id)
     {
         $customer = $this->resolveCustomer($id);
-        $orders = Order::where('user_id', $customer->id)->latest()->paginate(10);
+        $orders = Order::query()->where('user_id', $customer->id)->latest()->paginate(10);
         $customer->loadCount('orders')->loadSum('orders', 'total');
         return view('admin.customer-detail', compact('customer', 'orders'));
     }
@@ -381,7 +385,7 @@ class AdminController extends Controller
     // Coupons
     public function coupons()
     {
-        $coupons = Coupon::latest()->paginate(15);
+        $coupons = Coupon::query()->latest()->paginate(15);
         return view('admin.coupons', compact('coupons'));
     }
 

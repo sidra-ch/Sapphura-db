@@ -62,25 +62,50 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       @php
-        $stitchExamples = [
-          ['title' => 'Bridal Collection', 'category' => 'Lehengas', 'image' => 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&h=600&fit=crop', 'desc' => 'Intricate embroidered lehengas'],
-          ['title' => 'Evening Wear', 'category' => 'Suits', 'image' => 'https://images.unsplash.com/photo-1508873699372-f91e1df9ff39?w=500&h=600&fit=crop', 'desc' => 'Elegant tailored suits'],
-          ['title' => 'Casual Chic', 'category' => 'Abayas', 'image' => 'https://images.unsplash.com/photo-1539008588435-666a85a6fe6d?w=500&h=600&fit=crop', 'desc' => 'Modern abaya designs'],
-          ['title' => 'Party Wear', 'category' => 'Gowns', 'image' => 'https://images.unsplash.com/photo-1470927211585-0c888be48f00?w=500&h=600&fit=crop', 'desc' => 'Statement party gowns'],
-          ['title' => 'Festive Collection', 'category' => 'Sarees', 'image' => 'https://images.unsplash.com/photo-1505437359953-7f387bf274c6?w=500&h=600&fit=crop', 'desc' => 'Traditional yet modern sarees'],
-          ['title' => 'Designer Lawn', 'category' => 'Printed Suits', 'image' => 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=500&h=600&fit=crop', 'desc' => 'Custom printed collections'],
+        $stitchGroups = [
+          [
+            'group' => 'Bridal & Festive',
+            'items' => [
+              ['title' => 'Bridal Collection', 'category' => 'Lehengas', 'image' => '/newcollection-1.jpeg', 'desc' => 'Intricate embroidered lehenga details'],
+              ['title' => 'Festive Collection', 'category' => 'Sarees', 'image' => '/summer-9.jpeg', 'desc' => 'Festive textures and finishing'],
+            ],
+          ],
+          [
+            'group' => 'Formal & Evening',
+            'items' => [
+              ['title' => 'Evening Wear', 'category' => 'Suits', 'image' => '/summer-6.jpeg', 'desc' => 'Elegant tailored formal suits'],
+              ['title' => 'Party Wear', 'category' => 'Gowns', 'image' => '/summer-8.jpeg', 'desc' => 'Statement silhouettes for events'],
+            ],
+          ],
+          [
+            'group' => 'Casual & Daily Wear',
+            'items' => [
+              ['title' => 'Casual Chic', 'category' => 'Abayas', 'image' => '/summer-7.jpeg', 'desc' => 'Modern modestwear cuts'],
+              ['title' => 'Designer Lawn', 'category' => 'Printed Suits', 'image' => '/newcollection-2.jpeg', 'desc' => 'Custom print and color stories'],
+            ],
+          ],
         ];
       @endphp
 
-      @foreach($stitchExamples as $example)
-      <div class="group relative overflow-hidden rounded-xl aspect-[3/4]">
-        <img src="{{ $example['image'] }}" alt="{{ $example['title'] }}"
-             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
-        <div class="absolute inset-0 bg-gradient-to-t from-navy via-navy/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-        <div class="absolute inset-0 flex flex-col justify-end p-6 text-cream translate-y-6 group-hover:translate-y-0 transition-transform duration-300">
-          <p class="text-[10px] uppercase tracking-[0.3em] text-gold/70 mb-2">{{ $example['category'] }}</p>
-          <h3 class="text-xl font-light mb-2" style="font-family:Georgia,serif;">{{ $example['title'] }}</h3>
-          <p class="text-sm text-cream/70">{{ $example['desc'] }}</p>
+      @foreach($stitchGroups as $group)
+      <div class="lg:col-span-3">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="h-px w-10 bg-gold/40"></span>
+          <p class="text-[10px] uppercase tracking-[0.3em] text-gold/75">{{ $group['group'] }}</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          @foreach($group['items'] as $example)
+          <div class="group relative overflow-hidden rounded-xl aspect-[3/4]">
+            <img src="{{ $example['image'] }}" alt="{{ $example['title'] }}"
+                 class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+            <div class="absolute inset-0 bg-gradient-to-t from-navy via-navy/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="absolute inset-0 flex flex-col justify-end p-6 text-cream translate-y-6 group-hover:translate-y-0 transition-transform duration-300">
+              <p class="text-[10px] uppercase tracking-[0.3em] text-gold/70 mb-2">{{ $example['category'] }}</p>
+              <h3 class="text-xl font-light mb-2" style="font-family:Georgia,serif;">{{ $example['title'] }}</h3>
+              <p class="text-sm text-cream/70">{{ $example['desc'] }}</p>
+            </div>
+          </div>
+          @endforeach
         </div>
       </div>
       @endforeach
@@ -185,15 +210,20 @@
         </div>
       </div>
 
-      <div class="relative h-[600px] bg-gradient-to-br from-navy to-navy/70 rounded-xl overflow-hidden flex items-center justify-center">
-        <div class="text-center">
-          <div class="text-6xl mb-6">👗</div>
-          <p class="text-cream/60 text-sm mb-6">Send us your body silhouette or reference image</p>
-          <a href="https://wa.me/923001234567?text=Hi%20I%20want%20to%20customize%20a%20garment"
+      <div class="relative h-[600px] bg-gradient-to-br from-navy to-navy/70 rounded-xl overflow-hidden p-4">
+        <div class="grid grid-cols-2 gap-3 h-full">
+          <img src="/summer-2.jpeg" alt="Stitched suit details" class="w-full h-full object-cover rounded-lg border border-gold/10">
+          <img src="/newcollection-3.jpeg" alt="Custom embroidered fabric" class="w-full h-full object-cover rounded-lg border border-gold/10">
+          <img src="/newcollection-4.jpeg" alt="Tailored festive outfit" class="w-full h-full object-cover rounded-lg border border-gold/10">
+          <img src="/clothes-collection.jpeg" alt="Premium stitched collection" class="w-full h-full object-cover rounded-lg border border-gold/10">
+        </div>
+        <div class="absolute bottom-4 left-4 right-4 bg-ink/70 backdrop-blur rounded-lg border border-gold/20 p-4">
+          <p class="text-cream/75 text-xs mb-3">Share your preferred style and measurements on WhatsApp to start your custom order.</p>
+           <a href="https://wa.me/923320924951?text=Hi%20I%20want%20to%20customize%20a%20garment"
              target="_blank"
-             class="inline-flex items-center gap-2 px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.272-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.67-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.076 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421-7.403h-.004a9.87 9.87 0 00-5.031 1.378c-1.871.996-3.035 2.54-3.078 4.333.046 1.793 1.213 3.45 3.095 4.597 1.45.996 3.578 1.762 5.313 1.91.95.056 1.92.022 2.868-.045 1.286-.099 2.695-.486 3.622-1.585-.07-.165-.127-.355-.2-.547-.206-.592-.487-1.293-.892-1.845-.524-.697-1.076-1.264-1.594-1.692-.597-.502-1.247-.875-1.845-.957-.348-.046-.753-.046-1.126.046-.528.089-1.189.264-1.606.547-.348.231-.684.52-.957.891-.272.37-.528.83-.713 1.231-.181-.046-.363-.102-.535-.169-1.126-.399-2.405-.936-3.122-1.585-.717-.649-1.32-1.54-1.428-2.501-.108-.96.21-2.051 1.014-2.868.804-.817 2.108-1.342 3.35-1.342.975 0 1.923.284 2.695.781.404.269.767.603 1.076 1.014m0 0"/>
+             class="inline-flex items-center gap-2 px-5 py-2.5 bg-green-500 text-white text-xs rounded-lg hover:bg-green-600 transition">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.272-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.67-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.076 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/>
             </svg>
             WhatsApp Us
           </a>
@@ -213,7 +243,13 @@
       <p class="text-cream/60 text-base">Fill out the form below and our team will connect with you within 24 hours.</p>
     </div>
 
-    <form action="/api/stitching-orders" method="POST" class="space-y-6 bg-navy/40 p-8 rounded-2xl border border-gold/10">
+    @if(session('stitching_success'))
+      <div class="mb-6 rounded-lg border border-green-400/30 bg-green-500/10 px-4 py-3 text-sm text-green-200">
+        {{ session('stitching_success') }}
+      </div>
+    @endif
+
+    <form action="{{ route('stitching.request') }}" method="POST" class="space-y-6 bg-navy/40 p-8 rounded-2xl border border-gold/10">
       @csrf
       
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -362,7 +398,7 @@
         <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4-4 4M3 12h18"/>
       </svg>
     </a>
-    <a href="https://wa.me/923001234567?text=Hi%20I%20have%20questions%20about%20custom%20stitching"
+    <a href="https://wa.me/923320924951?text=Hi%20I%20have%20questions%20about%20custom%20stitching"
        target="_blank"
        class="inline-flex items-center gap-2 px-8 py-4 border border-gold text-gold font-semibold text-[10px] uppercase tracking-[0.2em] rounded-lg hover:bg-gold/10 transition">
       Message on WhatsApp

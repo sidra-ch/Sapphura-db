@@ -2,12 +2,14 @@
 @section('title', $product->name . ' – Sapphura')
 @section('description', Str::limit(strip_tags($product->description ?? $product->name), 160))
 @section('og_type', 'product')
-@section('og_image', $product->images ? json_decode($product->images)[0] ?? asset('/logo-1.png') : asset('/logo-1.png'))
+@section('og_image', $product->primaryImageUrl())
 
 @section('content')
 @php
-    $images = json_decode($product->images ?: '[]', true);
-    $firstImage = $images[0] ?? null;
+    $mediaItems = $product->mediaItems();
+    $images = array_values(array_filter($mediaItems, fn ($item) => $item['type'] === 'image'));
+    $firstImage = $images[0]['url'] ?? null;
+    $primaryDisplayImage = $firstImage ?? asset('/logo-1.png');
     $ogImage = $firstImage ?? asset('/logo-1.png');
 @endphp
 
@@ -48,29 +50,130 @@
     @endphp
     @include('partials.breadcrumb', ['items' => $breadcrumbItems])
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12" x-data="{ selectedImage: 0, qty: 1, selectedVariant: null }">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12" x-data="{
+        mediaItems: {{ json_encode($mediaItems) }},
+        selectedMedia: 0,
+        qty: 1,
+        selectedVariant: null,
+        lightboxOpen: false,
+        lensVisible: false,
+        lensX: 0,
+        lensY: 0,
+        lensBgPos: '50% 50%',
+        get activeMedia() {
+            return this.mediaItems[this.selectedMedia] || null;
+        },
+        get activeImage() {
+            return this.activeMedia && this.activeMedia.type === 'image' ? this.activeMedia.url : '';
+        },
+        get activeMediaUrl() {
+            return this.activeMedia ? this.activeMedia.url : '';
+        },
+        get activeMediaType() {
+            return this.activeMedia ? this.activeMedia.type : 'image';
+        },
+        updateLens(event) {
+            if (!this.activeImage || this.activeMediaType !== 'image') return;
+            const rect = event.currentTarget.getBoundingClientRect();
+            const x = Math.max(0, Math.min(event.clientX - rect.left, rect.width));
+            const y = Math.max(0, Math.min(event.clientY - rect.top, rect.height));
+
+            this.lensX = x;
+            this.lensY = y;
+            this.lensBgPos = `${(x / rect.width) * 100}% ${(y / rect.height) * 100}%`;
+            this.lensVisible = true;
+        },
+        openLightbox() {
+            this.lightboxOpen = true;
+            document.body.style.overflow = 'hidden';
+        },
+        closeLightbox() {
+            this.lightboxOpen = false;
+            document.body.style.overflow = '';
+        },
+        nextImage() {
+            if (this.mediaItems.length < 2) return;
+            this.selectedMedia = (this.selectedMedia + 1) % this.mediaItems.length;
+        },
+        prevImage() {
+            if (this.mediaItems.length < 2) return;
+            this.selectedMedia = (this.selectedMedia - 1 + this.mediaItems.length) % this.mediaItems.length;
+        }
+    }">
         {{-- Images --}}
         <div class="lg:sticky lg:top-28 lg:self-start">
-            <div class="aspect-square rounded-xl overflow-hidden glass mb-4">
-                @if(count($images) > 0)
-                    <template x-for="(img, idx) in {{ json_encode($images) }}" :key="idx">
-                        <img x-show="selectedImage === idx" :src="img" alt="{{ $product->name }}" class="w-full h-full object-cover">
+            <div class="group relative aspect-square rounded-xl overflow-hidden glass mb-4"
+                 @mousemove="updateLens($event)"
+                 @mouseenter="lensVisible = true"
+                 @mouseleave="lensVisible = false">
+                @if(count($mediaItems) > 0)
+                    <template x-for="(item, idx) in mediaItems" :key="idx">
+                        <div x-show="selectedMedia === idx" class="w-full h-full">
+                            <template x-if="item.type === 'video'">
+                                <video :src="item.url" class="w-full h-full object-cover bg-black" controls preload="metadata"></video>
+                            </template>
+                            <template x-if="item.type !== 'video'">
+                                <img :src="item.url" alt="{{ $product->name }}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110 cursor-zoom-in" @click="openLightbox()">
+                            </template>
+                        </div>
                     </template>
+                    <div x-show="lensVisible && activeMediaType === 'image'"
+                         x-cloak
+                         class="pointer-events-none absolute z-20 hidden lg:block w-36 h-36 rounded-full border border-gold/50 shadow-xl"
+                         :style="`left:${lensX - 72}px; top:${lensY - 72}px; background-image:url('${activeImage}'); background-size:240%; background-position:${lensBgPos};`">
+                    </div>
+                    <button x-show="activeMediaType === 'image'" type="button" @click="openLightbox()" class="absolute bottom-3 right-3 px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] rounded-full bg-navy/70 border border-gold/30 text-gold hover:bg-navy transition">
+                        Zoom
+                    </button>
                 @else
                     <div class="w-full h-full flex items-center justify-center text-cream/20">
                         <svg class="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                     </div>
                 @endif
             </div>
-            @if(count($images) > 1)
+            @if(count($mediaItems) > 1)
                 <div class="flex gap-3">
-                    @foreach($images as $idx => $img)
-                        <button @click="selectedImage = {{ $idx }}"
-                                :class="selectedImage === {{ $idx }} ? 'border-gold' : 'border-gold/20'"
+                    @foreach($mediaItems as $idx => $item)
+                        <button @click="selectedMedia = {{ $idx }}"
+                                :class="selectedMedia === {{ $idx }} ? 'border-gold' : 'border-gold/20'"
                                 class="w-20 h-20 rounded-lg overflow-hidden border-2 transition">
-                            <img src="{{ $img }}" alt="" class="w-full h-full object-cover">
+                            @if($item['type'] === 'video')
+                                <div class="relative w-full h-full bg-black">
+                                    <video src="{{ $item['url'] }}" class="w-full h-full object-cover" muted preload="metadata"></video>
+                                    <div class="absolute inset-0 flex items-center justify-center bg-black/20 text-white text-[10px]">Play</div>
+                                </div>
+                            @else
+                                <img src="{{ $item['url'] }}" alt="" class="w-full h-full object-cover">
+                            @endif
                         </button>
                     @endforeach
+                </div>
+            @endif
+
+            @if(count($mediaItems) > 0)
+                <div x-show="lightboxOpen" x-cloak class="fixed inset-0 z-[120] bg-black/90 backdrop-blur-sm p-4 flex items-center justify-center" @click.self="closeLightbox()" @keydown.escape.window="closeLightbox()" style="display:none;">
+                    <button type="button" @click="closeLightbox()" class="absolute top-5 right-5 text-cream/80 hover:text-gold transition">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+
+                    @if(count($mediaItems) > 1)
+                        <button type="button" @click="prevImage()" class="absolute left-4 sm:left-8 text-cream/80 hover:text-gold transition">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                        </button>
+                    @endif
+
+                    <template x-if="activeMediaType === 'video'">
+                        <video :src="activeMediaUrl" class="max-h-[88vh] max-w-[92vw] rounded-lg shadow-2xl" controls autoplay></video>
+                    </template>
+                    <template x-if="activeMediaType !== 'video'">
+                        <img :src="activeMediaUrl" alt="{{ $product->name }}" class="max-h-[88vh] max-w-[92vw] object-contain rounded-lg shadow-2xl">
+                    </template>
+
+                    @if(count($mediaItems) > 1)
+                        <button type="button" @click="nextImage()" class="absolute right-4 sm:right-8 text-cream/80 hover:text-gold transition">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+                    @endif
                 </div>
             @endif
         </div>
@@ -165,7 +268,7 @@
                     productId: {{ $product->id }},
                     slug: '{{ $product->slug }}',
                     name: '{{ addslashes($product->name) }}',
-                    image: '{{ $images[0] ?? '' }}',
+                    image: '{{ $primaryDisplayImage }}',
                     price: selectedVariant ? selectedVariant.price : {{ $product->sale_price ?: $product->price }},
                     quantity: qty,
                     variant: selectedVariant ? (selectedVariant.size || '') + ' ' + (selectedVariant.color || '') : ''
@@ -177,7 +280,7 @@
                     id: '{{ $product->public_id ?: $product->id }}',
                     slug: '{{ $product->slug }}',
                     name: '{{ addslashes($product->name) }}',
-                    image: '{{ $images[0] ?? '' }}',
+                    image: '{{ $primaryDisplayImage }}',
                     price: {{ $product->sale_price ?: $product->price }}
                 })" class="w-12 h-12 border border-gold/30 rounded-lg flex items-center justify-center hover:bg-gold/10 transition">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>

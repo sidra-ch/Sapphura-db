@@ -5,39 +5,39 @@
             {{-- Useful Links --}}
             <div>
                 <h4 class="text-gold text-xs uppercase tracking-widest font-bold mb-4">Useful Links</h4>
-                <ul class="space-y-2">
-                    <li><a href="/track-order" class="text-sm text-cream/60 hover:text-gold transition">Track Order</a></li>
-                    <li><a href="/how-to-order" class="text-sm text-cream/60 hover:text-gold transition">How To Order</a></li>
-                    <li><a href="/shipping-rates" class="text-sm text-cream/60 hover:text-gold transition">Shipping Rates</a></li>
+                <ul class="space-y-1.5">
+                    <li><a href="/track-order" class="block py-1 text-sm text-cream/60 hover:text-gold transition">Track Order</a></li>
+                    <li><a href="/how-to-order" class="block py-1 text-sm text-cream/60 hover:text-gold transition">How To Order</a></li>
+                    <li><a href="/shipping-rates" class="block py-1 text-sm text-cream/60 hover:text-gold transition">Shipping Rates</a></li>
                 </ul>
             </div>
             {{-- Quick Links --}}
             <div>
                 <h4 class="text-gold text-xs uppercase tracking-widest font-bold mb-4">Quick Links</h4>
-                <ul class="space-y-2">
-                    <li><a href="/collections?category=Jewelry" class="text-sm text-cream/60 hover:text-gold transition">Bangles</a></li>
-                    <li><a href="/collections?category=Accessories" class="text-sm text-cream/60 hover:text-gold transition">Bracelets</a></li>
-                    <li><a href="/collections?category=Jewelry" class="text-sm text-cream/60 hover:text-gold transition">Necklace Sets</a></li>
-                    <li><a href="/collections?category=Jewelry" class="text-sm text-cream/60 hover:text-gold transition">Earrings</a></li>
+                <ul class="space-y-1.5">
+                    <li><a href="/collections?category=Jewelry" class="block py-1 text-sm text-cream/60 hover:text-gold transition">Bangles</a></li>
+                    <li><a href="/collections?category=Accessories" class="block py-1 text-sm text-cream/60 hover:text-gold transition">Bracelets</a></li>
+                    <li><a href="/collections?category=Jewelry" class="block py-1 text-sm text-cream/60 hover:text-gold transition">Necklace Sets</a></li>
+                    <li><a href="/collections?category=Jewelry" class="block py-1 text-sm text-cream/60 hover:text-gold transition">Earrings</a></li>
                 </ul>
             </div>
             {{-- Company --}}
             <div>
                 <h4 class="text-gold text-xs uppercase tracking-widest font-bold mb-4">Company</h4>
-                <ul class="space-y-2">
-                    <li><a href="/about" class="text-sm text-cream/60 hover:text-gold transition">About Us</a></li>
-                    <li><a href="/contact" class="text-sm text-cream/60 hover:text-gold transition">Contact</a></li>
-                    <li><a href="/blogs" class="text-sm text-cream/60 hover:text-gold transition">Blogs</a></li>
-                    <li><a href="/faq" class="text-sm text-cream/60 hover:text-gold transition">FAQs</a></li>
+                <ul class="space-y-1.5">
+                    <li><a href="/about" class="block py-1 text-sm text-cream/60 hover:text-gold transition">About Us</a></li>
+                    <li><a href="/contact" class="block py-1 text-sm text-cream/60 hover:text-gold transition">Contact</a></li>
+                    <li><a href="/blogs" class="block py-1 text-sm text-cream/60 hover:text-gold transition">Blogs</a></li>
+                    <li><a href="/faq" class="block py-1 text-sm text-cream/60 hover:text-gold transition">FAQs</a></li>
                 </ul>
             </div>
             {{-- Policies --}}
             <div>
                 <h4 class="text-gold text-xs uppercase tracking-widest font-bold mb-4">Policies</h4>
-                <ul class="space-y-2">
-                    <li><a href="/refund-policy" class="text-sm text-cream/60 hover:text-gold transition">Refund Policy</a></li>
-                    <li><a href="/exchange-policy" class="text-sm text-cream/60 hover:text-gold transition">Exchange Policy</a></li>
-                    <li><a href="/terms-of-service" class="text-sm text-cream/60 hover:text-gold transition">Terms of Service</a></li>
+                <ul class="space-y-1.5">
+                    <li><a href="/refund-policy" class="block py-1 text-sm text-cream/60 hover:text-gold transition">Refund Policy</a></li>
+                    <li><a href="/exchange-policy" class="block py-1 text-sm text-cream/60 hover:text-gold transition">Exchange Policy</a></li>
+                    <li><a href="/terms-of-service" class="block py-1 text-sm text-cream/60 hover:text-gold transition">Terms of Service</a></li>
                 </ul>
             </div>
         </div>

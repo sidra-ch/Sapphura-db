@@ -52,6 +52,7 @@ Route::get('/terms-of-service', [PageController::class, 'termsOfService'])->name
 Route::get('/refund-policy', [PageController::class, 'refundPolicy'])->name('refund-policy');
 Route::get('/exchange-policy', [PageController::class, 'exchangePolicy'])->name('exchange-policy');
 Route::get('/stitching', [PageController::class, 'stitching'])->name('stitching');
+Route::post('/stitching-request', [PageController::class, 'stitchingRequest'])->name('stitching.request');
 
 Route::get('/sitemap.xml', function () {
     $pages = [
@@ -127,7 +128,7 @@ Route::get('/sitemap.xml', function () {
 })->name('sitemap');
 
 // Admin (protected)
-Route::prefix('admin')->middleware('auth')->group(function () {
+Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/products', [AdminController::class, 'products'])->name('admin.products');
     Route::get('/bulk-import-products', [AdminProductImportController::class, 'showForm'])->name('admin.products.import.form');
@@ -162,6 +163,10 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::delete('/coupons/{id}', [AdminController::class, 'deleteCoupon'])->name('admin.coupons.delete');
     Route::get('/settings', [AdminController::class, 'settings'])->name('admin.settings');
     Route::get('/media-library', [AdminMediaController::class, 'index'])->name('admin.media.library');
+    Route::get('/media-library/list', [AdminMediaController::class, 'list'])->name('admin.media.list');
     Route::post('/media-library/upload', [AdminMediaController::class, 'upload'])->name('admin.media.upload');
+    Route::delete('/media-library', [AdminMediaController::class, 'bulkDestroy'])->name('admin.media.bulk-destroy');
+    Route::patch('/media-library/{id}/category', [AdminMediaController::class, 'updateCategory'])->name('admin.media.category.update');
+    Route::patch('/media-library/{id}/caption', [AdminMediaController::class, 'updateCaption'])->name('admin.media.caption.update');
     Route::delete('/media-library/{id}', [AdminMediaController::class, 'destroy'])->name('admin.media.destroy');
 });

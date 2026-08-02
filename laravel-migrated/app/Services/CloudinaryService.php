@@ -93,6 +93,43 @@ class CloudinaryService
         ];
     }
 
+    public static function deleteResource(string $publicId, string $resourceType = 'image'): bool
+    {
+        if (!self::configured()) {
+            throw new \RuntimeException('Cloudinary credentials are not configured');
+        }
+
+        $publicId = trim($publicId);
+        if ($publicId === '') {
+            return false;
+        }
+
+        $cloudName = self::cloudName();
+        $apiKey    = env('CLOUDINARY_API_KEY');
+        $apiSecret = env('CLOUDINARY_API_SECRET');
+        $timestamp = time();
+        $resourceType = $resourceType === 'video' ? 'video' : 'image';
+
+        $paramsToSign = "public_id={$publicId}&timestamp={$timestamp}";
+        $signature    = sha1($paramsToSign . $apiSecret);
+
+        $url = "https://api.cloudinary.com/v1_1/{$cloudName}/{$resourceType}/destroy";
+
+        $response = Http::timeout(30)->asForm()->post($url, [
+            'public_id' => $publicId,
+            'api_key' => $apiKey,
+            'timestamp' => $timestamp,
+            'signature' => $signature,
+        ]);
+
+        if (!$response->successful()) {
+            return false;
+        }
+
+        $data = $response->json() ?? [];
+        return in_array(($data['result'] ?? ''), ['ok', 'not found'], true);
+    }
+
     private static function listAllResources(string $resourceType, ?string $prefix = null): array
     {
         $resources = [];

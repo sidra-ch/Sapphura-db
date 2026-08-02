@@ -36,7 +36,11 @@
                 for (const f of chunk) form.append('files[]', f);
                 form.append('_token', document.querySelector('meta[name=csrf-token]').content);
                 try {
-                    const res  = await fetch('/admin/media-library/upload', { method: 'POST', body: form });
+                    const res  = await fetch('/admin/media-library/upload', {
+                        method: 'POST',
+                        headers: { 'Accept': 'application/json' },
+                        body: form
+                    });
                     const data = await res.json();
                     totalUploaded += data.uploaded || 0;
                     totalFailed   += data.failed   || 0;
@@ -109,8 +113,14 @@
             <option value="image" {{ request('type') === 'image' ? 'selected' : '' }} class="bg-ink">Images Only</option>
             <option value="video" {{ request('type') === 'video' ? 'selected' : '' }} class="bg-ink">Videos Only</option>
         </select>
+        <select name="category_id" class="px-3 py-2 bg-white/5 border border-gold/20 rounded-lg text-cream text-sm outline-none">
+            <option value="" class="bg-ink">All Categories</option>
+            @foreach($categories as $category)
+                <option value="{{ $category->id }}" {{ (string) request('category_id') === (string) $category->id ? 'selected' : '' }} class="bg-ink">{{ $category->name }}</option>
+            @endforeach
+        </select>
         <button type="submit" class="px-4 py-2 bg-gold/20 text-gold rounded-lg text-sm font-semibold hover:bg-gold/30 transition">Filter</button>
-        @if(request('type'))
+        @if(request('type') || request('category_id'))
             <a href="/admin/media-library" class="px-4 py-2 border border-gold/20 text-cream/50 rounded-lg text-sm hover:text-gold transition">Clear</a>
         @endif
     </form>
@@ -118,10 +128,98 @@
 
 {{-- GRID --}}
 @if($media->count())
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4" x-data="{ copied: null }">
+    <div x-data="{
+        copied: null,
+        selectedIds: [],
+        pageIds: @json($media->pluck('id')->values()),
+        bulkDeleting: false,
+        allSelected() {
+            return this.pageIds.length > 0 && this.pageIds.every((id) => this.selectedIds.includes(id));
+        },
+        toggleSelect(id) {
+            if (this.selectedIds.includes(id)) {
+                this.selectedIds = this.selectedIds.filter((v) => v !== id);
+                return;
+            }
+            this.selectedIds.push(id);
+        },
+        toggleSelectAll() {
+            if (this.allSelected()) {
+                this.selectedIds = [];
+                return;
+            }
+            this.selectedIds = [...this.pageIds];
+        },
+        async bulkDelete() {
+            if (!this.selectedIds.length) return;
+            if (!confirm(`Delete ${this.selectedIds.length} selected file(s)?`)) return;
+
+            this.bulkDeleting = true;
+            const form = document.getElementById('bulkDeleteForm');
+            form.submit();
+        },
+        async editCaption(id, currentCaption) {
+            const nextCaption = prompt('Update caption:', currentCaption || '');
+            if (nextCaption === null) return;
+
+            try {
+                const res = await fetch(`/admin/media-library/${id}/caption`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                    },
+                    body: JSON.stringify({ caption: nextCaption }),
+                });
+
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error('Failed');
+                }
+
+                window.location.reload();
+            } catch (e) {
+                alert('Caption update failed. Please try again.');
+            }
+        }
+    }">
+        <div class="glass rounded-xl p-3 mb-4 flex flex-wrap items-center gap-2">
+            <button type="button"
+                @click="toggleSelectAll()"
+                class="px-3 py-2 rounded-lg border border-gold/30 text-gold text-xs font-semibold hover:bg-gold/10 transition">
+                <span x-show="!allSelected()">Select All (Page)</span>
+                <span x-show="allSelected()">Unselect All</span>
+            </button>
+
+            <form id="bulkDeleteForm" method="POST" action="/admin/media-library" class="contents">
+                @csrf
+                @method('DELETE')
+                <template x-for="id in selectedIds" :key="id">
+                    <input type="hidden" name="ids[]" :value="id">
+                </template>
+                <button type="button"
+                    :disabled="selectedIds.length === 0 || bulkDeleting"
+                    @click="bulkDelete()"
+                    class="px-3 py-2 rounded-lg border border-red-500/40 text-red-400 text-xs font-semibold hover:bg-red-500/10 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span x-show="!bulkDeleting">Delete Selected (<span x-text="selectedIds.length"></span>)</span>
+                    <span x-show="bulkDeleting">Deleting...</span>
+                </button>
+            </form>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         @foreach($media as $item)
             <div class="glass rounded-xl overflow-hidden group relative">
                 <div class="aspect-square bg-white/5 relative overflow-hidden">
+                    <button type="button"
+                        @click.stop="toggleSelect({{ $item->id }})"
+                        class="absolute top-2 right-2 z-10 w-6 h-6 rounded border border-white/40 flex items-center justify-center text-[10px] font-bold transition"
+                        :class="selectedIds.includes({{ $item->id }}) ? 'bg-gold text-ink border-gold' : 'bg-black/60 text-white'">
+                        <span x-show="selectedIds.includes({{ $item->id }})">✓</span>
+                        <span x-show="!selectedIds.includes({{ $item->id }})"></span>
+                    </button>
+
                     @if($item->cloudinary_url)
                         @if($item->type === 'video')
                             <video src="{{ $item->cloudinary_url }}" class="w-full h-full object-cover" muted preload="metadata"></video>
@@ -156,6 +254,11 @@
                                class="w-full py-1.5 rounded text-xs font-semibold text-center border border-white/30 text-white hover:bg-white/10 transition">
                                 Open Full Size
                             </a>
+                            <button type="button"
+                                @click.stop="editCaption({{ $item->id }}, @js($item->caption))"
+                                class="w-full py-1.5 rounded text-xs font-semibold text-center border border-gold/40 text-gold hover:bg-gold/10 transition">
+                                Edit Caption
+                            </button>
                         @endif
                         <form method="POST" action="/admin/media-library/{{ $item->id }}" onsubmit="return confirm('Delete?')">
                             @csrf @method('DELETE')
@@ -165,11 +268,23 @@
                 </div>
 
                 <div class="p-2.5">
+                        <form method="POST" action="/admin/media-library/{{ $item->id }}/category" class="mb-2 flex items-center gap-2">
+                            @csrf
+                            @method('PATCH')
+                            <select name="category_id" class="w-full px-2 py-1.5 bg-white/5 border border-gold/20 rounded text-[11px] text-cream outline-none">
+                                <option value="" class="bg-ink">No Category</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category->id }}" {{ (int) ($item->category_id ?? 0) === (int) $category->id ? 'selected' : '' }} class="bg-ink">{{ $category->name }}</option>
+                                @endforeach
+                            </select>
+                            <button class="px-2 py-1.5 rounded text-[10px] border border-gold/30 text-gold hover:bg-gold/10 transition">Save</button>
+                        </form>
                     <p class="text-[11px] text-cream/70 truncate font-medium" title="{{ $item->caption }}">{{ $item->caption ?: '—' }}</p>
                     <p class="text-[10px] text-cream/30 mt-0.5">{{ optional($item->created_at)->format('d M Y, H:i') }}</p>
                 </div>
             </div>
         @endforeach
+        </div>
     </div>
     <div class="mt-6">{{ $media->links() }}</div>
 @else

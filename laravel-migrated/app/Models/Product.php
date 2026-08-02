@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 /**
  * @property int $id
@@ -78,5 +79,70 @@ class Product extends Model
     public function inventoryLogs(): HasMany
     {
         return $this->hasMany(InventoryLog::class);
+    }
+
+    public function mediaItems(): array
+    {
+        $rawItems = json_decode($this->images ?: '[]', true);
+        if (!is_array($rawItems)) {
+            return [];
+        }
+
+        return collect($rawItems)
+            ->map(function ($item) {
+                if (!is_string($item)) {
+                    return null;
+                }
+
+                $url = $this->normalizeMediaUrl($item);
+                if ($url === null) {
+                    return null;
+                }
+
+                return [
+                    'url' => $url,
+                    'type' => $this->inferMediaTypeFromUrl($url),
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    public function imageMediaItems(): array
+    {
+        return array_values(array_filter($this->mediaItems(), fn (array $item) => $item['type'] === 'image'));
+    }
+
+    public function primaryImageUrl(): string
+    {
+        $primaryImage = $this->imageMediaItems()[0]['url'] ?? null;
+        return $primaryImage ?: asset('/logo-1.png');
+    }
+
+    private function normalizeMediaUrl(string $value): ?string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return null;
+        }
+
+        if (Str::startsWith($value, ['http://', 'https://', '//', 'data:', '/'])) {
+            return $value;
+        }
+
+        return '/' . ltrim($value, '/');
+    }
+
+    private function inferMediaTypeFromUrl(string $url): string
+    {
+        if (str_contains($url, '/video/upload/')) {
+            return 'video';
+        }
+
+        $path = parse_url($url, PHP_URL_PATH);
+        $extension = strtolower(pathinfo((string) $path, PATHINFO_EXTENSION));
+
+        return in_array($extension, ['mp4', 'mov', 'avi', 'webm', 'm4v'], true) ? 'video' : 'image';
     }
 }
