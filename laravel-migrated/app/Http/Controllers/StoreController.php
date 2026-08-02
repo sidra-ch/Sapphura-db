@@ -41,15 +41,15 @@ class StoreController extends Controller
             }
         }
         if ($request->filled('min_price')) {
-            $query->where('price', '>=', $minPrice);
+            $query->where('price', '>=', $minPrice, 'and');
         }
         if ($request->filled('max_price')) {
-            $query->where('price', '<=', $maxPrice);
+            $query->where('price', '<=', $maxPrice, 'and');
         }
         if ($request->filled('search')) {
             $query->where(function ($query) use ($request) {
                 $searchTerm = (string) $request->input('search');
-                $query->where('name', 'like', '%' . $searchTerm . '%')
+                    $query->where('name', 'like', '%' . $searchTerm . '%', 'and')
                       ->orWhere('description', 'like', '%' . $searchTerm . '%');
             });
         }
@@ -86,7 +86,7 @@ class StoreController extends Controller
         $products = collect();
         if (strlen($q) >= 2) {
             $products = Product::where('status', '=', 'active', 'and')
-                ->where(fn ($query) => $query->where('name', 'like', "%{$q}%", 'and')->orWhere('description', 'like', "%{$q}%"))
+                ->where(fn ($query) => $query->where('name', 'like', "%{$q}%", 'and')->orWhere('description', 'like', "%{$q}%"), null, null, 'and')
                 ->with(['category','variants'])->take(20)->get();
         }
         return view('store.search', compact('q', 'products'));

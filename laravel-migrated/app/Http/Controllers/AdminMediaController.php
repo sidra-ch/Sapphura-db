@@ -12,14 +12,14 @@ class AdminMediaController extends Controller
 {
     public function index(Request $request)
     {
-        $query = WhatsappMedia::query()->with('category')->orderByDesc('created_at');
+        $query = WhatsappMedia::query()->with('category')->latest('created_at');
 
         if ($request->filled('type')) {
-            $query->where('type', $request->input('type'));
+            $query->where('type', '=', $request->input('type'), 'and');
         }
 
         if ($request->filled('category_id')) {
-            $query->where('category_id', $request->input('category_id'));
+            $query->where('category_id', '=', $request->input('category_id'), 'and');
         }
 
         $media = $query->paginate(24)->withQueryString();
@@ -30,14 +30,14 @@ class AdminMediaController extends Controller
 
     public function list(Request $request)
     {
-        $query = WhatsappMedia::query()->orderByDesc('created_at');
+        $query = WhatsappMedia::query()->latest('created_at');
 
         if ($request->filled('type')) {
-            $query->where('type', $request->input('type'));
+            $query->where('type', '=', $request->input('type'), 'and');
         }
 
         if ($request->filled('category_id')) {
-            $query->where('category_id', $request->input('category_id'));
+            $query->where('category_id', '=', $request->input('category_id'), 'and');
         }
 
         $items = $query->limit(120)->get([

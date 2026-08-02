@@ -217,7 +217,7 @@ class LegacyBridgeController extends Controller
             $expiresAt = now()->addMinutes(10);
 
             OtpVerification::query()->where('user_id', '=', $user->id, 'and')
-                ->where('purpose', $purposeKey)
+                ->where('purpose', '=', $purposeKey, 'and')
                 ->whereNull('consumed_at')
                 ->update(['consumed_at' => now()]);
 
@@ -277,7 +277,7 @@ class LegacyBridgeController extends Controller
 
             /** @var OtpVerification|null $record */
             $record = OtpVerification::query()->where('user_id', '=', $user->id, 'and')
-                ->where('purpose', $purposeKey)
+                ->where('purpose', '=', $purposeKey, 'and')
                 ->whereNull('consumed_at')
                 ->orderByDesc('id')
                 ->first(['*']);
@@ -328,12 +328,12 @@ class LegacyBridgeController extends Controller
 
     public function productsIndex(Request $request): JsonResponse
     {
-        $query = Product::query()->where('status', 'active')->with(['category','variants'])->orderByDesc('created_at');
+        $query = Product::query()->where('status', '=', 'active', 'and')->with(['category','variants'])->orderByDesc('created_at');
         if ($request->query('featured') === '1') {
-            $query->where('is_featured', true);
+            $query->where('is_featured', '=', true, 'and');
         }
         if ($slug = trim((string) $request->query('slug', ''))) {
-            $query->where('slug', $slug);
+            $query->where('slug', '=', $slug, 'and');
         }
         if ($limit = (int) $request->query('limit', 0)) {
             $query->limit($limit);
@@ -1037,13 +1037,13 @@ class LegacyBridgeController extends Controller
     {
         $query = PaymentTransaction::query()->latest('created_at')->limit(50);
         if ($ref = trim((string) $request->query('merchantReference', ''))) {
-            $query->where('merchant_reference', $ref);
+            $query->where('merchant_reference', '=', $ref, 'and');
         }
         if ($provider = trim((string) $request->query('provider', ''))) {
-            $query->where('provider', $provider);
+            $query->where('provider', '=', $provider, 'and');
         }
         if ($orderId = (int) $request->query('orderId', 0)) {
-            $query->where('order_id', $orderId);
+            $query->where('order_id', '=', $orderId, 'and');
         }
         $transactions = $query->get();
         return response()->json(['success' => true, 'count' => $transactions->count(), 'transactions' => $transactions]);
@@ -1221,7 +1221,7 @@ class LegacyBridgeController extends Controller
 
             /** @var PaymentTransaction|null $transaction */
             $transaction = PaymentTransaction::query()->where('provider', '=', 'stripe', 'and')
-                ->where('provider_transaction_id', $intent->id)
+                ->where('provider_transaction_id', '=', $intent->id, 'and')
                 ->orderByDesc('id')
                 ->first(['*']);
 
@@ -1530,10 +1530,10 @@ class LegacyBridgeController extends Controller
         $query = Product::query()->where('status', '=', 'active', 'and')->with('category')->orderByDesc('created_at')->limit(12);
         if ($q !== '') {
             $query->where(function ($builder) use ($q) {
-                $builder->where('name', 'like', '%'.$q.'%')
+                $builder->where('name', 'like', '%'.$q.'%', 'and')
                     ->orWhere('description', 'like', '%'.$q.'%')
                     ->orWhere('slug', 'like', '%'.$q.'%');
-            });
+            }, null, null, 'and');
         }
         if ($category !== '') {
             $query->whereHas('category', fn ($b) => $b->whereRaw('LOWER(name) = ?', [strtolower($category)]));
@@ -1555,7 +1555,7 @@ class LegacyBridgeController extends Controller
             if (!$product) {
                 return response()->json(['error' => 'Product not found'], 404);
             }
-            $query->where('product_id', $product->id);
+            $query->where('product_id', '=', $product->id, 'and');
         }
 
         $reviews = $query->limit(100)->get();
