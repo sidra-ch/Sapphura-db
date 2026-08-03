@@ -43,6 +43,7 @@ Route::middleware('auth')->group(function () {
 // Static pages
 Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
+Route::post('/contact', [PageController::class, 'contactRequest'])->name('contact.submit');
 Route::get('/faq', [PageController::class, 'faq'])->name('faq');
 Route::get('/blogs', [PageController::class, 'blogs'])->name('blogs');
 Route::get('/track-order', [PageController::class, 'trackOrder'])->name('track-order');

@@ -12,9 +12,17 @@
     <div class="glass rounded-2xl p-8" x-data="{ orderId: '', result: null, loading: false, error: '' }">
         <form @submit.prevent="
             loading = true; error = ''; result = null;
-            fetch('/api/orders/' + orderId)
+            fetch('/api/orders/' + encodeURIComponent(orderId) + '/status')
                 .then(r => r.ok ? r.json() : Promise.reject('Order not found'))
-                .then(d => { result = d; loading = false; })
+                .then(d => {
+                    result = d.order ? {
+                        ...d.order,
+                        total_amount: d.order.total_amount ?? d.order.total ?? 0,
+                        payment_method: d.order.payment_method ?? d.order.paymentMethod ?? 'N/A',
+                        created_at: d.order.created_at ?? d.order.createdAt ?? d.order.updatedAt ?? null,
+                    } : d;
+                    loading = false;
+                })
                 .catch(e => { error = typeof e === 'string' ? e : 'Order not found. Please check your order ID.'; loading = false; })
         " class="space-y-4">
             <div>

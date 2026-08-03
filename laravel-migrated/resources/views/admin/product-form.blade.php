@@ -234,6 +234,55 @@ function productImageUploader() {
             this.uploadMessage = `${urls.length} image(s) added from media library.`;
             this.libraryOpen = false;
         },
+        appendUrlsToTextarea(urls) {
+            const current = (this.$refs.imagesTextarea.value || '').trim();
+            const existing = current ? current.split(/\r?\n/).map((v) => v.trim()).filter(Boolean) : [];
+            const merged = [...new Set([...existing, ...urls])];
+            this.$refs.imagesTextarea.value = merged.join('\n');
+        },
+        extractUploadUrls(data) {
+            const urls = [];
+
+            const addUrl = (value) => {
+                if (typeof value !== 'string') return;
+                const trimmed = value.trim();
+                if (!trimmed) return;
+                urls.push(trimmed);
+            };
+
+            const collections = [data?.items, data?.media, data?.files].filter(Array.isArray);
+            collections.forEach((list) => {
+                list.forEach((item) => {
+                    if (typeof item === 'string') {
+                        addUrl(item);
+                        return;
+                    }
+
+                    addUrl(item?.url);
+                    addUrl(item?.cloudinary_url);
+                    addUrl(item?.secure_url);
+                    addUrl(item?.media_url);
+                });
+            });
+
+            addUrl(data?.url);
+            addUrl(data?.cloudinary_url);
+            addUrl(data?.secure_url);
+
+            return [...new Set(urls)];
+        },
+        async fetchRecentUploadedUrls(limit = 1) {
+            const res = await fetch('/admin/media-library/list', {
+                headers: { 'Accept': 'application/json' }
+            });
+            const data = await res.json();
+            const items = Array.isArray(data?.items) ? data.items : [];
+
+            return items
+                .slice(0, Math.max(1, Number(limit) || 1))
+                .map((item) => item?.cloudinary_url || item?.url || item?.secure_url || item?.media_url)
+                .filter((url) => typeof url === 'string' && url.trim() !== '');
+        },
         async uploadProductImages(event) {
             const files = Array.from(event.target.files || []);
             if (!files.length) return;
@@ -261,20 +310,31 @@ function productImageUploader() {
                     headers: { 'Accept': 'application/json' },
                     body: form,
                 });
-                const data = await res.json();
+                let data = {};
+                try {
+                    data = await res.json();
+                } catch (parseError) {
+                    data = {};
+                }
 
-                const urls = (data.items || [])
-                    .filter((item) => item.url)
-                    .map((item) => item.url);
+                if (!res.ok) {
+                    throw new Error(data?.message || 'Upload request failed.');
+                }
+
+                let urls = this.extractUploadUrls(data);
+                const uploadedCount = Number(data?.uploaded || 0);
+
+                if (!urls.length && uploadedCount > 0) {
+                    urls = await this.fetchRecentUploadedUrls(uploadedCount);
+                }
 
                 if (urls.length) {
-                    const current = (this.$refs.imagesTextarea.value || '').trim();
-                    const existing = current ? current.split(/\r?\n/).map((v) => v.trim()).filter(Boolean) : [];
-                    const merged = [...new Set([...existing, ...urls])];
-                    this.$refs.imagesTextarea.value = merged.join('\n');
+                    this.appendUrlsToTextarea(urls);
                     this.uploadMessage = `${urls.length} media item(s) uploaded and added.`;
+                } else if (uploadedCount > 0) {
+                    this.uploadMessage = 'Upload successful. URL auto-add miss ho gaya, Select From Media Library se image select karein.';
                 } else {
-                    this.uploadMessage = 'Upload completed but no media URL returned.';
+                    this.uploadMessage = data?.message || 'Upload completed but no media URL returned.';
                 }
             } catch (error) {
                 this.uploadMessage = 'Upload failed. Please try again.';

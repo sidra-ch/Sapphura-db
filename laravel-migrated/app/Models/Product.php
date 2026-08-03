@@ -46,6 +46,45 @@ class Product extends Model
         'is_featured' => 'boolean',
     ];
 
+    public static function generateUniqueSlug(string $name, ?int $ignoreProductId = null): string
+    {
+        $baseSlug = Str::slug($name);
+        if ($baseSlug === '') {
+            $baseSlug = 'product';
+        }
+
+        $existingSlugs = static::query()
+            ->when($ignoreProductId !== null, fn ($query) => $query->where('id', '!=', $ignoreProductId))
+            ->where(function ($query) use ($baseSlug) {
+                $query->where('slug', $baseSlug)
+                    ->orWhere('slug', 'like', $baseSlug . '-%');
+            })
+            ->pluck('slug')
+            ->filter(fn ($slug) => is_string($slug) && $slug !== '')
+            ->values();
+
+        if (! $existingSlugs->contains($baseSlug)) {
+            return $baseSlug;
+        }
+
+        $maxSuffix = $existingSlugs
+            ->map(function (string $slug) use ($baseSlug) {
+                if ($slug === $baseSlug) {
+                    return 1;
+                }
+
+                if (! preg_match('/^' . preg_quote($baseSlug, '/') . '-(\d+)$/', $slug, $matches)) {
+                    return null;
+                }
+
+                return (int) $matches[1];
+            })
+            ->filter(fn ($suffix) => is_int($suffix))
+            ->max();
+
+        return $baseSlug . '-' . (((int) $maxSuffix) + 1);
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
@@ -117,7 +156,7 @@ class Product extends Model
     public function primaryImageUrl(): string
     {
         $primaryImage = $this->imageMediaItems()[0]['url'] ?? null;
-        return $primaryImage ?: asset('/logo-1.png');
+        return $primaryImage ?: asset('logo-1.png');
     }
 
     private function normalizeMediaUrl(string $value): ?string

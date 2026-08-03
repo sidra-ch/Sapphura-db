@@ -32,7 +32,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                 </button>
-                <div x-show="open === {{ $i }}" x-collapse class="px-5 pb-5">
+                <div x-show="open === {{ $i }}" x-transition.opacity.duration.200ms class="px-5 pb-5">
                     <p class="text-cream/60 text-sm leading-relaxed">{{ $faq['a'] }}</p>
                 </div>
             </div>

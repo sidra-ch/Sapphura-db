@@ -11,7 +11,7 @@
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
 
         <!-- Styles / Scripts -->
-        @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
+        @if (file_exists(public_path('build/manifest.json')))
             @vite(['resources/css/app.css', 'resources/js/app.js'])
         @else
             <style>
@@ -38,9 +38,9 @@
                             Log in
                         </a>
 
-                        @if (Route::has('register'))
+                        @if (Route::has('sign-up'))
                             <a
-                                href="{{ route('register') }}"
+                                href="{{ route('sign-up') }}"
                                 class="inline-block px-5 py-1.5 dark:text-[#EDEDEC] border-[#19140035] hover:border-[#1915014a] border text-[#1b1b18] dark:border-[#3E3E3A] dark:hover:border-[#62605b] rounded-sm text-sm leading-normal">
                                 Register
                             </a>

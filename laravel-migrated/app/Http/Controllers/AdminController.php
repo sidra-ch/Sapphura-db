@@ -172,7 +172,7 @@ class AdminController extends Controller
         Product::create([
             'public_id' => (string) Str::uuid(),
             'name' => $request->input('name'),
-            'slug' => Str::slug((string) $request->input('name')),
+            'slug' => Product::generateUniqueSlug((string) $request->input('name')),
             'description' => $request->input('description'),
             'price' => $request->input('price'),
             'sale_price' => $request->input('sale_price'),
@@ -212,7 +212,7 @@ class AdminController extends Controller
 
         $product->update([
             'name' => $request->input('name'),
-            'slug' => Str::slug((string) $request->input('name')),
+            'slug' => Product::generateUniqueSlug((string) $request->input('name'), $product->id),
             'description' => $request->input('description'),
             'price' => $request->input('price'),
             'sale_price' => $request->input('sale_price'),
@@ -229,7 +229,7 @@ class AdminController extends Controller
 
     public function deleteProduct(string $id)
     {
-        $this->resolveProduct($id)->delete([]);
+        $this->resolveProduct($id)->delete();
         return redirect('/admin/products')->with('success', 'Product deleted.');
     }
 

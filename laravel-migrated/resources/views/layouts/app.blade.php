@@ -27,7 +27,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
+    @if (file_exists(public_path('build/manifest.json')))
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @else
         <script>
@@ -90,7 +90,7 @@
         "@type": "Organization",
         "name": "Sapphura",
         "url": "{{ url('/') }}",
-        "logo": "{{ asset('/logo-1.png') }}",
+        "logo": "{{ asset('logo-1.png') }}",
         "description": "Luxury fashion, jewelry, and custom stitching services.",
         "sameAs": [
             "https://instagram.com/sapphura",
@@ -98,6 +98,10 @@
         ]
     }
     </script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
     
     <script type="application/ld+json">
     {
@@ -124,7 +128,19 @@
 
     @include('partials.footer')
     @include('partials.cart-drawer')
-    @include('partials.whatsapp')
+    @if (!request()->is('admin') && !request()->is('admin/*'))
+        @include('partials.whatsapp')
+    @endif
+
+    <script>
+        // Fallback: if Alpine isn't bundled in app.js, load CDN version so dropdowns/widgets still work.
+        if (typeof window.Alpine === 'undefined') {
+            const alpineFallback = document.createElement('script');
+            alpineFallback.defer = true;
+            alpineFallback.src = 'https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js';
+            document.head.appendChild(alpineFallback);
+        }
+    </script>
 
     {{-- GSAP + ScrollTrigger --}}
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>

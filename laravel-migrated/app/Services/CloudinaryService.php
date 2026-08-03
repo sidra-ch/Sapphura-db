@@ -13,7 +13,7 @@ class CloudinaryService
 
     public static function cloudName(): string
     {
-        return env('CLOUDINARY_CLOUD_NAME', 'dwmxdyvd2');
+        return env('CLOUDINARY_CLOUD_NAME', '');
     }
 
     public static function listAssets(?string $prefix = null): array
@@ -70,6 +70,54 @@ class CloudinaryService
 
         $response = Http::timeout(120)
             ->attach('file', fopen($file->getRealPath(), 'r'), $file->getClientOriginalName())
+            ->post($url, [
+                'api_key'   => $apiKey,
+                'timestamp' => $timestamp,
+                'folder'    => $folder,
+                'signature' => $signature,
+            ]);
+
+        if (!$response->successful()) {
+            throw new \RuntimeException('Cloudinary upload failed: ' . $response->body());
+        }
+
+        $data = $response->json();
+        return [
+            'url'           => $data['secure_url'] ?? '',
+            'public_id'     => $data['public_id'] ?? '',
+            'resource_type' => $resourceType,
+            'width'         => $data['width'] ?? null,
+            'height'        => $data['height'] ?? null,
+            'bytes'         => $data['bytes'] ?? null,
+            'format'        => $data['format'] ?? '',
+        ];
+    }
+
+    public static function uploadPath(string $path, string $originalName, string $folder = 'admin-uploads'): array
+    {
+        if (!self::configured()) {
+            throw new \RuntimeException('Cloudinary credentials are not configured');
+        }
+
+        if (!is_file($path)) {
+            throw new \RuntimeException('Local media file not found: ' . $path);
+        }
+
+        $cloudName = self::cloudName();
+        $apiKey    = env('CLOUDINARY_API_KEY');
+        $apiSecret = env('CLOUDINARY_API_SECRET');
+        $timestamp = time();
+
+        $mimeType = (string) (mime_content_type($path) ?: '');
+        $resourceType = str_starts_with($mimeType, 'video') ? 'video' : 'image';
+
+        $paramsToSign = "folder={$folder}&timestamp={$timestamp}";
+        $signature    = sha1($paramsToSign . $apiSecret);
+
+        $url = "https://api.cloudinary.com/v1_1/{$cloudName}/{$resourceType}/upload";
+
+        $response = Http::timeout(120)
+            ->attach('file', fopen($path, 'r'), $originalName)
             ->post($url, [
                 'api_key'   => $apiKey,
                 'timestamp' => $timestamp,

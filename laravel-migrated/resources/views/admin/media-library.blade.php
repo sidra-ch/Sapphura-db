@@ -131,7 +131,7 @@
     <div x-data="{
         copied: null,
         selectedIds: [],
-        pageIds: @json($media->pluck('id')->values()),
+        pageIds: @json($media->getCollection()->pluck('id')->values()),
         bulkDeleting: false,
         allSelected() {
             return this.pageIds.length > 0 && this.pageIds.every((id) => this.selectedIds.includes(id));

@@ -31,6 +31,14 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
+    protected $table = 'users';
+
+    public $timestamps = true;
+
+    const CREATED_AT = 'created_at';
+
+    const UPDATED_AT = 'updated_at';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -60,6 +68,26 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+
+    public function getAuthPassword()
+    {
+        return $this->password;
+    }
+
+    public function getCreatedAtAttribute(mixed $value)
+    {
+        return $value;
+    }
+
+    public function getUpdatedAtAttribute(mixed $value)
+    {
+        return $value;
+    }
+
+    public function getIsActiveAttribute(mixed $value)
+    {
+        return (bool) $value;
+    }
 
     /**
      * Get the attributes that should be cast.

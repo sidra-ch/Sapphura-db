@@ -148,7 +148,7 @@ class LegacyBridgeController extends Controller
             return response()->json(['error' => 'Email is required.'], 400);
         }
 
-        if (User::query()->where('email', '=', $email, 'and')->exists()) {
+        if (User::query()->where('email', '=', $email)->exists()) {
             return response()->json(['error' => 'A user with this email already exists.'], 409);
         }
 
@@ -216,12 +216,12 @@ class LegacyBridgeController extends Controller
             $otp = (string) random_int(100000, 999999);
             $expiresAt = now()->addMinutes(10);
 
-            OtpVerification::query()->where('user_id', '=', $user->id, 'and')
-                ->where('purpose', '=', $purposeKey, 'and')
+            OtpVerification::query()->where('user_id', '=', $user->id)
+                ->where('purpose', '=', $purposeKey)
                 ->whereNull('consumed_at')
                 ->update(['consumed_at' => now()]);
 
-            OtpVerification::create([
+            $otpVerification = OtpVerification::create([
                 'user_id' => $user->id,
                 'otp_hash' => Hash::make($otp),
                 'purpose' => $purposeKey,
@@ -276,8 +276,8 @@ class LegacyBridgeController extends Controller
             }
 
             /** @var OtpVerification|null $record */
-            $record = OtpVerification::query()->where('user_id', '=', $user->id, 'and')
-                ->where('purpose', '=', $purposeKey, 'and')
+            $record = OtpVerification::query()->where('user_id', '=', $user->id)
+                ->where('purpose', '=', $purposeKey)
                 ->whereNull('consumed_at')
                 ->orderByDesc('id')
                 ->first(['*']);
@@ -291,7 +291,7 @@ class LegacyBridgeController extends Controller
             if ($record->attempts >= 5) {
                 return response()->json(['error' => 'Too many attempts. Please request a new OTP.'], 429);
             }
-            if (! Hash::check($otp, $record->otp_hash)) {
+            if (! Hash::check($otp, $record->getAttribute('otp_hash'))) {
                 $record->increment('attempts', 1, []);
                 return response()->json(['error' => 'Invalid OTP. 0 attempts remaining.'], 400);
             }
@@ -314,7 +314,7 @@ class LegacyBridgeController extends Controller
 
     public function categoriesIndex(): JsonResponse
     {
-        $categories = Category::query()->withCount(['products' => fn ($q) => $q->where('status', '=', 'active', 'and')])->orderBy('name', 'asc')->get(['*']);
+        $categories = Category::query()->withCount(['products' => fn ($q) => $q->where('status', '=', 'active')])->orderBy('name', 'asc')->get(['*']);
 
         return response()->json([
             'categories' => $categories->map(fn (Category $c) => [
@@ -328,12 +328,12 @@ class LegacyBridgeController extends Controller
 
     public function productsIndex(Request $request): JsonResponse
     {
-        $query = Product::query()->where('status', '=', 'active', 'and')->with(['category','variants'])->orderByDesc('created_at');
+        $query = Product::query()->where('status', '=', 'active')->with(['category','variants'])->orderByDesc('created_at');
         if ($request->query('featured') === '1') {
-            $query->where('is_featured', '=', true, 'and');
+            $query->where('is_featured', '=', true);
         }
         if ($slug = trim((string) $request->query('slug', ''))) {
-            $query->where('slug', '=', $slug, 'and');
+            $query->where('slug', '=', $slug);
         }
         if ($limit = (int) $request->query('limit', 0)) {
             $query->limit($limit);
@@ -399,7 +399,7 @@ class LegacyBridgeController extends Controller
 
     public function productsUpdate(Request $request, string $id): JsonResponse
     {
-        $product = Product::query()->where('public_id', '=', $id, 'and')->orWhere('id', '=', $id, 'and')->first();
+        $product = Product::query()->where('public_id', '=', $id)->orWhere('id', '=', $id)->first();
         if (! $product) {
             return response()->json(['error' => 'Invalid product ID'], 400);
         }
@@ -437,11 +437,11 @@ class LegacyBridgeController extends Controller
 
     public function productsDestroy(string $id): JsonResponse
     {
-        $product = Product::query()->where('public_id', '=', $id, 'and')->orWhere('id', '=', $id, 'and')->first();
+        $product = Product::query()->where('public_id', '=', $id)->orWhere('id', '=', $id)->first();
         if (! $product) {
             return response()->json(['error' => 'Invalid product ID'], 400);
         }
-        if (OrderItem::query()->where('product_id', '=', $product->id, 'and')->exists()) {
+        if (OrderItem::query()->where('product_id', '=', $product->id)->exists()) {
             return response()->json(['error' => 'Cannot delete product that exists in orders. Set status to inactive instead.'], 409);
         }
         $product->delete([]);
@@ -680,7 +680,7 @@ class LegacyBridgeController extends Controller
     private function relinkProductsToCloudinaryMedia(array $relinkableProducts): void
     {
         foreach ($relinkableProducts as $pm) {
-            Product::query()->where('id', '=', $pm['id'], 'and')->update([
+            Product::query()->where('id', '=', $pm['id'])->update([
                 'images' => json_encode($pm['nextMediaUrls']),
             ]);
         }
@@ -855,7 +855,7 @@ class LegacyBridgeController extends Controller
             return ['coupon' => null, 'discount' => 0.0];
         }
 
-        $coupon = Coupon::query()->where('code', '=', $discountCode, 'and')->first();
+        $coupon = Coupon::query()->where('code', '=', $discountCode)->first();
         if (!$coupon || !$coupon->isValid($subtotal)) {
             return response()->json(['error' => 'Invalid or expired coupon code.'], 422);
         }
@@ -982,7 +982,7 @@ class LegacyBridgeController extends Controller
 
     public function ordersUpdate(Request $request, string $id): JsonResponse
     {
-        $order = Order::query()->where('public_id', '=', $id, 'and')->orWhere('id', '=', $id, 'and')->first();
+        $order = Order::query()->where('public_id', '=', $id)->orWhere('id', '=', $id)->first();
         if (! $order) {
             return response()->json(['error' => 'Invalid order ID'], 400);
         }
@@ -1002,19 +1002,32 @@ class LegacyBridgeController extends Controller
 
     public function orderStatus(string $id): JsonResponse
     {
-        $order = Order::query()->where('public_id', '=', $id, 'and')->orWhere('id', '=', $id, 'and')->first();
+        $order = Order::query()->where('public_id', '=', $id)->orWhere('id', '=', $id)->first();
         if (! $order) {
             return response()->json(['error' => 'Order not found'], 404);
         }
-        $latestTransaction = PaymentTransaction::query()->where('order_id', '=', $order->id, 'and')->latest('created_at')->first(['provider', 'status', 'merchant_reference', 'updated_at']);
-        return response()->json(['success' => true, 'order' => ['id' => $order->public_id ?: (string) $order->id, 'legacyId' => $order->id, 'status' => $order->status, 'paymentStatus' => $order->payment_status, 'paymentMethod' => $order->payment_method, 'updatedAt' => $order->updated_at], 'latestTransaction' => $latestTransaction]);
+        $latestTransaction = PaymentTransaction::query()->where('order_id', '=', $order->id)->latest('created_at')->first(['provider', 'status', 'merchant_reference', 'updated_at']);
+        return response()->json(['success' => true, 'order' => [
+            'id' => $order->public_id ?: (string) $order->id,
+            'legacyId' => $order->id,
+            'status' => $order->status,
+            'paymentStatus' => $order->payment_status,
+            'paymentMethod' => $order->payment_method,
+            'payment_method' => $order->payment_method,
+            'total' => $order->total,
+            'total_amount' => $order->total,
+            'createdAt' => $order->created_at,
+            'created_at' => $order->created_at,
+            'updatedAt' => $order->updated_at,
+            'updated_at' => $order->updated_at,
+        ], 'latestTransaction' => $latestTransaction]);
     }
     public function paymentProviders(): JsonResponse { return response()->json(['providers' => ['jazzcash' => ['available' => (bool) env('JAZZCASH_INITIATE_URL')], 'easypaisa' => ['available' => (bool) env('EASYPAISA_INITIATE_URL')]]]); }
     public function paymentInitiate(Request $request): JsonResponse
     {
         $provider = (string) $request->input('provider', '');
         $orderRef = (string) $request->input('orderId', '');
-        $order = Order::query()->where('public_id', '=', $orderRef, 'and')->orWhere('id', '=', $orderRef, 'and')->first();
+        $order = Order::query()->where('public_id', '=', $orderRef)->orWhere('id', '=', $orderRef)->first();
         if (! in_array($provider, ['jazzcash', 'easypaisa'], true)) {
             return response()->json(['error' => 'Unsupported payment provider'], 400);
         }
@@ -1037,13 +1050,13 @@ class LegacyBridgeController extends Controller
     {
         $query = PaymentTransaction::query()->latest('created_at')->limit(50);
         if ($ref = trim((string) $request->query('merchantReference', ''))) {
-            $query->where('merchant_reference', '=', $ref, 'and');
+            $query->where('merchant_reference', '=', $ref);
         }
         if ($provider = trim((string) $request->query('provider', ''))) {
-            $query->where('provider', '=', $provider, 'and');
+            $query->where('provider', '=', $provider);
         }
         if ($orderId = (int) $request->query('orderId', 0)) {
-            $query->where('order_id', '=', $orderId, 'and');
+            $query->where('order_id', '=', $orderId);
         }
         $transactions = $query->get();
         return response()->json(['success' => true, 'count' => $transactions->count(), 'transactions' => $transactions]);
@@ -1142,17 +1155,17 @@ class LegacyBridgeController extends Controller
                     /** @var PaymentTransaction $transaction */
                     // If paid, decrement stock
                     if ($result['status'] === 'paid') {
-                        $order = Order::query()->where('id', '=', $transaction->order_id, 'and')
+                        $order = Order::query()->where('id', '=', $transaction->order_id)
                             ->select('id', 'notes', 'payment_status')
                             ->first();
 
                         if ($order && $order->payment_status !== 'paid') {
                             foreach (self::parseStockPlan($order->notes) as $entry) {
                                 if ($entry['variantId']) {
-                                    ProductVariant::query()->where('id', '=', $entry['variantId'], 'and')
+                                    ProductVariant::query()->where('id', '=', $entry['variantId'])
                                         ->decrement('stock', $entry['quantity']);
                                 }
-                                Product::query()->where('id', '=', $entry['productId'], 'and')
+                                Product::query()->where('id', '=', $entry['productId'])
                                     ->decrement('stock', $entry['quantity']);
                             }
                         }
@@ -1164,7 +1177,7 @@ class LegacyBridgeController extends Controller
                         'reconciled_at' => now(),
                     ]);
 
-                    Order::query()->where('id', '=', $transaction->order_id, 'and')->update($orderState);
+                    Order::query()->where('id', '=', $transaction->order_id)->update($orderState);
                 });
 
                 $updated[] = [
@@ -1220,8 +1233,8 @@ class LegacyBridgeController extends Controller
             $providerStatus = self::mapStripeIntentStatus($intent->status);
 
             /** @var PaymentTransaction|null $transaction */
-            $transaction = PaymentTransaction::query()->where('provider', '=', 'stripe', 'and')
-                ->where('provider_transaction_id', '=', $intent->id, 'and')
+            $transaction = PaymentTransaction::query()->where('provider', '=', 'stripe')
+                ->where('provider_transaction_id', '=', $intent->id)
                 ->orderByDesc('id')
                 ->first(['*']);
 
@@ -1249,7 +1262,7 @@ class LegacyBridgeController extends Controller
                     'reconciled_at' => now(),
                 ]);
 
-                Order::query()->where('id', '=', $transaction->order_id, 'and')->update($orderState);
+                Order::query()->where('id', '=', $transaction->order_id)->update($orderState);
             });
 
             if ($providerStatus === 'paid') {
@@ -1299,7 +1312,7 @@ class LegacyBridgeController extends Controller
             }
 
             /** @var PaymentTransaction|null $transaction */
-            $transaction = PaymentTransaction::query()->where('merchant_reference', '=', $merchantReference, 'and')->first(['*']);
+            $transaction = PaymentTransaction::query()->where('merchant_reference', '=', $merchantReference)->first(['*']);
             if (!$transaction) {
                 return response()->json(['error' => 'Payment transaction not found'], 404);
             }
@@ -1317,17 +1330,17 @@ class LegacyBridgeController extends Controller
             $orderState = self::mapOrderState($status);
 
             DB::transaction(function () use ($transaction, $status, $payload, $signatureValid, $orderState) {
-                $order = Order::query()->where('id', '=', $transaction->order_id, 'and')
+                $order = Order::query()->where('id', '=', $transaction->order_id)
                     ->select('id', 'notes', 'payment_status')
                     ->first();
 
                 if ($status === 'paid' && $order && $order->payment_status !== 'paid') {
                     foreach (self::parseStockPlan($order->notes) as $entry) {
                         if ($entry['variantId']) {
-                            ProductVariant::query()->where('id', '=', $entry['variantId'], 'and')
+                            ProductVariant::query()->where('id', '=', $entry['variantId'])
                                 ->decrement('stock', $entry['quantity']);
                         }
-                        Product::query()->where('id', '=', $entry['productId'], 'and')
+                        Product::query()->where('id', '=', $entry['productId'])
                             ->decrement('stock', $entry['quantity']);
                     }
                 }
@@ -1340,7 +1353,7 @@ class LegacyBridgeController extends Controller
                     'provider_transaction_id' => (string) ($payload['transactionId'] ?? $transaction->provider_transaction_id ?? '') ?: null,
                 ]);
 
-                Order::query()->where('id', '=', $transaction->order_id, 'and')->update($orderState);
+                Order::query()->where('id', '=', $transaction->order_id)->update($orderState);
             });
 
             if ($status === 'paid') {
@@ -1527,13 +1540,13 @@ class LegacyBridgeController extends Controller
             return response()->json(['products' => []]);
         }
 
-        $query = Product::query()->where('status', '=', 'active', 'and')->with('category')->orderByDesc('created_at')->limit(12);
+        $query = Product::query()->where('status', '=', 'active')->with('category')->orderByDesc('created_at')->limit(12);
         if ($q !== '') {
             $query->where(function ($builder) use ($q) {
-                $builder->where('name', 'like', '%'.$q.'%', 'and')
+                $builder->where('name', 'like', '%'.$q.'%')
                     ->orWhere('description', 'like', '%'.$q.'%')
                     ->orWhere('slug', 'like', '%'.$q.'%');
-            }, null, null, 'and');
+            }, null, null);
         }
         if ($category !== '') {
             $query->whereHas('category', fn ($b) => $b->whereRaw('LOWER(name) = ?', [strtolower($category)]));
@@ -1551,11 +1564,11 @@ class LegacyBridgeController extends Controller
         $query = Review::query()->with('user:id,name,email')->orderByDesc('created_at');
 
         if ($productId) {
-            $product = Product::query()->where('public_id', '=', $productId, 'and')->orWhere('id', '=', $productId, 'and')->first();
+            $product = Product::query()->where('public_id', '=', $productId)->orWhere('id', '=', $productId)->first();
             if (!$product) {
                 return response()->json(['error' => 'Product not found'], 404);
             }
-            $query->where('product_id', '=', $product->id, 'and');
+            $query->where('product_id', '=', $product->id);
         }
 
         $reviews = $query->limit(100)->get();
@@ -1578,7 +1591,7 @@ class LegacyBridgeController extends Controller
     public function reviewsStore(Request $request): JsonResponse
     {
         $productId = $request->input('productId');
-        $product = Product::query()->where('public_id', '=', $productId, 'and')->orWhere('id', '=', $productId, 'and')->first();
+        $product = Product::query()->where('public_id', '=', $productId)->orWhere('id', '=', $productId)->first();
         if (!$product) {
             return response()->json(['error' => 'Product not found'], 404);
         }
@@ -1593,7 +1606,7 @@ class LegacyBridgeController extends Controller
             return response()->json(['error' => 'Email is required'], 400);
         }
 
-        $user = User::query()->where('email', '=', $email, 'and')->first();
+        $user = User::query()->where('email', '=', $email)->first();
         if (!$user) {
             return response()->json(['error' => 'User not found'], 404);
         }
@@ -1684,7 +1697,7 @@ class LegacyBridgeController extends Controller
             return response()->json(['valid' => false, 'error' => 'Please enter a coupon code']);
         }
 
-        $coupon = Coupon::query()->where('code', '=', $code, 'and')->first();
+        $coupon = Coupon::query()->where('code', '=', $code)->first();
         if (! $coupon) {
             return response()->json(['valid' => false, 'error' => 'Coupon not found']);
         }

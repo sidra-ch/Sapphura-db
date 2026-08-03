@@ -9,6 +9,31 @@ class PageController extends Controller
 {
     public function about() { return view('pages.about'); }
     public function contact() { return view('pages.contact'); }
+
+    public function contactRequest(Request $request)
+    {
+        $data = $request->validate([
+            'first_name' => ['nullable', 'string', 'max:120'],
+            'last_name' => ['nullable', 'string', 'max:120'],
+            'email' => ['required', 'email', 'max:190'],
+            'phone' => ['nullable', 'string', 'max:40'],
+            'subject' => ['required', 'string', 'max:190'],
+            'message' => ['required', 'string', 'max:5000'],
+        ]);
+
+        Log::info('contact_form_submitted', [
+            'name' => trim((string) ($data['first_name'] ?? '') . ' ' . (string) ($data['last_name'] ?? '')),
+            'email' => $data['email'],
+            'phone' => $data['phone'] ?? null,
+            'subject' => $data['subject'],
+            'message' => $data['message'],
+        ]);
+
+        return redirect()
+            ->route('contact')
+            ->with('success', 'Thanks! Your message has been received. We will contact you soon.');
+    }
+
     public function faq() { return view('pages.faq'); }
     public function blogs() { return view('pages.blogs'); }
     public function trackOrder() { return view('pages.track-order'); }

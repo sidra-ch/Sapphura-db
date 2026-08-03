@@ -29,8 +29,8 @@
         "priceCurrency": "PKR",
         "availability": "{{ $product->stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock' }}",
         "url": "{{ url('/product/' . $product->slug) }}"
-    }@if($product->reviews->count()),
-    "aggregateRating": {
+    }@if($product->reviews->count())
+    ,"aggregateRating": {
         "@type": "AggregateRating",
         "ratingValue": @json(round($product->reviews->avg('rating'), 1)),
         "reviewCount": @json($product->reviews->count())

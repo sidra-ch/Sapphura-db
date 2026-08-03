@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Services\CloudinaryService;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -99,6 +100,10 @@ class AdminProductImportController extends Controller
             return back()->with('error', 'CSV file upload failed. Please try again.');
         }
 
+        if ($this->isXlsxFile($csv) && !$this->supportsXlsx()) {
+            return back()->with('error', 'XLSX import requires the PHP zip extension. Please upload a CSV file or enable zip on the server.');
+        }
+
         [$previewRows, $validRows, $summary] = $this->parseAndValidateFile($csv);
 
         if (($summary['total_rows'] ?? 0) === 0) {
@@ -140,7 +145,7 @@ class AdminProductImportController extends Controller
 
         foreach ($validRows as $row) {
             try {
-                DB::transaction(function () use ($row, &$created, &$slugSet): void {
+                DB::transaction(function () use ($row, &$created, &$slugSet, &$errors): void {
                     $name = (string) ($row['name'] ?? '');
                     $baseSlug = Str::slug($name !== '' ? $name : 'product');
                     if ($baseSlug === '') {
@@ -155,6 +160,12 @@ class AdminProductImportController extends Controller
                     }
                     $slugSet[$slug] = true;
 
+                    $mediaUploadErrors = [];
+                    $media = $this->prepareImportMedia((array) ($row['media'] ?? []), $mediaUploadErrors);
+                    foreach ($mediaUploadErrors as $mediaError) {
+                        $errors[] = 'Row ' . ($row['row_number'] ?? '?') . ': ' . $mediaError;
+                    }
+
                     Product::create([
                         'public_id' => (string) Str::uuid(),
                         'name' => $name,
@@ -166,7 +177,7 @@ class AdminProductImportController extends Controller
                         'stock' => (int) ($row['stock'] ?? 0),
                         'status' => (string) ($row['status'] ?? 'active'),
                         'is_featured' => (bool) ($row['is_featured'] ?? false),
-                        'images' => json_encode($row['media'] ?? [], JSON_UNESCAPED_SLASHES),
+                        'images' => json_encode($media, JSON_UNESCAPED_SLASHES),
                         'category_id' => (int) ($row['category_id'] ?? 0),
                     ]);
 
@@ -523,7 +534,65 @@ class AdminProductImportController extends Controller
             return $resolved;
         }
 
-        return '/' . ltrim(str_replace('\\', '/', $trimmed), '/');
+        return null;
+    }
+
+    private function prepareImportMedia(array $mediaItems, array &$errors = []): array
+    {
+        $prepared = [];
+
+        foreach ($mediaItems as $item) {
+            if (!is_string($item) || trim($item) === '') {
+                continue;
+            }
+
+            $normalized = trim($item);
+            if (Str::startsWith($normalized, ['http://', 'https://'])) {
+                $prepared[] = $normalized;
+                continue;
+            }
+
+            if (!Str::startsWith($normalized, '/')) {
+                $normalized = '/' . ltrim(str_replace('\\', '/', $normalized), '/');
+            }
+
+            $localPath = public_path(ltrim($normalized, '/'));
+            if (!is_file($localPath)) {
+                $errors[] = 'Media file not found: ' . $item;
+                continue;
+            }
+
+            try {
+                $uploadedFile = new UploadedFile(
+                    $localPath,
+                    basename($localPath),
+                    mime_content_type($localPath) ?: null,
+                    null,
+                    true
+                );
+                $uploaded = CloudinaryService::uploadFile($uploadedFile, 'product-imports');
+                if (!empty($uploaded['url'])) {
+                    $prepared[] = $uploaded['url'];
+                    continue;
+                }
+            } catch (\Throwable $e) {
+                $errors[] = 'Cloudinary upload failed for ' . $item . ': ' . $e->getMessage();
+            }
+
+            $prepared[] = $normalized;
+        }
+
+        return array_values(array_unique($prepared));
+    }
+
+    private function isXlsxFile(UploadedFile $file): bool
+    {
+        return Str::lower((string) $file->getClientOriginalExtension()) === 'xlsx';
+    }
+
+    private function supportsXlsx(): bool
+    {
+        return class_exists(ZipArchive::class);
     }
 
     private function resolveLocalMediaPath(string $value): ?string

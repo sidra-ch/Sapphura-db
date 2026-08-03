@@ -82,7 +82,7 @@
             @if(session('success'))
                 <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-3 mb-6 text-sm text-green-300">{{ session('success') }}</div>
             @endif
-            <form method="POST" action="/contact" class="space-y-5">
+            <form method="POST" action="{{ route('contact.submit') }}" class="space-y-5">
                 @csrf
                 <div class="grid grid-cols-2 gap-4">
                     <div>

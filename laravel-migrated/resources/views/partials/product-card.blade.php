@@ -8,7 +8,7 @@
         ->values()
         ->all();
 
-    $primaryImage = $images[0] ?? asset('/logo-1.png');
+    $primaryImage = $images[0] ?? asset('logo-1.png');
     $secondaryImage = $images[1] ?? null;
     $variantOptions = $variants->map(function ($variant) use ($product) {
         $variantImage = is_string($variant->image ?? null) ? trim($variant->image) : '';
@@ -113,7 +113,7 @@
             @if(!empty($images))
                 <img src="{{ $primaryImage }}" alt="{{ $product->name }}"
                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                     onerror="this.onerror=null;this.src='{{ asset('/logo-1.png') }}';"
+                     onerror="this.onerror=null;this.src='{{ asset('logo-1.png') }}';"
                      loading="lazy">
             @else
                 <div class="w-full h-full flex items-center justify-center text-cream/20">
@@ -259,7 +259,7 @@
                                     <video :src="activeQuickImage" class="w-full h-full object-cover bg-black" controls preload="metadata"></video>
                                 </template>
                                 <template x-if="activeQuickMediaType !== 'video'">
-                                    <img :src="activeQuickImage" alt="{{ $product->name }}" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='{{ asset('/logo-1.png') }}';">
+                                    <img :src="activeQuickImage" alt="{{ $product->name }}" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='{{ asset('logo-1.png') }}';">
                                 </template>
                                 @if(count($mediaItems) > 1)
                                     <button type="button" @click="prevQuickImage()" class="absolute left-3 top-1/2 -translate-y-1/2 rounded-full border border-gold/20 bg-navy/75 p-2 text-cream transition hover:text-gold hover:bg-navy">
