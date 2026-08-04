@@ -50,8 +50,8 @@
             <div class="absolute inset-x-0 flex items-center justify-center xl:static xl:pointer-events-auto pointer-events-none">
                 <a href="/" class="xl:hidden flex items-center gap-3 group pointer-events-auto">
                     <img src="/logo-1.png" alt="Sapphura"
-                         class="w-9 h-9 rounded-full border border-gold/40 object-cover group-hover:border-gold transition-colors duration-300">
-                    <span class="hidden sm:inline text-base font-bold tracking-[0.25em] text-cream group-hover:text-gold transition-colors font-serif uppercase">SAPPHURA</span>
+                         class="w-8 h-8 sm:w-9 sm:h-9 rounded-full border border-gold/40 object-cover group-hover:border-gold transition-colors duration-300">
+                    <span class="text-xs sm:text-sm md:text-base font-bold tracking-wider text-cream group-hover:text-gold transition-colors font-serif uppercase">SAPPHURA</span>
                 </a>
             </div>
 
@@ -148,22 +148,22 @@
                 </a>
             </nav>
 
-            <div class="flex items-center gap-2.5 sm:gap-4">
-                <a href="/search" class="text-cream/80 hover:text-gold transition p-2.5 sm:p-3 rounded-full hover:bg-gold/10" title="Search">
+            <div class="flex items-center gap-2 sm:gap-4">
+                <a href="/search" class="text-cream/80 hover:text-gold transition p-2 sm:p-3 rounded-full hover:bg-gold/10" title="Search">
                     <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 </a>
-                <a href="/wishlist" class="relative text-cream/80 hover:text-gold transition p-2.5 sm:p-3 rounded-full hover:bg-gold/10" title="Wishlist">
+                <a href="/wishlist" class="relative text-cream/80 hover:text-gold transition p-2 sm:p-3 rounded-full hover:bg-gold/10" title="Wishlist">
                     <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
                       <span x-text="$store.wishlist.totalItems" x-show="$store.wishlist.totalItems > 0" x-cloak
                           class="absolute -top-0.5 -right-0.5 bg-gold text-ink text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold"></span>
                 </a>
-                <button @click="$store.cart.open = true" class="text-cream/80 hover:text-gold transition relative p-2.5 sm:p-3 rounded-full hover:bg-gold/10" title="Cart">
+                <button @click="$store.cart.open = true" class="text-cream/80 hover:text-gold transition relative p-2 sm:p-3 rounded-full hover:bg-gold/10" title="Cart">
                     <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                       <span x-text="$store.cart.totalItems" x-show="$store.cart.totalItems > 0" x-cloak
                           class="absolute -top-0.5 -right-0.5 bg-gold text-ink text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold"></span>
                 </button>
                 @auth
-                    <a href="/account" class="text-cream/80 hover:text-gold transition p-2.5 sm:p-3 rounded-full hover:bg-gold/10" title="Account">
+                    <a href="/account" class="text-cream/80 hover:text-gold transition p-2 sm:p-3 rounded-full hover:bg-gold/10" title="Account">
                         <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                     </a>
                 @else
