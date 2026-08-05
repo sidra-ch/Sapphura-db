@@ -16,7 +16,7 @@
 {{-- Product JSON-LD --}}
 <script type="application/ld+json">
 {
-    "@context": "https://schema.org",
+    "@@context": "https://schema.org",
     "@type": "Product",
     "name": @json($product->name),
     "description": @json(Str::limit(strip_tags($product->description ?? $product->name), 300)),

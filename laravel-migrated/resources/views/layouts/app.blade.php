@@ -6,10 +6,21 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @php
         $allowedCanonicalQueryKeys = ['category', 'search', 'sort', 'on_sale', 'page'];
-        $canonicalQuery = collect(request()->query())
-            ->only($allowedCanonicalQueryKeys)
-            ->filter(fn ($value) => $value !== null && $value !== '')
-            ->all();
+        $rawQuery = request()->query();
+        $canonicalQuery = [];
+        foreach ($allowedCanonicalQueryKeys as $key) {
+            if (!array_key_exists($key, $rawQuery)) {
+                continue;
+            }
+
+            $value = $rawQuery[$key];
+            if ($value === null || $value === '') {
+                continue;
+            }
+
+            $canonicalQuery[$key] = $value;
+        }
+
         $defaultCanonical = request()->url() . (!empty($canonicalQuery) ? ('?' . http_build_query($canonicalQuery)) : '');
     @endphp
     <title>@yield('title', 'Sapphura – Luxury Fashion & Jewelry')</title>
@@ -94,7 +105,7 @@
     {{-- Organization JSON-LD --}}
     <script type="application/ld+json">
     {
-        "@context": "https://schema.org",
+        "@@context": "https://schema.org",
         "@type": "Organization",
         "name": "Sapphura",
         "url": "{{ url('/') }}",
@@ -113,7 +124,7 @@
     
     <script type="application/ld+json">
     {
-        "@context": "https://schema.org",
+        "@@context": "https://schema.org",
         "@type": "WebSite",
         "name": "Sapphura",
         "url": "{{ url('/') }}",
