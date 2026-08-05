@@ -1,5 +1,8 @@
 @extends('layouts.app')
 @section('title', request('category') ? request('category') . ' - Sapphura' : 'Collections - Sapphura')
+@section('description', request('category')
+    ? ('Shop ' . request('category') . ' collection at Sapphura. Explore premium styles, latest arrivals, and curated fashion picks with nationwide delivery.')
+    : 'Explore Sapphura collections for luxury fashion, jewelry, unstitched and stitched styles. Discover curated products with nationwide delivery.')
 
 @section('content')
 <div class="max-w-7xl mx-auto px-4 sm:px-6 py-10">

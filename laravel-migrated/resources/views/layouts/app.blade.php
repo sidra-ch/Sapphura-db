@@ -4,9 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @php
+        $allowedCanonicalQueryKeys = ['category', 'search', 'sort', 'on_sale', 'page'];
+        $canonicalQuery = collect(request()->query())
+            ->only($allowedCanonicalQueryKeys)
+            ->filter(fn ($value) => $value !== null && $value !== '')
+            ->all();
+        $defaultCanonical = request()->url() . (!empty($canonicalQuery) ? ('?' . http_build_query($canonicalQuery)) : '');
+    @endphp
     <title>@yield('title', 'Sapphura – Luxury Fashion & Jewelry')</title>
     <meta name="description" content="@yield('description', 'Discover luxury jewelry, abayas, and fashion accessories at Sapphura.')">
-    <link rel="canonical" href="@yield('canonical', request()->fullUrl())">
+    <link rel="canonical" href="@yield('canonical', $defaultCanonical)">
 
     {{-- Open Graph --}}
     <meta property="og:type" content="@yield('og_type', 'website')">
@@ -86,7 +94,7 @@
     {{-- Organization JSON-LD --}}
     <script type="application/ld+json">
     {
-        "@@context": "https://schema.org",
+        "@context": "https://schema.org",
         "@type": "Organization",
         "name": "Sapphura",
         "url": "{{ url('/') }}",
@@ -105,7 +113,7 @@
     
     <script type="application/ld+json">
     {
-        "@@context": "https://schema.org",
+        "@context": "https://schema.org",
         "@type": "WebSite",
         "name": "Sapphura",
         "url": "{{ url('/') }}",
